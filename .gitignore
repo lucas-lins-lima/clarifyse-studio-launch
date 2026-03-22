@@ -22,14 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-!node_modules/.vite
-
-**/tempobook/dynamic/
-**/tempobook/storyboards/
-
-core
-
-.github/
-
-**/tempobook/**
