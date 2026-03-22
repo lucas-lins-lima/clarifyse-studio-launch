@@ -1,0 +1,10 @@
+project_id = "rbjrpzmsrygvkpdvnzsh"
+
+[functions.manage-users]
+verify_jwt = false
+
+[functions.get-sheet-headers]
+verify_jwt = true
+
+[functions.sync-field-data]
+verify_jwt = false
