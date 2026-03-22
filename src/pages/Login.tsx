@@ -24,6 +24,12 @@ export default function Login() {
     );
   }
 
+  // Se o usuário está logado e precisa trocar senha, redirecionar para a tela de troca
+  if (session && profile && profile.requiresPasswordChange) {
+    return <Navigate to="/force-change-password" replace />;
+  }
+
+  // Se o usuário está logado normalmente, redirecionar para o dashboard
   if (session && profile) {
     return <Navigate to="/admin" replace />;
   }

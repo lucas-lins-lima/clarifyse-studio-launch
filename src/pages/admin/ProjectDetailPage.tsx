@@ -10,6 +10,7 @@ import QuotasTab from '@/components/projects/surveyforge/QuotasTab';
 import FormBuilderTab from '@/components/projects/surveyforge/FormBuilderTab';
 import ProjectOverviewTab from '@/components/projects/surveyforge/ProjectOverviewTab';
 import MonitoringTab from '@/components/projects/surveyforge/MonitoringTab';
+import AnalysisTab from '@/components/projects/surveyforge/AnalysisTab';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -108,6 +109,9 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="monitoring" className="rounded-lg px-6 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white">
             Monitoramento em Tempo Real
           </TabsTrigger>
+          <TabsTrigger value="analysis" className="rounded-lg px-6 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white">
+            Análise
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -122,6 +126,9 @@ export default function ProjectDetailPage() {
           </TabsContent>
           <TabsContent value="monitoring">
             <MonitoringTab project={project} />
+          </TabsContent>
+          <TabsContent value="analysis">
+            <AnalysisTab project={project} />
           </TabsContent>
         </div>
       </Tabs>

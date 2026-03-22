@@ -10,6 +10,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 
 // Lazy load pages
 const Login = React.lazy(() => import("./pages/Login"));
+const ForceChangePassword = React.lazy(() => import("./pages/ForceChangePassword"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const ProjetosPage = React.lazy(() => import("./pages/admin/ProjetosPage"));
 const ProjectDetailPage = React.lazy(() => import("./pages/admin/ProjectDetailPage"));
@@ -46,6 +47,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/force-change-password" element={<ForceChangePassword />} />
 
               {/* Protected routes */}
               <Route element={<AppLayout allowedRoles={['admin', 'pesquisador']} />}>

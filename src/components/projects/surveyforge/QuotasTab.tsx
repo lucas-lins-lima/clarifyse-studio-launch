@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Plus, Trash2, GripVertical, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { 
   Dialog, 
