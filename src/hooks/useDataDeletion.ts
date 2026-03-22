@@ -3,7 +3,7 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 
 export const useDataDeletion = () => {
-  const { projects, responses, updateProject, deleteProject } = useProjectStore();
+  const { projects, responses, updateProject, deleteResponsesByProject } = useProjectStore();
   const { addNotification } = useNotificationStore();
 
   useEffect(() => {
@@ -28,10 +28,8 @@ export const useDataDeletion = () => {
 
       // Excluir dados quando a data chegar
       if (now >= deletionDate) {
-        // Remover todas as respostas do projeto
-        const projectResponseIds = responses
-          .filter((r) => r.projectId === project.id)
-          .map((r) => r.id);
+        // Deletar todas as respostas do projeto
+        deleteResponsesByProject(project.id);
 
         // Atualizar projeto para marcar como deletado
         updateProject(project.id, {
@@ -47,5 +45,5 @@ export const useDataDeletion = () => {
         });
       }
     });
-  }, [projects, responses, updateProject, addNotification]);
+  }, [projects, responses, updateProject, deleteResponsesByProject, addNotification]);
 };

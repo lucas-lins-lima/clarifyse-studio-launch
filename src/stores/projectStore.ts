@@ -104,6 +104,8 @@ interface ProjectState {
   getActiveProjects: () => Project[];
   addResponse: (response: Omit<Response, "id">) => void;
   getResponsesByProject: (projectId: string) => Response[];
+  deleteResponsesByProject: (projectId: string) => void;
+  updateQuotaTargetStatus: (projectId: string, quotaId: string, targetId: string, isBlocked: boolean) => void;
 }
 
 const generateSlug = (name: string) =>
@@ -206,6 +208,38 @@ export const useProjectStore = create<ProjectState>()(
 
       getResponsesByProject: (projectId) =>
         get().responses.filter((r) => r.projectId === projectId),
+
+      deleteResponsesByProject: (projectId) => {
+        set({ responses: get().responses.filter((r) => r.projectId !== projectId) });
+        // Reset sample current when deleting all responses
+        const project = get().projects.find((p) => p.id === projectId);
+        if (project) {
+          get().updateProject(projectId, { sampleCurrent: 0 });
+        }
+      },
+
+      updateQuotaTargetStatus: (projectId, quotaId, targetId, isBlocked) => {
+        const updated = get().projects.map((p) => {
+          if (p.id === projectId) {
+            return {
+              ...p,
+              quotas: p.quotas.map((q) => {
+                if (q.id === quotaId) {
+                  return {
+                    ...q,
+                    targets: q.targets.map((t) =>
+                      t.id === targetId ? { ...t, isBlocked } : t
+                    ),
+                  };
+                }
+                return q;
+              }),
+            };
+          }
+          return p;
+        });
+        set({ projects: updated });
+      },
     }),
     { name: "clarifyse-projects" }
   )
