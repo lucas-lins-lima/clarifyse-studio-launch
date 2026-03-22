@@ -36,6 +36,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea as TextareaField } from "@/components/ui/textarea";
+import {
   ArrowLeft,
   Plus,
   GripVertical,
@@ -147,6 +156,9 @@ const FormBuilder = () => {
 
   const [questions, setQuestions] = useState<Question[]>(project?.questions || []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, string | string[]>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor),

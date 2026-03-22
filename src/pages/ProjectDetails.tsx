@@ -124,10 +124,11 @@ const ProjectDetails = () => {
   }, [project.quotas]);
 
   const publicLink = `${window.location.origin}/r/${project.slug}`;
+  const integrationLink = `https://api.clarifyse.com/webhook/${project.id}`;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(publicLink);
-    toast.success("Link copiado para a área de transferência!");
+  const handleCopyLink = (text: string, label = "Link") => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado para a área de transferência!`);
   };
 
   const handleDownloadQrCode = () => {
@@ -297,20 +298,31 @@ const ProjectDetails = () => {
           <CardHeader>
             <CardTitle className="text-sm">Links de Acesso</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Link Público</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Link Público (Entrevistados)</p>
               <div className="flex gap-2">
                 <code className="flex-1 bg-muted p-2 rounded text-xs break-all">
                   {publicLink}
                 </code>
-                <Button size="sm" variant="outline" onClick={handleCopyLink}>
+                <Button size="sm" variant="outline" onClick={() => handleCopyLink(publicLink, "Link público")}>
                   <Copy size={14} />
                 </Button>
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">QR Code</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Link de Integração (Clarifyse Insights)</p>
+              <div className="flex gap-2">
+                <code className="flex-1 bg-muted p-2 rounded text-xs break-all text-muted-foreground">
+                  {integrationLink}
+                </code>
+                <Button size="sm" variant="outline" onClick={() => handleCopyLink(integrationLink, "Link de integração")}>
+                  <Copy size={14} />
+                </Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">QR Code</p>
               <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowQrModal(true)}>
                 <QrCode size={14} /> Gerar QR Code
               </Button>

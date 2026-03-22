@@ -49,14 +49,15 @@ const Dashboard = () => {
   const activeCount = visibleProjects.filter((p) => p.status === "active").length;
   const completedCount = visibleProjects.filter((p) => p.status === "completed").length;
   const totalResponses = visibleProjects.reduce((sum, p) => sum + p.sampleCurrent, 0);
-  const avgCompletion = visibleProjects.length > 0
-    ? Math.round(
-        visibleProjects
-          .filter((p) => p.sampleTarget > 0)
-          .reduce((sum, p) => sum + (p.sampleCurrent / p.sampleTarget) * 100, 0) /
-        Math.max(visibleProjects.filter((p) => p.sampleTarget > 0).length, 1)
-      )
-    : 0;
+  const avgCompletion =
+    visibleProjects.length > 0
+      ? Math.round(
+          visibleProjects
+            .filter((p) => p.sampleTarget > 0)
+            .reduce((sum, p) => sum + (p.sampleCurrent / p.sampleTarget) * 100, 0) /
+            Math.max(visibleProjects.filter((p) => p.sampleTarget > 0).length, 1)
+        )
+      : 0;
 
   const summaryCards = [
     { label: "Projetos Ativos", value: String(activeCount), icon: FileText, color: "text-secondary" },
@@ -65,7 +66,6 @@ const Dashboard = () => {
     { label: "Coleta Encerrada", value: String(completedCount), icon: CheckCircle, color: "text-muted-foreground" },
   ];
 
-  // Generate chart data from last 7 days
   const chartData = useMemo(() => {
     const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     const now = new Date();
@@ -83,25 +83,45 @@ const Dashboard = () => {
     });
   }, [responses, isAdmin, visibleProjects]);
 
-  // Alerts
   const alerts = useMemo(() => {
     const result: { type: string; message: string }[] = [];
+    const now = Date.now();
+    const h24 = 24 * 60 * 60 * 1000;
+
     visibleProjects.forEach((p) => {
+      // Quota próxima (80-90% da amostra)
       if (p.status === "active" && p.sampleTarget > 0) {
         const pct = (p.sampleCurrent / p.sampleTarget) * 100;
         if (pct >= 80 && pct < 100) {
           result.push({ type: "warning", message: `Projeto "${p.name}" em ${Math.round(pct)}% da amostra` });
         }
       }
+
+      // Projeto ativo sem respostas nas últimas 24h
+      if (p.status === "active") {
+        const projectResponses = responses.filter((r) => r.projectId === p.id);
+        const hasRecentResponse = projectResponses.some(
+          (r) => now - new Date(r.startedAt).getTime() < h24
+        );
+        // Only alert if project has existed for at least 24h and has no recent responses
+        const projectAge = now - new Date(p.publishedAt || p.createdAt).getTime();
+        if (projectAge > h24 && !hasRecentResponse) {
+          result.push({ type: "info", message: `Projeto "${p.name}" sem respostas nas últimas 24h` });
+        }
+      }
+
+      // Dados próximos da exclusão
       if (p.dataDeletionAt) {
-        const daysLeft = Math.ceil((new Date(p.dataDeletionAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const daysLeft = Math.ceil(
+          (new Date(p.dataDeletionAt).getTime() - now) / (1000 * 60 * 60 * 24)
+        );
         if (daysLeft > 0 && daysLeft <= 3) {
           result.push({ type: "warning", message: `Dados de "${p.name}" serão excluídos em ${daysLeft} dia(s)` });
         }
       }
     });
     return result;
-  }, [visibleProjects]);
+  }, [visibleProjects, responses]);
 
   const recentProjects = visibleProjects
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -174,11 +194,11 @@ const Dashboard = () => {
           {alerts.length > 0 ? (
             <div className="space-y-3">
               {alerts.map((alert, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-2 rounded-md bg-muted p-3 text-sm"
-                >
-                  <AlertTriangle size={16} className="mt-0.5 shrink-0 text-secondary" />
+                <div key={i} className="flex items-start gap-2 rounded-md bg-muted p-3 text-sm">
+                  <AlertTriangle
+                    size={16}
+                    className={`mt-0.5 shrink-0 ${alert.type === "warning" ? "text-secondary" : "text-muted-foreground"}`}
+                  />
                   <span className="text-foreground">{alert.message}</span>
                 </div>
               ))}
@@ -205,29 +225,37 @@ const Dashboard = () => {
         {recentProjects.length > 0 ? (
           <div className="divide-y divide-border">
             {recentProjects.map((project) => {
-              const progress = project.sampleTarget > 0
-                ? Math.round((project.sampleCurrent / project.sampleTarget) * 100)
-                : 0;
+              const progress =
+                project.sampleTarget > 0
+                  ? Math.round((project.sampleCurrent / project.sampleTarget) * 100)
+                  : 0;
               const sm = statusMap[project.status];
               return (
                 <div key={project.id} className="flex items-center gap-4 px-5 py-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">{project.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {project.researcherName} · {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
+                      {project.researcherName} ·{" "}
+                      {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                   {sm && (
                     <Badge
                       variant={sm.variant}
-                      className={project.status === "active" ? "bg-secondary text-secondary-foreground border-none" : ""}
+                      className={
+                        project.status === "active"
+                          ? "bg-secondary text-secondary-foreground border-none"
+                          : ""
+                      }
                     >
                       {sm.label}
                     </Badge>
                   )}
                   <div className="hidden w-40 sm:block">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                      <span>{project.sampleCurrent}/{project.sampleTarget}</span>
+                      <span>
+                        {project.sampleCurrent}/{project.sampleTarget}
+                      </span>
                       <span>{progress}%</span>
                     </div>
                     <Progress value={progress} className="h-1.5" />
@@ -259,8 +287,14 @@ const Dashboard = () => {
       {/* Activity Log - Admin only */}
       {isAdmin && (
         <div className="card-studio">
-          <div className="border-b border-border px-5 py-4">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <h3 className="label-caps">Log de Atividades</h3>
+            <button
+              onClick={() => navigate("/auditoria")}
+              className="flex items-center gap-1 text-sm font-medium text-secondary hover:text-secondary/80 transition-colors"
+            >
+              Ver Log Completo <ArrowRight size={14} />
+            </button>
           </div>
           {recentLogs.length > 0 ? (
             <div className="divide-y divide-border">

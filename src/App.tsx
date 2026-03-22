@@ -14,6 +14,9 @@ import ProjectDetails from "./pages/ProjectDetails";
 import ProjectResponses from "./pages/ProjectResponses";
 import RespondentForm from "./pages/RespondentForm";
 import ThankYou from "./pages/ThankYou";
+import Analyses from "./pages/Analyses";
+import Settings from "./pages/Settings";
+import ActivityLog from "./pages/ActivityLog";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 import { useProjectAutoClose } from "@/hooks/useProjectAutoClose";
@@ -44,6 +47,9 @@ const AppContent = () => {
             <Route path="/projetos/:projectId/formulario" element={<FormBuilder />} />
             <Route path="/projetos/:projectId/respostas" element={<ProjectResponses />} />
             <Route path="/pesquisadores" element={<Researchers />} />
+            <Route path="/analises" element={<Analyses />} />
+            <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/auditoria" element={<ActivityLog />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

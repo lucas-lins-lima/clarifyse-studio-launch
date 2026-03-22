@@ -65,6 +65,8 @@ export interface Project {
   researcherName: string;
   sampleTarget: number;
   sampleCurrent: number;
+  startDate?: string;
+  endDate?: string;
   status: "draft" | "active" | "paused" | "completed" | "trash";
   settings: ProjectSettings;
   quotas: Quota[];
@@ -106,6 +108,7 @@ interface ProjectState {
   getResponsesByProject: (projectId: string) => Response[];
   deleteResponsesByProject: (projectId: string) => void;
   updateQuotaTargetStatus: (projectId: string, quotaId: string, targetId: string, isBlocked: boolean) => void;
+  incrementQuotaTarget: (projectId: string, quotaId: string, targetId: string) => void;
 }
 
 const generateSlug = (name: string) =>
@@ -178,6 +181,8 @@ export const useProjectStore = create<ProjectState>()(
           status: "draft",
           sampleCurrent: 0,
           clientName: "",
+          startDate: undefined,
+          endDate: undefined,
           publishedAt: null,
           completedAt: null,
           dataDeletionAt: null,
@@ -197,7 +202,6 @@ export const useProjectStore = create<ProjectState>()(
       addResponse: (data) => {
         const response: Response = { ...data, id: crypto.randomUUID() };
         set({ responses: [...get().responses, response] });
-        // Update sample current
         if (data.status === "completed") {
           const project = get().projects.find((p) => p.id === data.projectId);
           if (project) {
@@ -211,7 +215,6 @@ export const useProjectStore = create<ProjectState>()(
 
       deleteResponsesByProject: (projectId) => {
         set({ responses: get().responses.filter((r) => r.projectId !== projectId) });
-        // Reset sample current when deleting all responses
         const project = get().projects.find((p) => p.id === projectId);
         if (project) {
           get().updateProject(projectId, { sampleCurrent: 0 });
@@ -229,6 +232,29 @@ export const useProjectStore = create<ProjectState>()(
                     ...q,
                     targets: q.targets.map((t) =>
                       t.id === targetId ? { ...t, isBlocked } : t
+                    ),
+                  };
+                }
+                return q;
+              }),
+            };
+          }
+          return p;
+        });
+        set({ projects: updated });
+      },
+
+      incrementQuotaTarget: (projectId, quotaId, targetId) => {
+        const updated = get().projects.map((p) => {
+          if (p.id === projectId) {
+            return {
+              ...p,
+              quotas: p.quotas.map((q) => {
+                if (q.id === quotaId) {
+                  return {
+                    ...q,
+                    targets: q.targets.map((t) =>
+                      t.id === targetId ? { ...t, current: t.current + 1 } : t
                     ),
                   };
                 }

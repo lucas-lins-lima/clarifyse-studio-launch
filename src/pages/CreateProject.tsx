@@ -123,6 +123,8 @@ const CreateProject = () => {
       researcherId: researcher?.id || currentUser!.id,
       researcherName: researcher?.name || currentUser!.name,
       sampleTarget: Number(sampleTarget),
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
       status: "draft",
       settings: {
         ...settings,
