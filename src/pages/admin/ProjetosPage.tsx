@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { loadDB, addProject, deleteProject, getProjectsByUser } from '@/lib/surveyForgeDB';
+import { loadDB, addProject, deleteProject, getProjectsByUser, duplicateProject } from '@/lib/surveyForgeDB';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import { HealthThermometer } from '@/components/projects/HealthThermometer';
-import { FolderOpen, Plus, Search, MoreVertical, Trash2, Edit3, BarChart3 } from 'lucide-react';
+import { FolderOpen, Plus, Search, MoreVertical, Trash2, Edit3, BarChart3, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -113,10 +113,22 @@ export default function ProjetosPage() {
 
   const handleDeleteConfirm = () => {
     if (deleteConfirmId) {
-      deleteProject(deleteConfirmId);
+      deleteProject(deleteConfirmId, user?.id, profile?.role);
       setDb(loadDB());
       setDeleteConfirmId(null);
       toast.success('Projeto excluído com sucesso.');
+    }
+  };
+
+  const handleDuplicate = (projectId: string) => {
+    if (!user?.id) return;
+    const duplicated = duplicateProject(projectId, user.id);
+    if (duplicated) {
+      setDb(loadDB());
+      toast.success(`Projeto duplicado como "${duplicated.name}"!`);
+      navigate(`/admin/projetos/${duplicated.id}`);
+    } else {
+      toast.error('Erro ao duplicar projeto.');
     }
   };
 
@@ -240,6 +252,9 @@ export default function ProjetosPage() {
                               <BarChart3 className="h-4 w-4 mr-2" /> Ver Insights
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem onClick={() => handleDuplicate(project.id)}>
+                            <Copy className="h-4 w-4 mr-2" /> Duplicar Projeto
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600 focus:text-red-600 focus:bg-red-50"

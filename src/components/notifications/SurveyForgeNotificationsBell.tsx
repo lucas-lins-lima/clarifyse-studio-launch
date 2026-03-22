@@ -16,6 +16,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 interface Notification {
@@ -45,15 +46,19 @@ function getNotificationIcon(type: string) {
 
 export const SurveyForgeNotificationsBell = React.memo(function SurveyForgeNotificationsBell() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const userId = profile?.id || null;
+  const isAdmin = profile?.role === 'admin';
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const refreshNotifications = useCallback(() => {
-    const notifs = loadNotifications();
+    // Admin vê todas; pesquisador vê apenas as suas
+    const notifs = loadNotifications(isAdmin ? null : userId);
     setNotifications(notifs);
-    setUnreadCount(getUnreadNotificationsCount());
-  }, []);
+    setUnreadCount(getUnreadNotificationsCount(isAdmin ? null : userId));
+  }, [userId, isAdmin]);
 
   useEffect(() => {
     refreshNotifications();
@@ -69,7 +74,7 @@ export const SurveyForgeNotificationsBell = React.memo(function SurveyForgeNotif
   }, [refreshNotifications]);
 
   const handleMarkAllRead = () => {
-    markAllNotificationsAsRead();
+    markAllNotificationsAsRead(isAdmin ? null : userId);
     refreshNotifications();
   };
 

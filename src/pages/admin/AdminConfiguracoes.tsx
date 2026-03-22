@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { loadDB, updateSettings, getAllUsers, addUser, updateUser, deleteUser } from '@/lib/surveyForgeDB';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,8 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 export default function AdminConfiguracoes() {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [db, setDb] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +81,7 @@ export default function AdminConfiguracoes() {
       return;
     }
 
-    const newUser = addUser({
+    const result = addUser({
       name: newUserForm.name,
       email: newUserForm.email,
       password: newUserForm.password,
@@ -86,10 +89,15 @@ export default function AdminConfiguracoes() {
       cargo: 'Pesquisador'
     });
 
+    if (result && result.error) {
+      toast.error(result.error);
+      return;
+    }
+
     setUsers(getAllUsers());
     setIsAddUserModalOpen(false);
     setNewUserForm({ name: '', email: '', password: '' });
-    toast.success(`Pesquisador "${newUser.name}" adicionado com sucesso! Senha temporária: ${newUserForm.password}`);
+    toast.success(`Pesquisador "${result.name}" adicionado! Senha temporária: ${newUserForm.password}`);
   };
 
   const handleEditUser = (e: React.FormEvent) => {
@@ -112,7 +120,12 @@ export default function AdminConfiguracoes() {
 
   const handleDeleteUser = () => {
     if (!selectedUser) return;
-    deleteUser(selectedUser.id);
+    const result = deleteUser(selectedUser.id);
+    if (result && typeof result === 'object' && result.error) {
+      toast.error(result.error);
+      setIsDeleteConfirmOpen(false);
+      return;
+    }
     setUsers(getAllUsers());
     setIsDeleteConfirmOpen(false);
     setSelectedUser(null);
@@ -163,9 +176,11 @@ export default function AdminConfiguracoes() {
           <TabsTrigger value="empresa" className="rounded-lg px-6 data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white gap-2">
             <Building2 className="h-4 w-4" /> Dados da Empresa
           </TabsTrigger>
-          <TabsTrigger value="usuarios" className="rounded-lg px-6 data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white gap-2">
-            <Users className="h-4 w-4" /> Usuários da Equipe
-          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="usuarios" className="rounded-lg px-6 data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white gap-2">
+              <Users className="h-4 w-4" /> Usuários da Equipe
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Dados da Empresa */}

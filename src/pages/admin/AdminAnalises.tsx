@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { loadDB } from '@/lib/surveyForgeDB';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -22,16 +23,25 @@ import {
 
 export default function AdminAnalises() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [db, setDb] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDb(loadDB());
+      const loadedDb = loadDB();
+      // Pesquisadores só vêem seus próprios projetos
+      if (!isAdmin && profile) {
+        loadedDb.projects = loadedDb.projects.filter(
+          (p: any) => p.responsibleId === profile.id || p.createdBy === profile.id
+        );
+      }
+      setDb(loadedDb);
       setLoading(false);
     }, 600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAdmin, profile]);
 
   const stats = useMemo(() => {
     if (!db) return { totalProjects: 0, withAnalysis: 0, totalResponses: 0, avgQuality: 0 };

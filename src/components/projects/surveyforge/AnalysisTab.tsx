@@ -15,9 +15,10 @@ const COLORS = ['#2D1E6B', '#1D9E75', '#7F77DD', '#FF6B6B', '#4ECDC4', '#45B7D1'
 
 interface AnalysisTabProps {
   project: any;
+  isAdmin?: boolean;
 }
 
-export default function AnalysisTab({ project }: AnalysisTabProps) {
+export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabProps) {
   const navigate = useNavigate();
   const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('json');
 

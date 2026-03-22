@@ -23,17 +23,21 @@ import logo from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const menuItems = [
-  { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
-  { title: 'Projetos', url: '/admin/projetos', icon: FolderOpen },
-  { title: 'Análises Globais', url: '/admin/analises', icon: BarChart3 },
-  { title: 'Configurações', url: '/admin/configuracoes', icon: Settings },
+const allMenuItems = [
+  { title: 'Dashboard', url: '/admin', icon: LayoutDashboard, roles: ['admin', 'pesquisador'] },
+  { title: 'Projetos', url: '/admin/projetos', icon: FolderOpen, roles: ['admin', 'pesquisador'] },
+  { title: 'Análises Globais', url: '/admin/analises', icon: BarChart3, roles: ['admin'] },
+  { title: 'Configurações', url: '/admin/configuracoes', icon: Settings, roles: ['admin', 'pesquisador'] },
 ];
 
 export function AppSidebar() {
   const { profile, signOut } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+
+  const menuItems = allMenuItems.filter(item =>
+    profile?.role && item.roles.includes(profile.role)
+  );
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 bg-[#2D1E6B]">
@@ -78,7 +82,9 @@ export function AppSidebar() {
         {!collapsed && profile && (
           <div className="mb-4 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
             <p className="text-xs font-bold text-white truncate">{profile.name}</p>
-            <p className="text-[10px] text-white/50 truncate uppercase tracking-wider mt-0.5">{profile.role}</p>
+            <p className="text-[10px] text-white/50 truncate uppercase tracking-wider mt-0.5">
+              {profile.role === 'admin' ? 'Administrador' : 'Pesquisador'}
+            </p>
           </div>
         )}
         <Button

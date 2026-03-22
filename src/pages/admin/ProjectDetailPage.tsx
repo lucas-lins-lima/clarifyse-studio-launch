@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProjectById, updateProject } from '@/lib/surveyForgeDB';
+import { useAuth } from '@/contexts/AuthContext';
+import { getProjectById, updateProject, publishProject, canUserAccessProject } from '@/lib/surveyForgeDB';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Play, Unlock, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Play, Unlock, BarChart3, Copy, Share2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import QuotasTab from '@/components/projects/surveyforge/QuotasTab';
@@ -12,64 +13,92 @@ import FormBuilderTab from '@/components/projects/surveyforge/FormBuilderTab';
 import ProjectOverviewTab from '@/components/projects/surveyforge/ProjectOverviewTab';
 import MonitoringTab from '@/components/projects/surveyforge/MonitoringTab';
 import AnalysisTab from '@/components/projects/surveyforge/AnalysisTab';
+import ShareTab from '@/components/projects/surveyforge/ShareTab';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+
+  const loadProject = useCallback(() => {
+    if (!id) return;
+    const p = getProjectById(id);
+    if (p) {
+      // Verificar permissão de acesso
+      if (profile && user) {
+        const hasAccess = canUserAccessProject(id, user.id, profile.role);
+        if (!hasAccess) {
+          setAccessDenied(true);
+          setLoading(false);
+          return;
+        }
+      }
+      setProject(p);
+      setIsLocked(p.status !== 'Rascunho');
+    } else {
+      toast.error('Projeto não encontrado.');
+      navigate('/admin/projetos');
+    }
+    setLoading(false);
+  }, [id, navigate, profile, user]);
 
   useEffect(() => {
-    if (id) {
-      const timer = setTimeout(() => {
-        const p = getProjectById(id);
-        if (p) {
-          setProject(p);
-          setIsLocked(p.status !== 'Rascunho');
-        } else {
-          toast.error('Projeto não encontrado.');
-          navigate('/admin/projetos');
-        }
-        setLoading(false);
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [id, navigate]);
+    const timer = setTimeout(loadProject, 400);
+    return () => clearTimeout(timer);
+  }, [loadProject]);
 
-  const handleSave = (updates: any) => {
+  const handleSave = useCallback((updates: any) => {
     if (id && project) {
       const updated = updateProject(id, updates);
-      setProject(updated);
-      toast.success('Alterações salvas com sucesso!');
-    }
-  };
-
-  const handlePublish = () => {
-    if (id && project) {
-      if (!project.formQuestions || project.formQuestions.length === 0) {
-        toast.error('Adicione pelo menos uma pergunta antes de publicar.');
-        return;
+      if (updated) {
+        setProject(updated);
+        toast.success('Alterações salvas com sucesso!');
       }
-      const updated = updateProject(id, { status: 'Formulário Pronto' });
-      setProject(updated);
-      setIsLocked(true);
-      toast.success('Formulário publicado! Links gerados com sucesso.');
     }
-  };
+  }, [id, project]);
 
-  const handleUnlock = () => {
+  const handlePublish = useCallback(() => {
+    if (!id || !project) return;
+    if (!project.formQuestions || project.formQuestions.length === 0) {
+      toast.error('Adicione pelo menos uma pergunta antes de publicar.');
+      return;
+    }
+    const result = publishProject(id);
+    if (result && result.error) {
+      toast.error(result.error);
+      return;
+    }
+    if (result) {
+      setProject(result);
+      setIsLocked(true);
+      toast.success('Formulário publicado! Link gerado com sucesso.');
+    }
+  }, [id, project]);
+
+  const handleUnlock = useCallback(() => {
     if (id && project) {
       const updated = updateProject(id, { status: 'Rascunho' });
-      setProject(updated);
-      setIsLocked(false);
-      toast.success('Edição desbloqueada.');
+      if (updated) {
+        setProject(updated);
+        setIsLocked(false);
+        toast.success('Edição desbloqueada. Atenção: respostas existentes podem ficar inconsistentes.');
+      }
     }
-  };
+  }, [id, project]);
+
+  const handleProjectUpdate = useCallback((updatedProject: any) => {
+    setProject(updatedProject);
+  }, []);
 
   const isAnalysisReady =
     project?.status === 'Análise Disponível' ||
     ((project?.responses?.length || 0) >= project?.sampleSize && project?.sampleSize > 0);
+
+  const isAdmin = profile?.role === 'admin';
 
   if (loading) {
     return (
@@ -88,6 +117,26 @@ export default function ProjectDetailPage() {
           ))}
         </div>
         <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center">
+          <Lock className="h-10 w-10 text-red-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-display font-bold text-[#2D1E6B] mb-2">Acesso Negado</h2>
+          <p className="text-[#64748B]">Você não tem permissão para acessar este projeto.</p>
+        </div>
+        <Button
+          onClick={() => navigate('/admin/projetos')}
+          className="bg-[#2D1E6B] text-white rounded-xl px-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Projetos
+        </Button>
       </div>
     );
   }
@@ -118,7 +167,7 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isAnalysisReady && (
             <Button
               variant="outline"
@@ -129,11 +178,25 @@ export default function ProjectDetailPage() {
               Ver Insights
             </Button>
           )}
+          {project.publicLink && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(project.publicLink);
+                toast.success('Link copiado!');
+              }}
+              className="rounded-xl border-gray-200 text-[#2D1E6B] hover:bg-gray-50 gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              Copiar Link
+            </Button>
+          )}
           {isLocked ? (
             <Button
               variant="outline"
               onClick={handleUnlock}
               className="rounded-xl border-gray-200 text-[#2D1E6B] hover:bg-gray-50"
+              title={isAdmin ? 'Desbloquear para edição' : 'Apenas admin pode desbloquear após publicação'}
             >
               <Unlock className="h-4 w-4 mr-2" /> Desbloquear Edição
             </Button>
@@ -150,54 +213,79 @@ export default function ProjectDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-white p-1 rounded-xl border border-gray-100 h-14 w-full md:w-auto flex overflow-x-auto gap-1">
+        <TabsList className="bg-white p-1 rounded-xl border border-gray-100 h-auto w-full flex flex-wrap gap-1">
           <TabsTrigger
             value="overview"
-            className="rounded-lg px-5 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap"
+            className="rounded-lg px-4 py-2 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap text-sm"
           >
-            Dashboard
-          </TabsTrigger>
-          <TabsTrigger
-            value="quotas"
-            className="rounded-lg px-5 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap"
-          >
-            Cotas & Amostra
+            Visão Geral
           </TabsTrigger>
           <TabsTrigger
             value="builder"
-            className="rounded-lg px-5 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap"
+            className="rounded-lg px-4 py-2 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap text-sm"
           >
             Formulário
           </TabsTrigger>
           <TabsTrigger
+            value="quotas"
+            className="rounded-lg px-4 py-2 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap text-sm"
+          >
+            Cotas & Amostra
+          </TabsTrigger>
+          <TabsTrigger
             value="monitoring"
-            className="rounded-lg px-5 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap"
+            className="rounded-lg px-4 py-2 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap text-sm"
           >
             Monitoramento
           </TabsTrigger>
           <TabsTrigger
             value="analysis"
-            className="rounded-lg px-5 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap"
+            className="rounded-lg px-4 py-2 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap text-sm"
           >
             Análise
+          </TabsTrigger>
+          <TabsTrigger
+            value="share"
+            className="rounded-lg px-4 py-2 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white whitespace-nowrap text-sm"
+          >
+            Compartilhamento
           </TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
           <TabsContent value="overview">
-            <ProjectOverviewTab project={project} />
-          </TabsContent>
-          <TabsContent value="quotas">
-            <QuotasTab project={project} onSave={(quotas) => handleSave({ quotas })} isLocked={isLocked} />
+            <ProjectOverviewTab
+              project={project}
+              onSave={handleSave}
+              isLocked={isLocked}
+            />
           </TabsContent>
           <TabsContent value="builder">
-            <FormBuilderTab project={project} onSave={(formQuestions) => handleSave({ formQuestions })} isLocked={isLocked} />
+            <FormBuilderTab
+              project={project}
+              onSave={(formQuestions) => handleSave({ formQuestions })}
+              isLocked={isLocked}
+            />
+          </TabsContent>
+          <TabsContent value="quotas">
+            <QuotasTab
+              project={project}
+              onSave={(quotas) => handleSave({ quotas })}
+              isLocked={isLocked}
+            />
           </TabsContent>
           <TabsContent value="monitoring">
-            <MonitoringTab project={project} />
+            <MonitoringTab project={project} onRefresh={loadProject} />
           </TabsContent>
           <TabsContent value="analysis">
-            <AnalysisTab project={project} />
+            <AnalysisTab project={project} isAdmin={isAdmin} />
+          </TabsContent>
+          <TabsContent value="share">
+            <ShareTab
+              project={project}
+              onPublish={handlePublish}
+              isLocked={isLocked}
+            />
           </TabsContent>
         </div>
       </Tabs>

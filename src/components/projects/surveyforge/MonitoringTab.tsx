@@ -91,7 +91,7 @@ const getQuotaStatusColor = (status: string) => {
   }
 };
 
-export default function MonitoringTab({ project }: { project: any }) {
+export default function MonitoringTab({ project, onRefresh }: { project: any; onRefresh?: () => void }) {
   const navigate = useNavigate();
   const [responses, setResponses] = useState<ResponseWithQuality[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);

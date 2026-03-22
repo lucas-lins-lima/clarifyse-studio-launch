@@ -32,7 +32,22 @@ export default function SurveyPage() {
         return;
       }
       const p = getProjectById(id);
-      if (p) setProject(p);
+      if (p) {
+        // Verificar se o projeto está publicado
+        if (p.status === 'Rascunho') {
+          setProject(null);
+          setLoading(false);
+          return;
+        }
+        // Verificar se a amostra já foi atingida
+        const totalResponses = p.responses?.length || 0;
+        if (p.sampleSize > 0 && totalResponses >= p.sampleSize) {
+          setBlocked('sample');
+          setLoading(false);
+          return;
+        }
+        setProject(p);
+      }
       setLoading(false);
     }
   }, [id]);
@@ -81,26 +96,43 @@ export default function SurveyPage() {
   const handleSubmit = () => {
     if (!project || submitting) return;
     setSubmitting(true);
+
+    // Recarregar projeto para ter dados atualizados de respostas
+    const freshProject = getProjectById(project.id);
+    if (!freshProject) {
+      setSubmitting(false);
+      return;
+    }
+
     const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
     let quotaGroup = "Geral";
-    // Regra: Caso a amostra atinja a meta, as pessoas não irão mais responder o formulário do projeto.
-    const totalResponses = project.responses?.length || 0;
-    if (project.sampleSize > 0 && totalResponses >= project.sampleSize) {
+
+    // Regra: Caso a amostra atinja a meta, bloquear
+    const totalResponses = freshProject.responses?.length || 0;
+    if (freshProject.sampleSize > 0 && totalResponses >= freshProject.sampleSize) {
       setBlocked('sample');
       setSubmitting(false);
       return;
     }
 
-    if (project.quotas && project.quotas.length > 0) {
-      for (const quota of project.quotas) {
-        const answer = answers[quota.questionId];
+    // Verificar cotas usando variableCode das perguntas
+    if (freshProject.quotas && freshProject.quotas.length > 0) {
+      for (const quota of freshProject.quotas) {
+        if (!quota.questionId) continue;
+        // Encontrar a pergunta pela ID
+        const question = freshProject.formQuestions?.find((q: any) => q.id === quota.questionId);
+        if (!question) continue;
+        // Obter resposta pelo variableCode da pergunta
+        const answer = answers[question.variableCode];
+        if (answer === undefined || answer === null) continue;
+
         const mapping = quota.mappings?.find((m: any) => String(m.code) === String(answer));
         if (mapping && mapping.groupId) {
           const group = quota.groups?.find((g: any) => g.id === mapping.groupId);
           if (group) {
             quotaGroup = group.name;
-            // Regra: Caso uma cota atinja a meta, as pessoas que são da cota que atingiu a meta não irão mais responder o formulário
-            const currentCount = project.responses?.filter((r: any) => r.quotaGroup === group.name).length || 0;
+            // Verificar se a cota atingiu a meta
+            const currentCount = freshProject.responses?.filter((r: any) => r.quotaGroup === group.name).length || 0;
             if (group.target > 0 && currentCount >= group.target) {
               setBlocked('quota');
               setSubmitting(false);
@@ -110,6 +142,7 @@ export default function SurveyPage() {
         }
       }
     }
+
     const finalAnswers = { ...answers };
     Object.keys(verbatims).forEach(key => { finalAnswers[`${key}_verbatim`] = verbatims[key]; });
     addResponse(project.id, { answers: finalAnswers, quotaGroup, timeSpentSeconds });

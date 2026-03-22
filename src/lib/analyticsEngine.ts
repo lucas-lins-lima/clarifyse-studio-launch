@@ -191,8 +191,10 @@ function analyzeQuestions(
   questions: Question[]
 ): QuestionAnalysis[] {
   return questions.map((question) => {
+    // Usar variableCode se disponível, caso contrário usar id
+    const answerKey = question.variableCode || question.id;
     const answers = responses
-      .map((r) => r.answers[question.id])
+      .map((r) => r.answers[answerKey] ?? r.answers[question.id])
       .filter((a) => a !== undefined && a !== null);
 
     if (question.type === 'single' || question.type === 'multiple') {
@@ -466,8 +468,10 @@ function generateCrossTab(
   const crossTab: Record<string, Record<string, number>> = {};
 
   responses.forEach((response) => {
-    const primaryAnswer = String(response.answers[primary.id] || 'N/A');
-    const secondaryAnswer = String(response.answers[secondary.id] || 'N/A');
+    const primaryKey = primary.variableCode || primary.id;
+    const secondaryKey = secondary.variableCode || secondary.id;
+    const primaryAnswer = String(response.answers[primaryKey] ?? response.answers[primary.id] ?? 'N/A');
+    const secondaryAnswer = String(response.answers[secondaryKey] ?? response.answers[secondary.id] ?? 'N/A');
 
     if (!crossTab[primaryAnswer]) crossTab[primaryAnswer] = {};
     crossTab[primaryAnswer][secondaryAnswer] =
@@ -587,11 +591,10 @@ function analyzeQuotaComparison(
   questions: Question[]
 ): QuotaComparison[] {
   return quotas.map((quota) => {
-    const quotaResponses = responses.filter((r) => r.quotaProfile[quota.id]);
-
     const groups = quota.groups.map((group) => {
-      const groupResponses = quotaResponses.filter(
-        (r) => r.quotaProfile[quota.id] === group.id
+      // Filtrar respostas pelo nome do grupo (campo quotaGroup salvo no banco)
+      const groupResponses = responses.filter(
+        (r) => (r as any).quotaGroup === group.name
       );
 
       // Encontrar respostas mais frequentes para este grupo
@@ -599,9 +602,13 @@ function analyzeQuotaComparison(
       groupResponses.forEach((resp) => {
         // Pegar primeira pergunta como exemplo
         const firstQuestion = questions[0];
-        if (firstQuestion && resp.answers[firstQuestion.id]) {
-          const answer = String(resp.answers[firstQuestion.id]);
-          topAnswers[answer] = (topAnswers[answer] || 0) + 1;
+        if (firstQuestion) {
+          const answerKey = firstQuestion.variableCode || firstQuestion.id;
+          const rawAnswer = resp.answers[answerKey] ?? resp.answers[firstQuestion.id];
+          if (rawAnswer !== undefined && rawAnswer !== null) {
+            const answer = String(rawAnswer);
+            topAnswers[answer] = (topAnswers[answer] || 0) + 1;
+          }
         }
       });
 

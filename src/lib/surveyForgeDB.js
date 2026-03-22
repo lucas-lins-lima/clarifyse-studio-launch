@@ -6,8 +6,7 @@
 const DB_KEY = "surveyForgeDB";
 const NOTIFICATIONS_KEY = "surveyForgeNotifications";
 
-// Função simples de hash (para ambiente local, não é criptografia forte)
-// Em produção, usar bcryptjs no backend
+// Função simples de hash (para ambiente local)
 function simpleHash(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -18,41 +17,52 @@ function simpleHash(str) {
   return Math.abs(hash).toString(16);
 }
 
-// Dados iniciais com admin e 1 pesquisador
+// Gera UUID simples
+function generateId(prefix = 'id') {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Dados iniciais com admin e 1 pesquisador de exemplo
 const initialData = {
   projects: [
     {
       id: "proj-001",
       name: "Pesquisa de Satisfação Clarifyse 2026",
       objective: "Avaliar a percepção de valor dos clientes atuais.",
-      sampleSize: 500,
-      quotas: [
-        { id: "q1", name: "Região Sudeste", target: 200, type: "numeric", questionId: "q_regiao", mapping: {} },
-        { id: "q2", name: "Região Sul", target: 150, type: "numeric", questionId: "q_regiao", mapping: {} },
-        { id: "q3", name: "Outras Regiões", target: 150, type: "numeric", questionId: "q_regiao", mapping: {} }
-      ],
+      sampleSize: 50,
+      quotas: [],
       formQuestions: [
         {
           id: "q_regiao",
-          text: "Qual é sua região?",
+          question: "Qual é sua região?",
           variableCode: "regiao",
           type: "single",
           options: [
-            { code: "1", label: "Sudeste" },
-            { code: "2", label: "Sul" },
-            { code: "3", label: "Nordeste" },
-            { code: "4", label: "Norte" },
-            { code: "5", label: "Centro-Oeste" }
+            { id: "o1", code: "1", text: "Sudeste" },
+            { id: "o2", code: "2", text: "Sul" },
+            { id: "o3", code: "3", text: "Nordeste" },
+            { id: "o4", code: "4", text: "Norte" },
+            { id: "o5", code: "5", text: "Centro-Oeste" }
           ],
           required: true,
-          skipLogic: [],
+          logic: [],
           helpText: ""
+        },
+        {
+          id: "q_satisfacao",
+          question: "Em uma escala de 0 a 10, qual a probabilidade de você recomendar a Clarifyse?",
+          variableCode: "satisfacao_nps",
+          type: "nps",
+          options: [],
+          required: true,
+          logic: [],
+          helpText: "0 = Nada provável, 10 = Extremamente provável"
         }
       ],
       responses: [],
       status: "Rascunho",
       pilar: "DISCOVER",
-      ownerId: "admin-001", // Admin pode ver todos
+      ownerId: "admin-001",
       createdAt: new Date().toISOString(),
       lastResponseAt: null,
       publicLink: null
@@ -79,7 +89,7 @@ const initialData = {
     {
       id: "pesq-001",
       email: "pesquisador@clarifyse.com",
-      passwordHash: simpleHash("123"),
+      passwordHash: simpleHash("pesq123"),
       name: "Pesquisador Sênior",
       role: "pesquisador",
       empresa: "Clarifyse",
@@ -97,16 +107,62 @@ const initialData = {
 // ============================================================================
 
 export const loadDB = () => {
-  const data = localStorage.getItem(DB_KEY);
-  if (!data) {
+  try {
+    const data = localStorage.getItem(DB_KEY);
+    if (!data) {
+      saveDB(initialData);
+      return JSON.parse(JSON.stringify(initialData));
+    }
+    const parsed = JSON.parse(data);
+    // Migração: garantir que todos os projetos tenham campos obrigatórios
+    let needsSave = false;
+    if (parsed.projects) {
+      parsed.projects = parsed.projects.map(p => {
+        let changed = false;
+        if (!p.formQuestions) { p.formQuestions = []; changed = true; }
+        if (!p.quotas) { p.quotas = []; changed = true; }
+        if (!p.responses) { p.responses = []; changed = true; }
+        if (!p.ownerId) { p.ownerId = 'admin-001'; changed = true; }
+        if (!p.publicLink) { p.publicLink = null; }
+        if (!p.pilar) { p.pilar = 'DISCOVER'; changed = true; }
+        if (changed) needsSave = true;
+        return p;
+      });
+    }
+    if (!parsed.settings) {
+      parsed.settings = initialData.settings;
+      needsSave = true;
+    }
+    if (!parsed.users || parsed.users.length === 0) {
+      parsed.users = initialData.users;
+      needsSave = true;
+    }
+    if (!parsed.notifications) {
+      parsed.notifications = [];
+      needsSave = true;
+    }
+    if (needsSave) saveDB(parsed);
+    return parsed;
+  } catch (err) {
+    console.error('Erro ao carregar DB:', err);
     saveDB(initialData);
-    return initialData;
+    return JSON.parse(JSON.stringify(initialData));
   }
-  return JSON.parse(data);
 };
 
 export const saveDB = (data) => {
-  localStorage.setItem(DB_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(DB_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.error('Erro ao salvar DB:', err);
+  }
+};
+
+export const resetDB = () => {
+  localStorage.removeItem(DB_KEY);
+  localStorage.removeItem(NOTIFICATIONS_KEY);
+  saveDB(initialData);
+  return JSON.parse(JSON.stringify(initialData));
 };
 
 // ============================================================================
@@ -115,7 +171,7 @@ export const saveDB = (data) => {
 
 export const getProjectById = (id) => {
   const db = loadDB();
-  return db.projects.find(p => p.id === id);
+  return db.projects.find(p => p.id === id) || null;
 };
 
 export const getProjectsByUser = (userId, userRole) => {
@@ -128,16 +184,25 @@ export const getProjectsByUser = (userId, userRole) => {
   return db.projects.filter(p => p.ownerId === userId);
 };
 
+export const canUserAccessProject = (projectId, userId, userRole) => {
+  if (userRole === 'admin') return true;
+  const project = getProjectById(projectId);
+  if (!project) return false;
+  return project.ownerId === userId;
+};
+
 export const addProject = (projectData, userId) => {
   const db = loadDB();
+  const projectId = generateId('proj');
+  const publicLink = `${window.location.origin}/survey/${projectId}`;
   const newProject = {
-    id: `proj-${Date.now()}`,
+    id: projectId,
     responses: [],
     status: "Rascunho",
     quotas: [],
     formQuestions: [],
     publicLink: null,
-    ownerId: userId, // Vincula ao usuário criador
+    ownerId: userId,
     createdAt: new Date().toISOString(),
     lastResponseAt: null,
     ...projectData
@@ -148,26 +213,46 @@ export const addProject = (projectData, userId) => {
     type: 'project_created',
     title: 'Projeto criado',
     message: `O projeto "${newProject.name}" foi criado com sucesso.`,
-    projectId: newProject.id
+    projectId: newProject.id,
+    userId: userId
   });
   return newProject;
 };
 
-export const updateProject = (id, updates) => {
+export const updateProject = (id, updates, requestingUserId = null, requestingUserRole = null) => {
   const db = loadDB();
   const index = db.projects.findIndex(p => p.id === id);
-  if (index !== -1) {
-    db.projects[index] = { ...db.projects[index], ...updates };
-    saveDB(db);
-    return db.projects[index];
+  if (index === -1) return null;
+
+  // Verificar permissão se fornecida
+  if (requestingUserId && requestingUserRole && requestingUserRole !== 'admin') {
+    if (db.projects[index].ownerId !== requestingUserId) {
+      console.warn('Acesso negado: usuário não é dono do projeto');
+      return null;
+    }
   }
-  return null;
+
+  db.projects[index] = { ...db.projects[index], ...updates };
+  saveDB(db);
+  return db.projects[index];
 };
 
-export const deleteProject = (id) => {
+export const deleteProject = (id, requestingUserId = null, requestingUserRole = null) => {
   const db = loadDB();
+  const project = db.projects.find(p => p.id === id);
+  if (!project) return false;
+
+  // Verificar permissão se fornecida
+  if (requestingUserId && requestingUserRole && requestingUserRole !== 'admin') {
+    if (project.ownerId !== requestingUserId) {
+      console.warn('Acesso negado: usuário não é dono do projeto');
+      return false;
+    }
+  }
+
   db.projects = db.projects.filter(p => p.id !== id);
   saveDB(db);
+  return true;
 };
 
 export const duplicateProject = (projectId, userId) => {
@@ -175,9 +260,10 @@ export const duplicateProject = (projectId, userId) => {
   const original = db.projects.find(p => p.id === projectId);
   if (!original) return null;
 
+  const newId = generateId('proj');
   const newProject = {
-    ...original,
-    id: `proj-${Date.now()}`,
+    ...JSON.parse(JSON.stringify(original)), // deep copy
+    id: newId,
     name: `${original.name} (Cópia)`,
     responses: [],
     status: "Rascunho",
@@ -189,6 +275,22 @@ export const duplicateProject = (projectId, userId) => {
   db.projects.push(newProject);
   saveDB(db);
   return newProject;
+};
+
+export const publishProject = (projectId) => {
+  const db = loadDB();
+  const index = db.projects.findIndex(p => p.id === projectId);
+  if (index === -1) return null;
+
+  if (!db.projects[index].formQuestions || db.projects[index].formQuestions.length === 0) {
+    return { error: 'Adicione pelo menos uma pergunta antes de publicar.' };
+  }
+
+  const publicLink = `${window.location.origin}/survey/${projectId}`;
+  db.projects[index].status = 'Formulário Pronto';
+  db.projects[index].publicLink = publicLink;
+  saveDB(db);
+  return db.projects[index];
 };
 
 export const resetProjectResponses = (id) => {
@@ -206,56 +308,112 @@ export const resetProjectResponses = (id) => {
   return null;
 };
 
+// Calcula o grupo de cota para uma resposta
+export const calculateQuotaGroup = (project, answers) => {
+  if (!project.quotas || project.quotas.length === 0) return "Geral";
+
+  for (const quota of project.quotas) {
+    if (!quota.questionId) continue;
+
+    // Encontrar a pergunta correspondente
+    const question = project.formQuestions?.find(q => q.id === quota.questionId);
+    if (!question) continue;
+
+    const answer = answers[question.variableCode];
+    if (answer === undefined || answer === null) continue;
+
+    if (quota.mappings && quota.mappings.length > 0) {
+      const mapping = quota.mappings.find(m => String(m.code) === String(answer));
+      if (mapping && mapping.groupId) {
+        const group = quota.groups?.find(g => g.id === mapping.groupId);
+        if (group) return group.name;
+      }
+    }
+  }
+
+  return "Geral";
+};
+
 export const addResponse = (projectId, responseData) => {
   const db = loadDB();
   const projectIndex = db.projects.findIndex(p => p.id === projectId);
-  if (projectIndex !== -1) {
-    const now = new Date().toISOString();
-    const newResponse = {
-      id: `resp-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: now,
-      projectId,
-      qualityFlag: "OK",
-      timeSpentSeconds: 0,
-      ...responseData
-    };
+  if (projectIndex === -1) return null;
 
-    if (!db.projects[projectIndex].responses) {
-      db.projects[projectIndex].responses = [];
-    }
+  const project = db.projects[projectIndex];
+  const now = new Date().toISOString();
 
-    db.projects[projectIndex].responses.push(newResponse);
-    db.projects[projectIndex].lastResponseAt = now;
+  // Calcular grupo de cota
+  const quotaGroup = responseData.quotaGroup || calculateQuotaGroup(project, responseData.answers || {});
 
-    // Atualizar status
-    if (db.projects[projectIndex].status === "Formulário Pronto") {
-      db.projects[projectIndex].status = "Em Campo";
-    }
+  const newResponse = {
+    id: generateId('resp'),
+    timestamp: now,
+    projectId,
+    qualityFlag: "OK",
+    timeSpentSeconds: 0,
+    quotaGroup,
+    answers: {},
+    ...responseData
+  };
 
-    const totalResponses = db.projects[projectIndex].responses.length;
-    const sampleSize = db.projects[projectIndex].sampleSize;
-
-    if (sampleSize > 0 && totalResponses >= sampleSize) {
-      db.projects[projectIndex].status = "Análise Disponível";
-      addNotification({
-        type: 'sample_complete',
-        title: 'Meta de amostra atingida!',
-        message: `O projeto "${db.projects[projectIndex].name}" atingiu ${sampleSize} respostas.`,
-        projectId
-      });
-    } else {
-      addNotification({
-        type: 'new_response',
-        title: 'Nova resposta recebida',
-        message: `Nova resposta no projeto "${db.projects[projectIndex].name}" (${totalResponses}/${sampleSize}).`,
-        projectId
-      });
-    }
-
-    saveDB(db);
-    return newResponse;
+  if (!db.projects[projectIndex].responses) {
+    db.projects[projectIndex].responses = [];
   }
-  return null;
+
+  db.projects[projectIndex].responses.push(newResponse);
+  db.projects[projectIndex].lastResponseAt = now;
+
+  // Atualizar status
+  if (db.projects[projectIndex].status === "Formulário Pronto") {
+    db.projects[projectIndex].status = "Em Campo";
+  }
+
+  const totalResponses = db.projects[projectIndex].responses.length;
+  const sampleSize = db.projects[projectIndex].sampleSize;
+
+  // Verificar se cota foi atingida
+  if (project.quotas && project.quotas.length > 0) {
+    for (const quota of project.quotas) {
+      if (quota.groups) {
+        for (const group of quota.groups) {
+          if (group.target > 0) {
+            const groupCount = db.projects[projectIndex].responses.filter(r => r.quotaGroup === group.name).length;
+            if (groupCount >= group.target) {
+              addNotification({
+                type: 'quota_complete',
+                title: 'Cota atingida!',
+                message: `A cota "${group.name}" do projeto "${project.name}" atingiu a meta de ${group.target}.`,
+                projectId,
+                userId: project.ownerId
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (sampleSize > 0 && totalResponses >= sampleSize) {
+    db.projects[projectIndex].status = "Análise Disponível";
+    addNotification({
+      type: 'sample_complete',
+      title: 'Meta de amostra atingida!',
+      message: `O projeto "${project.name}" atingiu ${sampleSize} respostas.`,
+      projectId,
+      userId: project.ownerId
+    });
+  } else {
+    addNotification({
+      type: 'new_response',
+      title: 'Nova resposta recebida',
+      message: `Nova resposta no projeto "${project.name}" (${totalResponses}/${sampleSize}).`,
+      projectId,
+      userId: project.ownerId
+    });
+  }
+
+  saveDB(db);
+  return newResponse;
 };
 
 // ============================================================================
@@ -264,21 +422,22 @@ export const addResponse = (projectId, responseData) => {
 
 export const getUserByEmail = (email) => {
   const db = loadDB();
-  return db.users.find(u => u.email === email);
+  return db.users.find(u => u.email === email.toLowerCase().trim()) || null;
 };
 
 export const getUserById = (id) => {
   const db = loadDB();
-  return db.users.find(u => u.id === id);
+  return db.users.find(u => u.id === id) || null;
 };
 
 export const authenticateUser = (email, password) => {
   const user = getUserByEmail(email);
   if (!user) return null;
-  
+  if (user.status === 'inactive') return null;
+
   const passwordHash = simpleHash(password);
   if (user.passwordHash !== passwordHash) return null;
-  
+
   return user;
 };
 
@@ -287,17 +446,37 @@ export const getAllUsers = () => {
   return db.users;
 };
 
+export const getPesquisadores = () => {
+  const db = loadDB();
+  return db.users.filter(u => u.role === 'pesquisador');
+};
+
 export const addUser = (userData) => {
   const db = loadDB();
+
+  // Verificar email duplicado
+  const existing = db.users.find(u => u.email === userData.email?.toLowerCase().trim());
+  if (existing) return { error: 'E-mail já cadastrado.' };
+
   const newUser = {
-    id: `user-${Date.now()}`,
-    passwordHash: simpleHash(userData.password),
+    id: generateId('user'),
+    email: userData.email?.toLowerCase().trim(),
+    passwordHash: simpleHash(userData.password || 'senha123'),
+    name: userData.name,
     role: "pesquisador",
+    empresa: userData.empresa || "Clarifyse",
+    cargo: userData.cargo || "Pesquisador",
     status: "active",
     requiresPasswordChange: true,
     createdAt: new Date().toISOString(),
-    ...userData
+    ...userData,
+    // Garantir que não sobrescreva campos críticos
+    id: generateId('user'),
+    role: userData.role || "pesquisador",
+    passwordHash: simpleHash(userData.password || 'senha123'),
   };
+  delete newUser.password;
+
   db.users.push(newUser);
   saveDB(db);
   return newUser;
@@ -311,6 +490,9 @@ export const updateUser = (userId, updates) => {
       updates.passwordHash = simpleHash(updates.password);
       delete updates.password;
     }
+    if (updates.email) {
+      updates.email = updates.email.toLowerCase().trim();
+    }
     db.users[index] = { ...db.users[index], ...updates };
     saveDB(db);
     return db.users[index];
@@ -320,8 +502,14 @@ export const updateUser = (userId, updates) => {
 
 export const deleteUser = (userId) => {
   const db = loadDB();
+  // Não pode excluir o admin principal
+  const user = db.users.find(u => u.id === userId);
+  if (user?.role === 'admin' && db.users.filter(u => u.role === 'admin').length <= 1) {
+    return { error: 'Não é possível excluir o único administrador.' };
+  }
   db.users = db.users.filter(u => u.id !== userId);
   saveDB(db);
+  return true;
 };
 
 export const changePassword = (userId, newPassword) => {
@@ -331,30 +519,51 @@ export const changePassword = (userId, newPassword) => {
   });
 };
 
+export const deactivateUser = (userId) => {
+  return updateUser(userId, { status: 'inactive' });
+};
+
+export const activateUser = (userId) => {
+  return updateUser(userId, { status: 'active' });
+};
+
 // ============================================================================
 // FUNÇÕES DE NOTIFICAÇÕES
 // ============================================================================
 
-export const loadNotifications = () => {
-  const data = localStorage.getItem(NOTIFICATIONS_KEY);
-  if (!data) return [];
-  return JSON.parse(data);
+export const loadNotifications = (userId = null) => {
+  try {
+    const data = localStorage.getItem(NOTIFICATIONS_KEY);
+    if (!data) return [];
+    const all = JSON.parse(data);
+    if (userId) {
+      return all.filter(n => !n.userId || n.userId === userId);
+    }
+    return all;
+  } catch {
+    return [];
+  }
 };
 
 export const saveNotifications = (notifications) => {
-  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  try {
+    localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  } catch (err) {
+    console.error('Erro ao salvar notificações:', err);
+  }
 };
 
 export const addNotification = (notification) => {
   const notifications = loadNotifications();
   const newNotification = {
-    id: `notif-${Math.random().toString(36).substr(2, 9)}`,
+    id: generateId('notif'),
     timestamp: new Date().toISOString(),
     read: false,
+    link: notification.projectId ? `/admin/projetos/${notification.projectId}` : null,
     ...notification
   };
   notifications.unshift(newNotification);
-  const trimmed = notifications.slice(0, 50);
+  const trimmed = notifications.slice(0, 100);
   saveNotifications(trimmed);
   return newNotification;
 };
@@ -368,15 +577,26 @@ export const markNotificationAsRead = (id) => {
   }
 };
 
-export const markAllNotificationsAsRead = () => {
+export const markAllNotificationsAsRead = (userId = null) => {
   const notifications = loadNotifications();
-  const updated = notifications.map(n => ({ ...n, read: true }));
+  const updated = notifications.map(n => {
+    if (!userId || !n.userId || n.userId === userId) {
+      return { ...n, read: true };
+    }
+    return n;
+  });
   saveNotifications(updated);
 };
 
-export const getUnreadNotificationsCount = () => {
-  const notifications = loadNotifications();
+export const getUnreadNotificationsCount = (userId = null) => {
+  const notifications = loadNotifications(userId);
   return notifications.filter(n => !n.read).length;
+};
+
+export const deleteNotification = (id) => {
+  const notifications = loadNotifications();
+  const updated = notifications.filter(n => n.id !== id);
+  saveNotifications(updated);
 };
 
 // ============================================================================
@@ -393,4 +613,40 @@ export const updateSettings = (updates) => {
   db.settings = { ...db.settings, ...updates };
   saveDB(db);
   return db.settings;
+};
+
+// ============================================================================
+// FUNÇÕES DE ANÁLISE E ESTATÍSTICAS
+// ============================================================================
+
+export const getProjectStats = (userId, userRole) => {
+  const projects = getProjectsByUser(userId, userRole);
+  const today = new Date().toISOString().split('T')[0];
+
+  const active = projects.filter(p => p.status !== 'Encerrado').length;
+  const published = projects.filter(p =>
+    p.status === 'Formulário Pronto' || p.status === 'Em Campo'
+  ).length;
+  const todayResponses = projects.reduce((acc, p) => {
+    const count = (p.responses || []).filter(r => r.timestamp?.startsWith(today)).length;
+    return acc + count;
+  }, 0);
+  const complete = projects.filter(p =>
+    (p.responses?.length || 0) >= p.sampleSize && p.sampleSize > 0
+  ).length;
+
+  return { active, published, today: todayResponses, complete };
+};
+
+export const getGlobalStats = () => {
+  const db = loadDB();
+  const projects = db.projects;
+  const totalProjects = projects.length;
+  const totalResponses = projects.reduce((acc, p) => acc + (p.responses?.length || 0), 0);
+  const withAnalysis = projects.filter(p =>
+    p.status === 'Análise Disponível' || (p.responses?.length || 0) >= p.sampleSize
+  ).length;
+  const activeProjects = projects.filter(p => p.status === 'Em Campo').length;
+
+  return { totalProjects, totalResponses, withAnalysis, activeProjects };
 };

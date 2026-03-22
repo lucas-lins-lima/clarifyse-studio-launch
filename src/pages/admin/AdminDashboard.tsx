@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { loadDB, getProjectsByUser } from '@/lib/surveyForgeDB';
+import { loadDB, getProjectsByUser, getProjectStats } from '@/lib/surveyForgeDB';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
@@ -97,25 +97,7 @@ export default function AdminDashboard() {
 
   const stats = useMemo(() => {
     if (!db || !profile) return { active: 0, published: 0, today: 0, complete: 0 };
-
-    const userProjects = getProjectsByUser(user?.id, profile.role);
-    const active = userProjects.filter((p: any) => p.status === 'Em Campo').length;
-    const published = userProjects.filter(
-      (p: any) => p.status === 'Formulário Pronto' || p.status === 'Em Campo'
-    ).length;
-
-    const today = userProjects.reduce((acc: number, p: any) => {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const todayResponses =
-        p.responses?.filter((r: any) => r.timestamp?.startsWith(todayStr)).length || 0;
-      return acc + todayResponses;
-    }, 0);
-
-    const complete = userProjects.filter(
-      (p: any) => (p.responses?.length || 0) >= p.sampleSize && p.sampleSize > 0
-    ).length;
-
-    return { active, published, today, complete };
+    return getProjectStats(user?.id, profile.role);
   }, [db, profile, user?.id]);
 
   const recentProjects = useMemo(() => {
