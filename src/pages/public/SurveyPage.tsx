@@ -83,6 +83,14 @@ export default function SurveyPage() {
     setSubmitting(true);
     const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
     let quotaGroup = "Geral";
+    // Regra: Caso a amostra atinja a meta, as pessoas não irão mais responder o formulário do projeto.
+    const totalResponses = project.responses?.length || 0;
+    if (project.sampleSize > 0 && totalResponses >= project.sampleSize) {
+      setBlocked('sample');
+      setSubmitting(false);
+      return;
+    }
+
     if (project.quotas && project.quotas.length > 0) {
       for (const quota of project.quotas) {
         const answer = answers[quota.questionId];
@@ -91,8 +99,9 @@ export default function SurveyPage() {
           const group = quota.groups?.find((g: any) => g.id === mapping.groupId);
           if (group) {
             quotaGroup = group.name;
+            // Regra: Caso uma cota atinja a meta, as pessoas que são da cota que atingiu a meta não irão mais responder o formulário
             const currentCount = project.responses?.filter((r: any) => r.quotaGroup === group.name).length || 0;
-            if (currentCount >= group.target && group.target > 0) {
+            if (group.target > 0 && currentCount >= group.target) {
               setBlocked('quota');
               setSubmitting(false);
               return;
@@ -100,12 +109,6 @@ export default function SurveyPage() {
           }
         }
       }
-    }
-    const totalResponses = project.responses?.length || 0;
-    if (totalResponses >= project.sampleSize && project.sampleSize > 0) {
-      setBlocked('sample');
-      setSubmitting(false);
-      return;
     }
     const finalAnswers = { ...answers };
     Object.keys(verbatims).forEach(key => { finalAnswers[`${key}_verbatim`] = verbatims[key]; });
