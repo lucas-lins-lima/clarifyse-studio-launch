@@ -4,28 +4,56 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
+import { useActivityStore } from "@/stores/activityStore";
+import { toast } from "sonner";
 import logo from "@/assets/clarifyse-logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
+  const addLog = useActivityStore((s) => s.addLog);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    // Simulated login - will be replaced with Supabase Auth
+
     setTimeout(() => {
+      const result = login(email, password);
       setIsLoading(false);
-      navigate("/dashboard");
-    }, 800);
+
+      if (!result.success) {
+        setError(result.error || "Erro ao fazer login.");
+        return;
+      }
+
+      const user = useAuthStore.getState().currentUser;
+      if (user) {
+        addLog({
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role,
+          action: "login",
+          details: "Usuário fez login no sistema",
+        });
+
+        if (user.firstLogin) {
+          navigate("/trocar-senha");
+        } else {
+          navigate("/dashboard");
+        }
+      }
+    }, 400);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-primary geometric-bg">
-      {/* Decorative geometric elements */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full border border-accent/20" />
         <div className="absolute -right-10 top-1/4 h-40 w-40 rounded-full border border-secondary/20" />
@@ -34,13 +62,11 @@ const Login = () => {
       </div>
 
       <div className="relative z-10 w-full max-w-md px-4">
-        {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
           <img src={logo} alt="Clarifyse" className="h-14 mb-2" />
           <p className="label-caps text-primary-foreground/60">Strategy & Research</p>
         </div>
 
-        {/* Login Card */}
         <div className="card-studio p-8">
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-bold text-foreground">Bem-vindo ao Studio</h1>
@@ -48,6 +74,12 @@ const Login = () => {
               Acesse sua conta para gerenciar pesquisas
             </p>
           </div>
+
+          {error && (
+            <div className="mb-4 rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
@@ -103,12 +135,6 @@ const Login = () => {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <button className="text-sm text-accent hover:text-accent/80 transition-colors">
-              Esqueceu sua senha?
-            </button>
-          </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-primary-foreground/40">
