@@ -1,0 +1,111 @@
+Fase 5 — Cronograma
+
+"Implemente o cronograma completo dentro de cada projeto:
+CRIAÇÃO E EDIÇÃO (admin e gerente — aba 'Cronograma' dentro do projeto):
+Duas opções ao criar:
+
+'Usar etapas padrão Clarifyse' — carrega as 11 etapas pré-definidas; admin/gerente preenche apenas as datas
+'Começar do zero' — tabela vazia
+
+Etapas padrão:
+
+Briefing e Alinhamento
+Elaboração do Instrumento (Questionário / Roteiro)
+Aprovação do Instrumento pelo Cliente
+Início do Campo
+Encerramento do Campo
+Transcrição (com toggle para ocultar se não aplicável)
+Análise dos Dados
+Produção do Entregável
+Revisão Interna
+Entrega ao Cliente
+Reunião de Apresentação dos Resultados
+
+Tabela editável inline — colunas por linha:
+
+Nome da Etapa (texto editável diretamente na célula)
+Data de Início Prevista (date picker)
+Data de Conclusão Prevista (date picker)
+Data de Início Real (date picker — pode ficar vazia)
+Data de Conclusão Real (date picker — pode ficar vazia)
+Status (dropdown: Concluída / Em Andamento / Pendente / Atrasada)
+Botão remover linha (ícone lixeira)
+Botão 'Adicionar Etapa' no final da tabela
+Reordenação via drag-and-drop
+Botão 'Salvar Cronograma'
+Botão 'Exportar Excel'
+
+Cálculo automático de status (fuso obrigatório: America/Sao_Paulo):
+
+Data de Conclusão Real preenchida → 'Concluída'
+Data de Início Real preenchida + Conclusão Real vazia → 'Em Andamento'
+Data de Conclusão Prevista < hoje + Conclusão Real vazia → 'Atrasada'
+Data de Início Prevista > hoje → 'Pendente'
+
+O status definido manualmente pelo admin/gerente tem prioridade sobre o automático. Quando sobrescrito manualmente, exibir ícone de aviso na linha com tooltip 'Status definido manualmente' e opção de reverter para automático.
+Toda vez que o cronograma é salvo, registrar no histórico do projeto: 'Cronograma atualizado em DD/MM/AAAA às HH:MM (horário de Brasília).'
+EXPORTAÇÃO EXCEL (SheetJS):
+
+Arquivo: Cronograma_[Nome do Projeto]_Clarifyse.xlsx
+Linha 1: 'Clarifyse Strategy & Research' em negrito
+Linha 2: 'Cronograma do Projeto: [Nome do Projeto]'
+Linha 3: 'Exportado em: DD/MM/AAAA — Confidencial'
+Linha em branco separadora
+Cabeçalhos com fundo #1B2B6B, texto branco, negrito: Etapa | Início Previsto | Conclusão Prevista | Início Real | Conclusão Real | Status
+Formatação condicional no status: Concluída=verde claro | Em Andamento=teal claro | Pendente=cinza claro | Atrasada=vermelho claro
+Datas no formato DD/MM/AAAA
+Última linha: 'Clarifyse Strategy & Research | Where insight becomes clarity.'
+Primeira linha congelada
+
+VISUALIZAÇÃO DO CLIENTE (dentro da página do projeto):
+Label: 'CRONOGRAMA DO PROJETO' | Título: 'Linha do Tempo'
+Indicador de progresso geral no topo: barra horizontal 'X de Y etapas concluídas — ZZ%' com gradiente teal → roxo.
+Badge 'Você está aqui':
+
+Etapa com status 'Em Andamento' recebe borda lateral esquerda teal, fundo levemente destacado e badge '● Você está aqui' teal pulsante
+Se nenhuma etiver 'Em Andamento', o badge aponta para a primeira etapa 'Pendente'
+Calculado em tempo real pelo fuso America/Sao_Paulo
+
+Dois formatos alternáveis pelo cliente:
+FORMATO 1 — TIMELINE VERTICAL (padrão):
+
+Linha vertical central com marcadores circulares coloridos por status
+Card por etapa: ícone representativo + nome + período previsto 'DD/MM → DD/MM' + datas reais se houver (verde se no prazo, vermelho se atrasou) + badge de status:
+
+✓ Concluída → verde #16A34A, ícone check
+● Em Andamento → teal #14B8A6 pulsante, ícone relógio
+○ Pendente → cinza #94A3B8, ícone círculo
+⚠ Atrasada → vermelho #DC2626, ícone alerta
+
+
+
+FORMATO 2 — TABELA:
+
+Colunas: Etapa | Previsto | Realizado | Status
+Linha da etapa atual destacada com fundo teal suave
+
+Data/hora da última atualização exibida discretamente abaixo: 'Última atualização: DD/MM/AAAA às HH:MM (horário de Brasília)'
+Quando cronograma ainda não foi criado, exibir: 'O cronograma do seu projeto será disponibilizado em breve pela equipe Clarifyse.'
+Banco de dados — nova tabela project_schedule:
+sqlCREATE TABLE project_schedule (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  ordem INTEGER NOT NULL,
+  inicio_previsto DATE,
+  conclusao_prevista DATE,
+  inicio_real DATE,
+  conclusao_real DATE,
+  status TEXT CHECK (status IN ('Concluída','Em Andamento','Pendente','Atrasada')),
+  status_manual BOOLEAN DEFAULT false,
+  visivel BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+RLS: admin e gerente responsável leem e escrevem; cliente lê apenas etapas do projeto vinculado ao seu e-mail.
+Performance:
+
+React Query para cache do cronograma
+Salvar cronograma em uma única chamada ao banco (upsert do array completo), não linha por linha"
+
+

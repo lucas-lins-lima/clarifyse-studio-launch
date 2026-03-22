@@ -1,0 +1,121 @@
+Antes de publicar a plataforma para os clientes, preciso que você faça uma revisão completa e corrija todos os problemas. Execute tudo na ordem abaixo:
+1. RESET COMPLETO DOS DADOS (manter apenas o perfil admin):
+Criar e executar um script SQL que limpa todos os dados de teste do banco mantendo apenas o usuário administrador. Execute no Supabase SQL Editor:
+sql-- Limpar dados na ordem correta (respeitar foreign keys)
+DELETE FROM activity_logs;
+DELETE FROM notifications;
+DELETE FROM nps_responses;
+DELETE FROM panel_partner_reviews;
+DELETE FROM panel_partner_cpr;
+DELETE FROM panel_partners;
+DELETE FROM project_documents;
+DELETE FROM field_sync_log;
+DELETE FROM field_quota_results;
+DELETE FROM field_quotas;
+DELETE FROM field_config;
+DELETE FROM project_schedule;
+DELETE FROM project_financials;
+DELETE FROM project_history;
+DELETE FROM project_access;
+DELETE FROM projects;
+DELETE FROM goals;
+DELETE FROM profiles WHERE role != 'admin';
+-- Limpar usuários não-admin do Supabase Auth (via Edge Function)
+Criar Edge Function reset-demo-data com service role key que remove do Supabase Auth todos os usuários que não são admin.
+2. CORREÇÃO CRÍTICA — DADOS NÃO SALVAM (admin e gerentes):
+Este é o bug mais urgente. Investigar e corrigir a causa raiz em todos os formulários da plataforma. Verificar:
+
+Se as mutations do React Query estão chamando .mutateAsync() ou .mutate() corretamente
+Se os hooks de submissão de formulário estão fazendo await nas chamadas ao Supabase
+Se as RLS policies estão bloqueando writes do admin e gerente (testar com supabase.rpc ou verificar policies de INSERT/UPDATE em cada tabela)
+Se os toast de sucesso aparecem mas o dado não persiste (problema de otimistic update sem confirmação real)
+Verificar especificamente: criação de projeto, edição de projeto, salvamento de cronograma, salvamento de dados de campo, salvamento de dados financeiros, criação de cliente, criação de gerente
+Corrigir em todos os formulários e confirmar que cada um persiste corretamente no Supabase.
+
+3. CORREÇÃO — ETAPAS PADRÃO DO CRONOGRAMA:
+Em Configurações → Etapas Padrão do Cronograma, garantir que as 11 etapas originais estão pré-carregadas no banco na tabela system_settings com a chave schedule_default_steps. Se a chave não existir, inserir:
+sqlINSERT INTO system_settings (key, value)
+VALUES ('schedule_default_steps', '[
+  {"ordem": 1, "nome": "Briefing e Alinhamento", "ativo": true},
+  {"ordem": 2, "nome": "Elaboração do Instrumento (Questionário / Roteiro)", "ativo": true},
+  {"ordem": 3, "nome": "Aprovação do Instrumento pelo Cliente", "ativo": true},
+  {"ordem": 4, "nome": "Início do Campo", "ativo": true},
+  {"ordem": 5, "nome": "Encerramento do Campo", "ativo": true},
+  {"ordem": 6, "nome": "Transcrição", "ativo": true},
+  {"ordem": 7, "nome": "Análise dos Dados", "ativo": true},
+  {"ordem": 8, "nome": "Produção do Entregável", "ativo": true},
+  {"ordem": 9, "nome": "Revisão Interna", "ativo": true},
+  {"ordem": 10, "nome": "Entrega ao Cliente", "ativo": true},
+  {"ordem": 11, "nome": "Reunião de Apresentação dos Resultados", "ativo": true}
+]')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+Quando o admin cria um novo cronograma e clica em 'Usar etapas padrão Clarifyse', essas 11 etapas devem ser carregadas automaticamente da tabela system_settings. Se o admin personalizar em Configurações, as alterações devem refletir ao criar novos cronogramas.
+4. REVISÃO GERAL PRÉ-LANÇAMENTO — verificar e corrigir cada item:
+Autenticação:
+
+Fluxo de primeiro login do admin com troca obrigatória de senha está funcionando
+Clientes conseguem criar senha pelo link do e-mail de convite
+Gerentes conseguem criar senha pelo link do e-mail de convite
+Sessão expira após 8 horas de inatividade
+Rotas protegidas: cliente não acessa rota de admin/gerente e vice-versa
+
+E-mails via Resend:
+
+Confirmar que a chave de API do Resend está configurada nas variáveis de ambiente do Supabase
+Testar envio de convite de cliente (inviteUserByEmail)
+Testar envio de convite de gerente
+Testar envio de e-mail NPS ao encerrar projeto
+
+Formulários — confirmar que salvam corretamente:
+
+Criar projeto → persiste no banco
+Editar projeto → persiste no banco
+Criar cronograma com etapas padrão → persiste no banco
+Salvar cronograma editado → persiste no banco
+Configurar cotas de campo → persiste no banco
+Atualizar dados de campo manualmente → persiste no banco
+Carregar planilha Google Sheets e mapear colunas → persiste no banco
+Salvar dados financeiros do projeto → persiste no banco
+Configurar valores padrão da calculadora → persiste no banco
+Salvar Dados da Empresa em Configurações → persiste no banco e reflete em todas as telas
+Salvar senha do módulo financeiro → persiste e protege a distribuição de lucro
+Upload de documento no projeto → persiste no Supabase Storage
+
+Portal do cliente — confirmar:
+
+Cliente vê apenas seus projetos (RLS funcionando)
+Badge 'Novo' aparece quando há atualização
+Cronograma exibe 'Você está aqui' corretamente pelo fuso America/Sao_Paulo
+Download de documentos funciona via URL assinada
+Botão WhatsApp abre o número correto de system_settings
+Formulário NPS público acessível sem login via /avaliacao/[token]
+
+Performance — confirmar:
+
+Nenhuma página faz SELECT * no banco
+Listagens têm paginação
+Gráficos Recharts com lazy loading
+Skeleton loading em todas as listagens
+
+Responsividade — confirmar:
+
+Login funciona no mobile
+Dashboard do cliente funciona no mobile (cards em coluna única)
+Menu hambúrguer funciona no mobile
+
+5. VARIÁVEIS DE AMBIENTE — checklist final:
+Confirmar que as seguintes variáveis estão configuradas nas Edge Functions do Supabase:
+
+RESEND_API_KEY — chave do Resend para envio de e-mails
+SUPABASE_SERVICE_ROLE_KEY — para operações admin
+SUPABASE_URL — URL do projeto Supabase
+SITE_URL — URL pública da plataforma (para links nos e-mails de convite e NPS)
+
+Listar quais variáveis precisam ser configuradas manualmente pelo admin no painel do Supabase antes de publicar.
+6. APÓS TODAS AS CORREÇÕES:
+Gerar um relatório final confirmando:
+
+Quais bugs foram corrigidos
+Quais variáveis de ambiente precisam ser configuradas antes de publicar
+Quais migrations SQL precisam ser executadas no Supabase
+Checklist do que o admin deve fazer após publicar (configurar Dados da Empresa, definir senha do módulo financeiro, cadastrar primeiros gerentes)"

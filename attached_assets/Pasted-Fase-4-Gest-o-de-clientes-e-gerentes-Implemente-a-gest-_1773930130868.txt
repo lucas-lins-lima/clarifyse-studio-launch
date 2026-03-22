@@ -1,0 +1,59 @@
+Fase 4 — Gestão de clientes e gerentes
+
+"Implemente a gestão completa de clientes e gerentes:
+GESTÃO DE CLIENTES (admin e gerentes):
+Listagem com colunas: Nome | E-mail | Empresa | Projetos Vinculados | Último Acesso | Status (Ativo/Inativo) | Ações
+
+Busca por nome, e-mail ou empresa
+Filtro por status (ativo/inativo)
+Paginação (20 por página) — sem SELECT *
+
+Criar cliente:
+
+Campos: Nome completo, E-mail, Empresa
+Chamar Edge Function manage-users com action invite → usa supabase.auth.admin.inviteUserByEmail() com service role key
+Inserir registro na tabela profiles com role cliente e status ativo
+Enviar e-mail via Resend com link para o cliente criar sua senha
+Toast: "Cliente criado com sucesso. Um e-mail foi enviado para [email]."
+Tratar erros: e-mail já cadastrado, e-mail inválido, falha no envio — mensagem clara para cada caso
+
+Ações por cliente:
+
+Editar dados (nome, empresa)
+Desativar: bloqueia o acesso sem excluir dados (status = 'inativo')
+Reativar: restaura o acesso
+Excluir: modal de confirmação obrigatória → remove do Auth e da tabela profiles
+Redefinir senha: apenas o admin pode → Edge Function envia novo link de criação de senha via Resend
+Ver projetos vinculados: lista dos projetos que o cliente tem acesso
+
+GESTÃO DE GERENTES (somente administrador — em Configurações → Gerentes):
+Listagem com colunas: Nome | E-mail | Cargo | Projetos Ativos | Último Acesso | Status | Ações
+Criar gerente:
+
+Campos: Nome completo, E-mail, Cargo (texto livre, ex: "Gerente Sênior")
+Mesma Edge Function manage-users com role gerente
+E-mail de boas-vindas via Resend com link para criar senha
+Toast: "Gerente criado com sucesso. Um e-mail foi enviado para [email]."
+
+Ações por gerente:
+
+Editar dados (nome, e-mail, cargo)
+Redefinir senha (admin only)
+Desativar / Reativar
+Excluir: modal com texto — 'Tem certeza? Os projetos associados permanecerão no sistema, mas ficarão sem gerente responsável. Você pode reatribuí-los depois.' → após excluir, projetos do gerente ficam com campo 'Gerente Responsável' como '— Sem gerente —' e aparecem em destaque na listagem do admin
+
+VINCULAÇÃO DE CLIENTES AOS PROJETOS (aba 'Acessos' dentro do projeto):
+
+Campo para digitar e-mail do cliente e adicionar acesso
+Lista dos clientes com acesso ao projeto (nome + e-mail + botão remover)
+Ao adicionar: verificar se o cliente já existe no sistema. Se sim, vincula direto. Se não, criar o cliente via Edge Function e enviar e-mail de convite
+Ao remover: confirmação simples, remove da tabela project_access
+Cliente recebe notificação por e-mail (via Resend) quando é vinculado a um novo projeto
+
+Performance obrigatória:
+
+React.memo nos componentes de card de cliente e gerente
+React Query para cache das listagens
+Toda operação de criação/edição/exclusão de usuário passa pela Edge Function com service role — nunca direto do frontend"
+
+

@@ -1,0 +1,129 @@
+Fase 7 — Portal do cliente (página de projeto) + Termômetro de Saúde + Documentos
+
+"Implemente a página detalhada do projeto na visão do cliente e os recursos complementares:
+SEÇÃO 1 — VISÃO GERAL DO PROJETO:
+Cards em grid com todas as informações do projeto:
+
+Nome do Projeto
+Objetivo do Estudo
+Metodologia (ícone Lucide + nome)
+Pilar Clarifyse (badge colorido)
+Gerente Responsável
+Data de Início
+Data Prevista de Entrega
+Status Atual: badge grande + descrição amigável contextual por status:
+
+Briefing → 'Seu projeto está em fase de alinhamento inicial com a equipe Clarifyse.'
+Elaboração do Instrumento → 'A equipe Clarifyse está elaborando o instrumento de pesquisa.'
+Campo → 'Seu projeto está em fase de coleta de dados. As entrevistas estão sendo realizadas e você pode acompanhar o progresso em tempo real abaixo.'
+Análise dos Dados → 'Os dados coletados estão sendo analisados pela equipe Clarifyse. Em breve você receberá os resultados.'
+Produção do Entregável → 'A equipe Clarifyse está produzindo o entregável final do seu projeto.'
+Entrega Final → 'Seu projeto foi entregue. O relatório final está disponível na seção de Documentos.'
+Encerrado → 'Este projeto foi concluído. O histórico completo está disponível abaixo.'
+Pausado → 'Este projeto está temporariamente pausado. Entre em contato com o gerente para mais informações.'
+
+
+
+TERMÔMETRO DE SAÚDE DO PROJETO:
+Componente no topo da página do projeto — visível para admin, gerente e cliente. Também exibido como badge nos cards da listagem de projetos.
+Lógica automática calculada em tempo real:
+🟢 SAUDÁVEL — todas as condições verdadeiras:
+
+Nenhuma etapa do cronograma com status 'Atrasada'
+Data de entrega prevista a mais de 5 dias úteis
+Se em campo: progresso ≥ 60% da meta
+
+🟡 ATENÇÃO — pelo menos uma:
+
+1 etapa com status 'Atrasada'
+Data de entrega entre 2 e 5 dias úteis e status ≠ Entrega Final/Encerrado
+Se em campo: progresso entre 30% e 59% com menos de 30% do prazo restante
+
+🔴 CRÍTICO — pelo menos uma:
+
+2 ou mais etapas com status 'Atrasada'
+Data de entrega passou e status ≠ Entrega Final/Encerrado
+Se em campo: progresso < 30% com menos de 20% do prazo restante
+
+Visual: círculo colorido pulsante + texto descritivo.
+
+Para o cliente: 'Projeto no prazo e dentro do esperado.' / 'Projeto requer atenção — acompanhe as próximas etapas.' / 'Projeto com pendências críticas — entre em contato com o gerente.'
+Para admin/gerente: tooltip técnico ao passar o mouse detalhando qual condição ativou o status (ex: '2 etapas atrasadas: Análise dos Dados, Produção do Entregável')
+
+SEÇÃO 2 — CRONOGRAMA: já implementado na Fase 5, apenas garantir que aparece corretamente na página do cliente.
+SEÇÃO 3 — MONITORAMENTO DE CAMPO: já implementado na Fase 6, apenas garantir que aparece corretamente.
+SEÇÃO 4 — DOCUMENTOS DO PROJETO:
+Label: 'DOCUMENTOS' | Título: 'Arquivos do Projeto'
+Visão do admin/gerente (edição):
+
+Botão 'Adicionar Documento' abre modal com:
+
+Nome do documento (obrigatório)
+Descrição (opcional)
+Upload do arquivo: PDF, PPT, PPTX, XLSX, DOCX, PNG, JPG — máx. 50MB
+Toggle 'Visível ao cliente' (padrão: ativado)
+
+
+Arquivo armazenado no Supabase Storage
+URLs de download geradas como URLs assinadas com expiração de 1 hora — NUNCA URLs públicas permanentes
+Lista de documentos com: ícone do tipo de arquivo, nome, descrição, data de upload, tamanho formatado, badge de visibilidade, ações (editar nome/descrição, substituir arquivo, remover, toggle visibilidade)
+
+Visão do cliente:
+
+Exibe apenas documentos com 'Visível ao cliente' ativado
+Cards com: ícone do tipo de arquivo + nome + descrição + data de disponibilização + botão 'Baixar'
+Lazy load da seção (carregar apenas quando o usuário rolar até ela)
+Quando vazio: 'Os documentos do seu projeto serão disponibilizados aqui conforme o andamento das entregas.'
+
+Banco de dados:
+sqlCREATE TABLE project_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  descricao TEXT,
+  storage_path TEXT NOT NULL,
+  tipo_arquivo TEXT,
+  tamanho_bytes BIGINT,
+  visivel_cliente BOOLEAN DEFAULT true,
+  uploaded_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+RLS: admin e gerente responsável leem e escrevem; cliente lê apenas documentos com visivel_cliente = true dos seus projetos.
+SEÇÃO 5 — HISTÓRICO DE ATUALIZAÇÕES:
+Label: 'HISTÓRICO' | Título: 'Atualizações do Projeto'
+Feed cronológico (mais recente → mais antigo) com paginação (10 por página):
+
+Mudanças de status (já implementado nas fases anteriores)
+Atualizações de cronograma
+Sincronizações de campo
+Documentos adicionados
+
+Cada item: ícone Lucide representativo + texto descritivo + data e hora (horário de Brasília)
+SEÇÃO 6 — CONTATO E SUPORTE:
+Label: 'SUPORTE' | Título: 'Fale com a Clarifyse'
+
+Nome do gerente responsável
+E-mail: valor da tabela system_settings (chave 'email_suporte')
+Botão WhatsApp: valor da tabela system_settings (chave 'whatsapp') — link direto https://wa.me/[número]
+Texto: 'Dúvidas sobre seu projeto? Estamos disponíveis para acompanhá-lo em todas as etapas.'
+
+BADGE 'NOVO' nos cards de projeto do cliente:
+
+Aparece quando houver qualquer atualização desde o último acesso do cliente: status mudou, cronograma atualizado, documento adicionado
+Salvar last_seen_at por cliente por projeto na tabela project_access
+Badge '● Novo' teal pulsante no card do projeto
+Some ao abrir a página do projeto
+
+CARD DE BOAS-VINDAS no primeiro acesso do cliente:
+
+Exibido apenas uma vez (flag first_access na tabela project_access)
+Mostra: nome do projeto, gerente responsável e instrução: 'Bem-vindo ao seu portal. Aqui você acompanha o andamento do seu projeto em tempo real.'
+Some após o cliente fechar ou após a segunda visita
+
+Performance:
+
+Seções da página carregadas com lazy loading progressivo
+React Query para cache de cada seção independentemente
+Documentos: lazy load apenas quando o usuário rolar até a seção"
+
+

@@ -1,0 +1,219 @@
+Estou montando um projeto no meu Github pessoal que é o https://github.com/lucas-lins-lima/clarifyse-insights-platform
+
+Ele é a criação uma plataforma chamada Clarifyse Insights e fiz um documento guia completo explicando todas as funcionalidades da minha plataforma, estou te enviando em anexo. Por conta de o documento ser muito extenso, pensei em dividir as ações para criar a plataforma em fases, ao total deu 10 fases e eu já fiz as fases 1 ao 9 e agora é o momento para fazer a fase 10. Em todas as fases não usei nenhum dado simulado, demo ou mock, tudo é real e funcionou. A fase 10 foi enviada em anexo e as outras fases também. O que foi feito na fase 10 é "NPS Types + Migration Script + Edge Function" e o resto não foi feito. 
+
+A explicação de todas as fases está abaixo:
+"Fase 1 - Inicio  "1. Design system completo (paleta de cores, tipografia Playfair Display + Inter, tokens)  2. Tela de Login com identidade visual Clarifyse  3. Layout principal com sidebar/navbar responsiva  4. Estrutura de rotas para admin, gerente e cliente  5. Dashboard do Administrador (shell com cards de resumo)  6. Página "Meus Projetos" do cliente (shell)"  Fase 2 — Autenticação e estrutura de usuários  "Ative o Supabase e implemente a autenticação real. Crie as três roles (admin, gerente, cliente) com Row Level Security. Implemente o fluxo de primeiro login do admin com troca obrigatória de senha. Configure o redirecionamento pós-login para o painel correto de cada tipo de usuário. Nenhum dado mock — tudo real."  Fase 3 — Gestão de projetos (admin e gerente)  "Implemente a criação, edição, duplicação e exclusão de projetos com todas as informações básicas do formulário. Projetos salvos no Supabase em tempo real. Lixeira com exclusão automática após 15 dias via pg_cron. Histórico de alterações de status. Performance: select apenas campos necessários, sem select *, paginação na listagem."  Fase 4 — Gestão de clientes e gerentes  "Implemente o cadastro de clientes e gerentes usando a API Admin do Supabase via Edge Function (inviteUserByEmail — nunca signUp direto do frontend). Envio de e-mail via Resend com link para criação de senha. Desativação, exclusão e redefinição de senha. Correção do bug de criação de cliente."  Fase 5 — Cronograma  "Implemente a criação e edição do cronograma dentro de cada projeto: tabela editável inline, etapas padrão, drag-and-drop para reordenar, cálculo automático de status pelo fuso America/Sao_Paulo, exportação Excel com SheetJS. Visualização do cliente com timeline vertical, tabela alternável e badge 'Você está aqui'."  Fase 6 — Monitoramento de campo  "Implemente a configuração de cotas (4 tipos: mapeamento numérico, faixas etárias, texto/categoria, booleana) e a integração com Google Sheets via Edge Function com pg_cron a cada 5 minutos — o frontend nunca chama a planilha diretamente. Entrada manual como alternativa. Visualização do cliente com barras de progresso e gráficos Recharts."  Fase 7 — Portal do cliente (página de projeto)  "Implemente a página detalhada do projeto na visão do cliente: Visão Geral, Cronograma, Monitoramento de Campo, Documentos (upload no Supabase Storage com URL assinada), Histórico, Contato e Suporte. Badge 'Novo' quando houver atualização. Termômetro de Saúde automático."  Fase 8 — Financeiro  "Implemente a aba Financeiro: painel global (admin), painel do gerente (apenas seus projetos), detalhes financeiros por projeto com custos operacionais, distribuição de lucro protegida por senha do módulo (apenas admin), previsão de receita e calculadora de precificação com as fórmulas completas."  Fase 9 — KPIs, Metas, Alertas e Notificações  "Implemente o Dashboard de KPIs (somente admin), Metas mensais/trimestrais, sistema de Alertas de projetos em risco e Central de Notificações com sino no navbar para todos os tipos de usuário."  Fase 10 — Recursos finais  "Implemente: NPS automático ao encerrar projeto (e-mail via Resend + formulário público), página 'Sobre a Clarifyse' no portal do cliente, Log de Atividades do sistema, Parceiros de Painel, Configurações completas do administrador, todas as exportações em PDF e Excel.""
+
+A fase 10 explicada de forma detalhada é:
+"Fase 10 — Recursos finais
+
+"Implemente os últimos módulos da plataforma:
+1. NPS AUTOMÁTICO AO ENCERRAR PROJETO:
+Quando o status de um projeto é alterado para 'Encerrado', o sistema aguarda 1 hora e então dispara automaticamente um e-mail via Resend para todos os clientes vinculados ao projeto com link único para responder a avaliação.
+Implementar via Supabase Edge Function send-nps-email agendada com pg_cron ou disparada por trigger na alteração de status.
+O link de avaliação é único por cliente por projeto — gerado com token UUID armazenado na tabela nps_responses:
+sqlCREATE TABLE IF NOT EXISTS nps_responses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL DEFAULT gen_random_uuid()::text,
+  nps_score INTEGER CHECK (nps_score BETWEEN 0 AND 10),
+  satisfaction_stars INTEGER CHECK (satisfaction_stars BETWEEN 1 AND 5),
+  prazo_resposta TEXT CHECK (prazo_resposta IN ('no_prazo','pequeno_atraso','atraso_significativo')),
+  comentario TEXT,
+  respondido BOOLEAN DEFAULT false,
+  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '15 days'),
+  responded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+RLS: admin e gerente responsável leem; cliente insere apenas via token público (sem autenticação).
+Formulário público de avaliação — rota /avaliacao/[token] (sem necessidade de login):
+
+Design com identidade visual Clarifyse (fundo azul escuro, card centralizado, logo)
+Pergunta 1 — NPS: 'Em uma escala de 0 a 10, o quanto você recomendaria a Clarifyse para um colega ou parceiro de negócio?' — escala visual clicável de 0 a 10 com rótulos nas extremidades. Classificação automática: 0-6=Detrator | 7-8=Neutro | 9-10=Promotor
+Pergunta 2 — Qualidade: 'Como você avalia a qualidade do entregável final?' — escala de 1 a 5 estrelas clicáveis
+Pergunta 3 — Prazo: 'O projeto foi entregue dentro do prazo acordado?' — três opções: 'Sim, dentro do prazo' / 'Com pequeno atraso' / 'Com atraso significativo'
+Pergunta 4 — Comentário (opcional): campo de texto livre
+Botão 'Enviar Avaliação'
+Após envio: 'Obrigado pelo seu feedback! Ele é fundamental para continuarmos evoluindo. — Equipe Clarifyse'
+Se link expirado: 'Este link de avaliação expirou.'
+Se já respondido: 'Você já enviou sua avaliação para este projeto. Obrigado!'
+
+Aba 'Avaliação' dentro do projeto (admin e gerente):
+
+Status do envio por cliente: 'Enviado em DD/MM/AAAA' / 'Aguardando resposta' / 'Respondido'
+Respostas individuais: nome do cliente + nota NPS + estrelas + resposta de prazo + comentário
+Badge NPS: Promotor (verde) / Neutro (cinza) / Detrator (vermelho)
+Botão 'Reenviar convite' para clientes que ainda não responderam
+
+
+2. PÁGINA 'SOBRE A CLARIFYSE' — PORTAL DO CLIENTE:
+Nova aba 'Sobre a Clarifyse' no menu de navegação do cliente.
+Seção 1 — Apresentação:
+Label: 'QUEM SOMOS' | Título: 'Clarifyse Strategy & Research'
+Texto: 'Transformamos dados e percepções humanas em clareza estratégica para decisões de negócio. Combinamos rigor metodológico, inteligência analítica e profundo entendimento do comportamento humano para entregar insights que realmente movem empresas.'
+Slogan em destaque: 'Where insight becomes clarity.'
+Seção 2 — Os 6 Pilares:
+Label: 'NOSSAS SOLUÇÕES' | Título: 'Como podemos ajudar sua empresa'
+Grid de 6 cards com ícones Lucide:
+
+DISCOVER (Search) — Consumer & Market Understanding — 'Entender profundamente consumidores, contextos e mercados.'
+BRAND (Star) — Brand Intelligence & Positioning — 'Medir força, percepção e posicionamento de marcas.'
+INNOVATE (Lightbulb) — Product, Concept & Innovation — 'Criar e validar novos produtos, conceitos e ideias.'
+DECIDE (BarChart) — Pricing, Portfolio & Strategy — 'Apoiar decisões estratégicas de precificação e portfólio.'
+EXPERIENCE (Users) — Customer & Shopper Intelligence — 'Entender como clientes compram e interagem com marcas.'
+ANALYTICS (Brain) — Data Science, Modeling & AI — 'Análises avançadas: modelagem, previsão e IA aplicada.'
+
+Seção 3 — Diferenciais:
+Label: 'POR QUE A CLARIFYSE' | Título: 'Nossos Diferenciais'
+Três cards: 💰 Preço competitivo | 📅 Compromisso com cronograma | 🔬 Integração metodológica
+Seção 4 — Contato:
+Label: 'FALE CONOSCO' | Título: 'Vamos conversar sobre seu próximo projeto'
+E-mail e WhatsApp lidos da tabela system_settings. Botão 'Falar pelo WhatsApp' com link https://wa.me/[número].
+
+3. LOG DE ATIVIDADES DO SISTEMA (somente administrador):
+Aba 'Log de Atividades' dentro de Configurações.
+Label: 'AUDITORIA' | Título: 'Log de Atividades'
+sqlCREATE TABLE activity_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  user_name TEXT NOT NULL,
+  user_role TEXT NOT NULL,
+  action TEXT NOT NULL,
+  category TEXT NOT NULL CHECK (category IN ('autenticacao','projetos','clientes','gerentes','campo','financeiro','documentos','configuracoes','acessos')),
+  context TEXT,
+  ip_address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_activity_logs_created ON activity_logs(created_at DESC);
+CREATE INDEX idx_activity_logs_category ON activity_logs(category);
+RLS: apenas admin lê. Sistema escreve via service role.
+Retenção: 90 dias via pg_cron.
+Eventos registrados automaticamente:
+
+Autenticação: login bem-sucedido, login com falha, logout
+Projetos: criado, editado, status alterado, duplicado, excluído, restaurado, excluído permanentemente
+Clientes: criado, editado, desativado, reativado, excluído, senha redefinida
+Gerentes: criado, editado, desativado, reativado, excluído, senha redefinida
+Campo: sincronização Google Sheets (sucesso/erro), atualização manual
+Financeiro: dados financeiros preenchidos/editados, calculadora utilizada
+Documentos: adicionado, removido, visibilidade alterada
+Configurações: qualquer alteração nas configurações do sistema
+Acessos: cliente acessou o portal, cliente acessou página de projeto, cliente respondeu NPS
+
+Interface: lista cronológica (mais recente primeiro) + paginação (50 por página) + filtros por usuário/categoria/período/projeto + campo de busca livre + botão 'Exportar Log (Excel)'.
+
+4. PARCEIROS DE PAINEL (somente administrador — Configurações → Parceiros):
+sqlCREATE TABLE panel_partners (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome TEXT NOT NULL,
+  site TEXT,
+  email_contato TEXT,
+  telefone TEXT,
+  notas TEXT,
+  status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo','inativo')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE panel_partner_cpr (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id UUID REFERENCES panel_partners(id) ON DELETE CASCADE,
+  perfil TEXT NOT NULL,
+  faixa_perguntas TEXT NOT NULL,
+  cpr_valor DECIMAL(8,2),
+  data_cotacao DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE panel_partner_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id UUID REFERENCES panel_partners(id) ON DELETE CASCADE,
+  project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
+  qualidade_amostral INTEGER CHECK (qualidade_amostral BETWEEN 1 AND 5),
+  cumprimento_prazo INTEGER CHECK (cumprimento_prazo BETWEEN 1 AND 5),
+  custo_beneficio INTEGER CHECK (custo_beneficio BETWEEN 1 AND 5),
+  comentario TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+RLS: apenas admin lê e escreve em todas as tabelas de parceiros.
+Interface:
+
+Lista de parceiros: Nome | Site | E-mail | Telefone | Status | Ações
+Cadastrar parceiro: Nome, Site, E-mail, Telefone, Notas, Status
+Tabela de CPR por perfil editável para cada parceiro (8 combinações: 4 perfis × 3 faixas de perguntas). Badge '⚠️ Cotação desatualizada' quando data > 90 dias
+Avaliação por projeto: vincula parceiro a um projeto + registra qualidade amostral (1-5⭐) + cumprimento de prazo (1-5⭐) + custo-benefício (1-5⭐) + comentário
+Painel comparativo: tabela com CPR médio de todos os parceiros ativos por perfil lado a lado
+Integração com Calculadora: quando o admin abre a calculadora e seleciona um perfil, o sistema busca a média dos CPRs dos parceiros ativos para aquele perfil e exibe automaticamente no campo CPR com a indicação 'Média dos parceiros: R$ XX,XX'
+
+
+5. CONFIGURAÇÕES COMPLETAS DO ADMINISTRADOR:
+Página de Configurações com menu interno em abas:
+Aba 'Perfil e Segurança':
+
+Alterar nome de exibição
+Alterar e-mail (com confirmação por senha)
+Alterar senha
+Senha do Módulo Financeiro: campo para definir/alterar a senha que protege a Distribuição de Lucro. Obrigatório — sem essa senha definida, o botão 'Ver Distribuição de Lucro' não aparece
+
+Aba 'Gerentes': já implementada na Fase 4 — garantir que está integrada aqui
+Aba 'Dados da Empresa':
+
+Campos editáveis que alimentam dinamicamente todas as telas: Nome da empresa | E-mail de suporte | Número de WhatsApp | Slogan da tela de login
+Botão 'Salvar' com toast de confirmação
+
+Aba 'Etapas Padrão do Cronograma':
+Label: 'PERSONALIZAÇÃO' | Título: 'Etapas Padrão do Cronograma'
+
+Lista editável das 11 etapas padrão: renomear inline, reordenar via drag-and-drop, remover
+Botão 'Adicionar Etapa Padrão'
+Botão 'Restaurar Padrões' — volta às 11 etapas originais com confirmação
+Salvo na tabela system_settings como JSON
+
+Aba 'Lixeira de Projetos':
+
+Lista: Nome | Cliente | Gerente | Data de Exclusão | Dias Restantes
+Ação Restaurar: devolve ao status anterior. Toast: 'Projeto restaurado com sucesso.'
+Ação Excluir Permanentemente: modal com digitação do nome exato do projeto para confirmar. Irreversível.
+Badge ⚠️ vermelho quando restam ≤ 3 dias para exclusão automática
+
+Aba 'Alertas': já implementada na Fase 9 — garantir integração aqui
+Aba 'Calculadora': configuração dos valores padrão da calculadora já implementada na Fase 8 — garantir integração aqui
+Aba 'Parceiros': link para a seção de Parceiros de Painel implementada nesta fase
+Aba 'Log de Atividades': link para o log implementado nesta fase
+
+6. EXPORTAÇÕES EM PDF E EXCEL:
+Relatório do Projeto em PDF (admin/gerente — botão dentro do projeto):
+
+Via jsPDF + html2canvas
+Conteúdo: cabeçalho com logo Clarifyse + nome/empresa/gerente + data/status + Visão Geral (objetivo, metodologia, pilar, datas) + Cronograma (tabela com etapas e status) + Histórico (últimas 10 entradas)
+Rodapé: 'Clarifyse Strategy & Research | Where insight becomes clarity. | Confidencial'
+Nome: 'Relatório_[Nome do Projeto]_Clarifyse.pdf'
+
+Exportação de Lista de Clientes (Excel — somente admin):
+
+Colunas: Nome | E-mail | Empresa | Projetos Vinculados | Último Acesso | Status
+Nome: 'Clientes_Clarifyse_[Data].xlsx'
+Botão na página de Clientes
+
+Exportação de Lista de Projetos (Excel — admin e gerentes):
+
+Colunas: Nome do Projeto | Cliente/Empresa | Gerente | Metodologia | Pilar | Status | Data Início | Data Entrega Prevista
+Admin exporta todos; gerente exporta apenas os seus
+Nome: 'Projetos_Clarifyse_[Data].xlsx'
+Botão na página de Projetos
+
+Exportação Financeira Global (Excel — somente admin):
+
+Botão 'Exportar todos os projetos' na aba Financeiro
+Aba 1: Resumo (projeto, gerente, receita, custos, lucro, margem)
+Aba 2: Detalhamento de custos por categoria
+Filtros aplicados: por período, gerente, metodologia, status
+Nome: 'Financeiro_Clarifyse_[Data].xlsx'
+
+Exportação do Log de Atividades (Excel — somente admin):
+
+Com filtros aplicados
+Colunas: Data/Hora | Usuário | Role | Categoria | Ação | Contexto | IP
+Nome: 'Log_Clarifyse_[Data].xlsx'
+
+Todas as exportações Excel via SheetJS com identidade visual Clarifyse (cabeçalho #1B2B6B, texto branco, negrito). Todas as exportações PDF via jsPDF.
+Confirme quando tudo estiver implementado e funcional. Esta é a fase final da plataforma.""
