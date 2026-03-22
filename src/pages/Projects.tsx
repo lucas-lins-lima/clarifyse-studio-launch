@@ -99,7 +99,6 @@ const Projects = () => {
         if (dup) {
           addLog({ userId: currentUser.id, userName: currentUser.name, userRole: currentUser.role, action: "duplicate_project", details: `Duplicou o projeto "${project.name}"` });
           toast.success("Projeto duplicado");
-          navigate(`/projetos/${dup.id}/editar`);
         }
         break;
       case "trash":
@@ -219,10 +218,10 @@ const Projects = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => navigate(`/projetos/${project.id}`)}>
-                              <Eye size={14} className="mr-2" /> Ver
+                              <Eye size={14} className="mr-2" /> Ver Detalhes
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/projetos/${project.id}/editar`)}>
-                              <Edit size={14} className="mr-2" /> Editar
+                            <DropdownMenuItem onClick={() => navigate(`/projetos/${project.id}/formulario`)}>
+                              <Edit size={14} className="mr-2" /> Editar Formulário
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleAction(project.id, "duplicate")}>
                               <Copy size={14} className="mr-2" /> Duplicar
