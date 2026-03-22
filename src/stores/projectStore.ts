@@ -83,7 +83,7 @@ export interface Response {
   projectId: string;
   respondentHash: string;
   status: "in_progress" | "completed" | "partial";
-  answers: Record<string, { value: string; label?: string; timeSpent: number }>;
+  answers: Record<string, string | string[] | { value: string; label?: string; timeSpent: number }>;
   startedAt: string;
   completedAt: string | null;
   totalTimeSeconds: number | null;

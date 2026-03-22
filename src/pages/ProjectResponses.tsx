@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,7 +68,15 @@ const ProjectResponses = () => {
       project.questions.forEach((question) => {
         const answer = response.answers[question.id];
         if (answer) {
-          row[question.config.text] = Array.isArray(answer) ? answer.join("; ") : answer;
+          let answerText = "";
+          if (typeof answer === "string") {
+            answerText = answer;
+          } else if (Array.isArray(answer)) {
+            answerText = answer.join("; ");
+          } else if (typeof answer === "object" && answer !== null && "value" in answer) {
+            answerText = answer.value;
+          }
+          row[question.config.text] = answerText;
         }
       });
 

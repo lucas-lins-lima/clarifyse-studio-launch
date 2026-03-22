@@ -118,7 +118,7 @@ const ProjectDetails = () => {
         name: target.category,
         atual: target.current,
         meta: target.target,
-        percentual: (target.current / target.target) * 100,
+        percentual: target.target > 0 ? (target.current / target.target) * 100 : 0,
       }))
     );
   }, [project.quotas]);

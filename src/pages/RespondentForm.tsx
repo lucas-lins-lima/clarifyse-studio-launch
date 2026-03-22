@@ -275,7 +275,7 @@ const RespondentForm = () => {
       projectId: project.id,
       respondentHash: formState.respondentHash,
       status: "completed" as const,
-      answers: formState.answers as Record<string, { value: string; label?: string; timeSpent: number }>,
+      answers: formState.answers,
       startedAt: formState.startedAt.toISOString(),
       completedAt: new Date().toISOString(),
       totalTimeSeconds,

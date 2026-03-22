@@ -81,6 +81,7 @@ export const useProjectAutoClose = () => {
       // Notificações de alerta (80% e 100%) com bloqueio de cotas
       project.quotas.forEach((quota) => {
         quota.targets.forEach((target) => {
+          if (target.target <= 0) return; // Ignorar cotas com target inválido
           const percentual = (target.current / target.target) * 100;
           const targetKey = `${quota.id}-${target.id}`;
 
@@ -125,7 +126,7 @@ export const useProjectAutoClose = () => {
 
       // Alerta de amostra em 80%
       if (project.sampleTarget > 0) {
-        const samplePercentual = (project.sampleCurrent / project.sampleTarget) * 100;
+        const samplePercentual = project.sampleTarget > 0 ? (project.sampleCurrent / project.sampleTarget) * 100 : 0;
         if (samplePercentual >= 80 && samplePercentual < 90) {
           const sampleAlertKey = `sample-80-${project.id}`;
           if (!tracker.quotaTargets.has(sampleAlertKey)) {
