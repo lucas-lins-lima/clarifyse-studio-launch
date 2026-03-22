@@ -1,4 +1,9 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { MatrixQuestionBuilder } from '@/components/questions/builder/MatrixQuestionBuilder';
+import { FileUploadQuestionBuilder } from '@/components/questions/builder/FileUploadQuestionBuilder';
+import { ConjointQuestionBuilder } from '@/components/questions/builder/ConjointQuestionBuilder';
+import { MaxDiffQuestionBuilder } from '@/components/questions/builder/MaxDiffQuestionBuilder';
+import { ImageChoiceQuestionBuilder } from '@/components/questions/builder/ImageChoiceQuestionBuilder';
 import { Button } from '@/components/ui/button';
 import { 
   Plus, 

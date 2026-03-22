@@ -9,6 +9,11 @@ import { Loader2, CheckCircle2, ChevronLeft, ChevronRight, X, Star, Upload } fro
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '@/assets/logo.png';
 import { toast } from 'sonner';
+import { MatrixQuestion } from '@/components/questions/public/MatrixQuestion';
+import { FileUploadQuestion } from '@/components/questions/public/FileUploadQuestion';
+import { ConjointQuestion } from '@/components/questions/public/ConjointQuestion';
+import { MaxDiffQuestion } from '@/components/questions/public/MaxDiffQuestion';
+import { ImageChoiceQuestion } from '@/components/questions/public/ImageChoiceQuestion';
 
 export default function SurveyPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,24 +36,34 @@ export default function SurveyPage() {
         setLoading(false);
         return;
       }
-      const p = getProjectById(id);
-      if (p) {
-        // Verificar se o projeto está publicado
-        if (p.status === 'Rascunho') {
+
+      // Adicionar pequeno delay para garantir que o localStorage esteja pronto (em alguns casos de navegação rápida)
+      const timer = setTimeout(() => {
+        const p = getProjectById(id);
+        
+        if (p) {
+          // Verificar status do projeto
+          if (p.status === 'Rascunho') {
+            setBlocked('not_published');
+            setProject(p); // Mantemos o projeto para mostrar o nome se necessário
+          } else if (p.status === 'Encerrado') {
+            setBlocked('closed');
+            setProject(p);
+          } else {
+            // Verificar se a amostra já foi atingida
+            const totalResponses = p.responses?.length || 0;
+            if (p.sampleSize > 0 && totalResponses >= p.sampleSize) {
+              setBlocked('sample');
+            }
+            setProject(p);
+          }
+        } else {
           setProject(null);
-          setLoading(false);
-          return;
         }
-        // Verificar se a amostra já foi atingida
-        const totalResponses = p.responses?.length || 0;
-        if (p.sampleSize > 0 && totalResponses >= p.sampleSize) {
-          setBlocked('sample');
-          setLoading(false);
-          return;
-        }
-        setProject(p);
-      }
-      setLoading(false);
+        setLoading(false);
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
   }, [id]);
 
@@ -156,10 +171,14 @@ export default function SurveyPage() {
     </div>
   );
 
-  if (!project) return (
+  if (!project && !loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-4 text-center">
-      <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Projeto não encontrado</h1>
-      <p className="text-[#64748B]">O link que você acessou parece estar incorreto ou a pesquisa não está mais disponível.</p>
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
+        <X className="h-16 w-16 text-red-500 mx-auto mb-6" />
+        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Projeto não encontrado</h1>
+        <p className="text-[#64748B] mb-8">O link que você acessou parece estar incorreto ou a pesquisa não está mais disponível.</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar ao início</Button>
+      </div>
     </div>
   );
 
@@ -195,10 +214,33 @@ export default function SurveyPage() {
 
   if (blocked === 'already_submitted') return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
+      <CheckCircle2 className="h-16 w-16 text-[#1D9E75] mb-6" />
       <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Participação registrada!</h1>
       <p className="text-xl text-[#2D1E6B]/80 mb-4">Você já respondeu a esta pesquisa.</p>
       <p className="text-[#64748B] max-w-md">Agradecemos o seu interesse e colaboração.</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+      <Button onClick={() => navigate('/login')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+    </div>
+  );
+
+  if (blocked === 'not_published') return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
+        <Loader2 className="h-16 w-16 text-[#7F77DD] mx-auto mb-6 animate-pulse" />
+        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Aguarde a publicação</h1>
+        <p className="text-[#64748B] mb-8">Este formulário ainda não foi publicado. Aguarde o pesquisador liberar a pesquisa.</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar</Button>
+      </div>
+    </div>
+  );
+
+  if (blocked === 'closed') return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
+        <CheckCircle2 className="h-16 w-16 text-[#64748B] mx-auto mb-6" />
+        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Pesquisa Encerrada</h1>
+        <p className="text-[#64748B] mb-8">Esta pesquisa foi encerrada. Obrigado pela participação!</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar</Button>
+      </div>
     </div>
   );
 
@@ -423,38 +465,7 @@ function renderQuestionInput(
     }
 
     case 'matrix':
-      return (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="p-4 text-left"></th>
-                {(question.columns || []).map((col: any) => (
-                  <th key={col.id} className="p-4 text-center text-[10px] font-bold text-[#64748B] uppercase tracking-widest">{col.text}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(question.rows || []).map((row: any) => (
-                <tr key={row.id} className="border-t border-gray-50">
-                  <td className="p-4 font-medium text-[#2D1E6B]">{row.text}</td>
-                  {(question.columns || []).map((col: any) => {
-                    const isSelected = answers[question.variableCode]?.[row.id] === (col.code || col.text);
-                    return (
-                      <td key={col.id} className="p-4 text-center">
-                        <button onClick={() => { const m = answers[question.variableCode] || {}; onChange({ ...m, [row.id]: (col.code || col.text) }); }}
-                          className={`w-6 h-6 rounded-full border-2 mx-auto transition-all ${isSelected ? 'border-[#1D9E75] bg-[#1D9E75]' : 'border-gray-200 hover:border-[#1D9E75]/30'}`}>
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-white mx-auto" />}
-                        </button>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
+      return <MatrixQuestion question={question} answer={answers} onChange={(newAnswers) => Object.entries(newAnswers).forEach(([key, val]) => onChange(val))} />;
 
     case 'text':
       return (
@@ -490,28 +501,16 @@ function renderQuestionInput(
       );
 
     case 'upload':
-      return <UploadInput currentVal={currentVal} onChange={onChange} />;
+    case 'file_upload':
+      return <FileUploadQuestion question={question} answer={answers} onChange={(newAnswers) => { Object.entries(newAnswers).forEach(([key, val]) => { if (key === question.variableCode) onChange(val); }); }} />;
 
     case 'image_choice':
-      return (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {(question.options || []).map((opt: any) => {
-            const isSelected = String(currentVal) === String(opt.code || opt.text);
-            return (
-              <button key={opt.id} onClick={() => onChange(opt.code || opt.text)}
-                className={`rounded-2xl border-2 overflow-hidden transition-all ${isSelected ? 'border-[#1D9E75] shadow-lg shadow-[#1D9E75]/20' : 'border-gray-100 hover:border-[#1D9E75]/30'}`}>
-                {opt.imageUrl
-                  ? <img src={opt.imageUrl} alt={opt.text} className="w-full h-32 object-cover" />
-                  : <div className="w-full h-32 bg-[#F1EFE8] flex items-center justify-center"><span className="text-3xl">{opt.emoji || '🖼️'}</span></div>
-                }
-                <div className={`p-3 text-sm font-bold text-center ${isSelected ? 'bg-[#1D9E75] text-white' : 'text-[#2D1E6B]'}`}>{opt.text}</div>
-              </button>
-            );
-          })}
-        </div>
-      );
+      return <ImageChoiceQuestion question={question} answer={answers} onChange={(newAnswers) => { Object.entries(newAnswers).forEach(([key, val]) => { if (key === question.variableCode) onChange(val); }); }} />;
 
-    case 'maxdiff': {
+    case 'maxdiff':
+      return <MaxDiffQuestion question={question} answer={answers} onChange={(newAnswers) => { Object.entries(newAnswers).forEach(([key, val]) => { if (key === question.variableCode) onChange(val); }); }} />;
+
+    case 'maxdiff_old': {
       const opts: any[] = question.options || [];
       const setSize = question.setSize || Math.min(5, opts.length);
       const sets: any[][] = [];
@@ -556,7 +555,11 @@ function renderQuestionInput(
       );
     }
 
-    case 'cbc': {
+    case 'cbc':
+    case 'conjoint':
+      return <ConjointQuestion question={question} answer={answers} onChange={(newAnswers) => { Object.entries(newAnswers).forEach(([key, val]) => { if (key === question.variableCode) onChange(val); }); }} />;
+
+    case 'cbc_old': {
       const concepts: any[] = question.concepts || [];
       const selectedConcept = currentVal?.concept;
       return (
