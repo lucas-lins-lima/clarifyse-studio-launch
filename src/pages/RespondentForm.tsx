@@ -48,6 +48,7 @@ const RespondentForm = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [passwordInput, setPasswordInput] = useState("");
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [blockedQuotaMessage, setBlockedQuotaMessage] = useState<string | null>(null);
 
   // Gerar hash do respondente (IP + User-Agent + timestamp)
   useEffect(() => {
@@ -79,21 +80,22 @@ const RespondentForm = () => {
     );
   }
 
-  // Verificar se a quota foi atingida
+  // Verificar se há alguma cota bloqueada
+  const checkAnyQuotaBlocked = () => {
+    return project.quotas.some((quota) =>
+      quota.targets.some((target) => target.isBlocked)
+    );
+  };
+
+  // Verificar se a quota foi atingida (amostra total)
   const checkQuotaReached = () => {
-    if (project.sampleCurrent >= project.sampleTarget) {
+    if (project.sampleCurrent >= project.sampleTarget && project.sampleTarget > 0) {
       return true;
-    }
-    for (const quota of project.quotas) {
-      for (const target of quota.targets) {
-        if (target.current >= target.target) {
-          return true;
-        }
-      }
     }
     return false;
   };
 
+  // Mostrar mensagem se a amostra total foi atingida
   if (checkQuotaReached() && formState.currentQuestionIndex === -1) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4">
@@ -104,6 +106,40 @@ const RespondentForm = () => {
           <div className="bg-white rounded-lg shadow-lg p-8 border-l-4 border-secondary">
             <h1 className="text-2xl font-bold text-foreground mb-4">Quota Atingida</h1>
             <p className="text-muted-foreground mb-6">{project.settings.quotaReachedMessage}</p>
+            <Button variant="outline" onClick={() => navigate("/")} className="w-full">
+              Voltar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar aviso se há cotas bloqueadas
+  if (checkAnyQuotaBlocked() && formState.currentQuestionIndex === -1) {
+    const blockedCategories = project.quotas
+      .flatMap((q) => q.targets.filter((t) => t.isBlocked))
+      .map((t) => t.category);
+
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+        <div className="max-w-md text-center">
+          <div className="mb-6">
+            <img src={logo} alt="Clarifyse" className="h-12 mx-auto" />
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-8 border-l-4 border-yellow-500">
+            <h1 className="text-2xl font-bold text-foreground mb-4">Cotas Bloqueadas</h1>
+            <p className="text-muted-foreground mb-2">
+              As seguintes categorias atingiram sua meta e não estão mais aceitando respostas:
+            </p>
+            <div className="my-4 p-3 bg-yellow-50 rounded-md">
+              <p className="text-sm font-medium text-yellow-800">
+                {blockedCategories.join(", ")}
+              </p>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Se você faz parte dessas categorias, infelizmente não poderá responder neste momento.
+            </p>
             <Button variant="outline" onClick={() => navigate("/")} className="w-full">
               Voltar
             </Button>
@@ -239,7 +275,7 @@ const RespondentForm = () => {
       projectId: project.id,
       respondentHash: formState.respondentHash,
       status: "completed" as const,
-      answers: formState.answers as Record<string, { value: string; label?: string; timeSpent: number }>,
+      answers: formState.answers,
       startedAt: formState.startedAt.toISOString(),
       completedAt: new Date().toISOString(),
       totalTimeSeconds,

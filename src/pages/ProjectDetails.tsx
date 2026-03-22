@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +13,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { QRCodeSVG as QRCode } from "qrcode.react";
 import {
   LineChart,
   Line,
@@ -61,6 +70,8 @@ const ProjectDetails = () => {
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [showQrModal, setShowQrModal] = useState(false);
+  const qrCodeRef = useRef<HTMLDivElement>(null);
 
   if (!project) {
     return (
@@ -107,7 +118,7 @@ const ProjectDetails = () => {
         name: target.category,
         atual: target.current,
         meta: target.target,
-        percentual: (target.current / target.target) * 100,
+        percentual: target.target > 0 ? (target.current / target.target) * 100 : 0,
       }))
     );
   }, [project.quotas]);
@@ -117,6 +128,22 @@ const ProjectDetails = () => {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicLink);
     toast.success("Link copiado para a área de transferência!");
+  };
+
+  const handleDownloadQrCode = () => {
+    if (!qrCodeRef.current) return;
+
+    const canvas = qrCodeRef.current.querySelector("canvas");
+    if (!canvas) return;
+
+    const url = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `qrcode-${project.slug}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("QR Code baixado com sucesso!");
   };
 
   const handlePauseResume = () => {
@@ -284,7 +311,7 @@ const ProjectDetails = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">QR Code</p>
-              <Button size="sm" variant="outline" className="gap-2">
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowQrModal(true)}>
                 <QrCode size={14} /> Gerar QR Code
               </Button>
             </div>
@@ -419,6 +446,41 @@ const ProjectDetails = () => {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* QR Code Dialog */}
+      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>QR Code do Projeto</DialogTitle>
+            <DialogDescription>
+              Escaneie para acessar o formulário ou compartilhe com respondentes
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center p-6 bg-muted rounded-lg">
+            <div ref={qrCodeRef}>
+              <QRCode
+                value={publicLink}
+                size={256}
+                level="H"
+                includeMargin
+                fgColor="#000000"
+                bgColor="#FFFFFF"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            {publicLink}
+          </p>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowQrModal(false)}>
+              Fechar
+            </Button>
+            <Button onClick={handleDownloadQrCode} className="gap-2">
+              <Download size={16} /> Baixar PNG
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
