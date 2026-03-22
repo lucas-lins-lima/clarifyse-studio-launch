@@ -9,6 +9,7 @@ import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import QuotasTab from '@/components/projects/surveyforge/QuotasTab';
 import FormBuilderTab from '@/components/projects/surveyforge/FormBuilderTab';
 import ProjectOverviewTab from '@/components/projects/surveyforge/ProjectOverviewTab';
+import MonitoringTab from '@/components/projects/surveyforge/MonitoringTab';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,6 +105,9 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="builder" className="rounded-lg px-6 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white">
             Construir Formulário
           </TabsTrigger>
+          <TabsTrigger value="monitoring" className="rounded-lg px-6 font-bold data-[state=active]:bg-[#2D1E6B] data-[state=active]:text-white">
+            Monitoramento em Tempo Real
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -115,6 +119,9 @@ export default function ProjectDetailPage() {
           </TabsContent>
           <TabsContent value="builder">
             <FormBuilderTab project={project} onSave={(formQuestions) => handleSave({ formQuestions })} isLocked={isLocked} />
+          </TabsContent>
+          <TabsContent value="monitoring">
+            <MonitoringTab project={project} />
           </TabsContent>
         </div>
       </Tabs>
