@@ -1,159 +1,160 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/db';
 import { useAuth } from '@/contexts/AuthContext';
+import { loadDB } from '@/lib/surveyForgeDB';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import { HealthThermometer } from '@/components/projects/HealthThermometer';
-import { FolderOpen, Users, UserCheck, ArrowRight } from 'lucide-react';
+import { FolderOpen, FileText, MessageSquare, CheckCircle2, Plus, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Project } from '@/types/project';
-import { DashboardGoalsCards } from '@/components/goals/DashboardGoalsCards';
-import { RiskAlertsBanner } from '@/components/alerts/RiskAlertsBanner';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 
-function formatDate(d: string | null): string {
-  if (!d) return '';
-  try { return format(parseISO(d), 'dd/MM/yyyy', { locale: ptBR }); }
-  catch { return ''; }
-}
+const DashboardCard = React.memo(({ project, onClick }: { project: any, onClick: () => void }) => {
+  const progress = useMemo(() => {
+    if (!project.sampleSize) return 0;
+    return Math.min(100, Math.round((project.responses?.length || 0) / project.sampleSize * 100));
+  }, [project.responses, project.sampleSize]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+      onClick={onClick}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="space-y-1 flex-1 min-w-0">
+          <h3 className="font-bold text-[#2D1E6B] truncate group-hover:text-[#1D9E75] transition-colors">
+            {project.name}
+          </h3>
+          <p className="text-xs text-[#64748B] truncate">{project.objective}</p>
+        </div>
+        <ProjectStatusBadge status={project.status} size="sm" />
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[#64748B] font-medium">Progresso de Respostas</span>
+          <span className="text-[#2D1E6B] font-bold">{progress}%</span>
+        </div>
+        <Progress value={progress} className="h-2 bg-gray-100" indicatorClassName="bg-[#1D9E75]" />
+        
+        <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center gap-3">
+            <HealthThermometer project={project} />
+            <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Saúde do Campo</span>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-bold text-[#2D1E6B]">{project.responses?.length || 0} / {project.sampleSize}</p>
+            <p className="text-[10px] text-[#64748B] uppercase tracking-widest">Amostra</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [db, setDb] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const { data: stats, isLoading: loadingStats } = useQuery({
-    queryKey: ['admin-dashboard-stats'],
-    queryFn: async () => {
-      const [projectsRes, clientsRes, gerentesRes] = await Promise.all([
-        supabase
-          .from('projects')
-          .select('id, status', { count: 'exact' })
-          .is('deleted_at', null),
-        supabase
-          .from('profiles')
-          .select('id', { count: 'exact' })
-          .eq('role', 'cliente')
-          .eq('status', 'ativo'),
-        supabase
-          .from('profiles')
-          .select('id', { count: 'exact' })
-          .eq('role', 'gerente')
-          .eq('status', 'ativo'),
-      ]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDb(loadDB());
+      setLoading(false);
+    }, 800); // Skeleton loading simulation
+    return () => clearTimeout(timer);
+  }, []);
 
-      const projects = projectsRes.data ?? [];
-      const active = projects.filter(p => p.status !== 'Encerrado' && p.status !== 'Pausado');
+  const stats = useMemo(() => {
+    if (!db) return { active: 0, published: 0, today: 0, complete: 0 };
+    
+    const active = db.projects.filter((p: any) => p.status === 'Em Campo').length;
+    const published = db.projects.filter((p: any) => p.status === 'Formulário Pronto' || p.status === 'Em Campo').length;
+    
+    const today = db.projects.reduce((acc: number, p: any) => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayResponses = p.responses?.filter((r: any) => r.timestamp.startsWith(todayStr)).length || 0;
+      return acc + todayResponses;
+    }, 0);
 
-      return {
-        totalProjects: projectsRes.count ?? 0,
-        activeProjects: active.length,
-        totalClients: clientsRes.count ?? 0,
-        totalGerentes: gerentesRes.count ?? 0,
-      };
-    },
-    staleTime: 1000 * 60,
-  });
+    const complete = db.projects.filter((p: any) => (p.responses?.length || 0) >= p.sampleSize).length;
 
-  const { data: recentProjects = [], isLoading: loadingProjects } = useQuery<Project[]>({
-    queryKey: ['admin-recent-projects'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('projects')
-        .select('id, nome, cliente_empresa, status, data_entrega_prevista, deleted_at, created_at, updated_at, metodologia, pilar, gerente_id, objetivo, observacoes_internas, data_inicio')
-        .is('deleted_at', null)
-        .order('updated_at', { ascending: false })
-        .limit(5);
-      return (data ?? []) as Project[];
-    },
-    staleTime: 1000 * 60,
-  });
+    return { active, published, today, complete };
+  }, [db]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       {/* Header */}
-      <div>
-        <p className="clarifyse-section-label">PAINEL DO ADMINISTRADOR</p>
-        <h1 className="text-2xl font-display font-bold text-foreground mt-1">
-          Olá, {profile?.name?.split(' ')[0]}
-        </h1>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold tracking-[0.2em] text-[#1D9E75] uppercase mb-1">PAINEL DO PESQUISADOR</p>
+          <h1 className="text-3xl font-display font-bold text-[#2D1E6B]">
+            Olá, {profile?.name?.split(' ')[0]}
+          </h1>
+        </div>
+        <Button 
+          onClick={() => navigate('/admin/projetos/novo')}
+          className="bg-[#2D1E6B] hover:bg-[#1D9E75] text-white rounded-xl px-6 h-12 font-bold transition-all shadow-lg shadow-purple-900/10"
+        >
+          <Plus className="h-5 w-5 mr-2" /> Criar Novo Projeto
+        </Button>
       </div>
 
-      {/* Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <StatCard label="PROJETOS ATIVOS" value={stats?.activeProjects ?? 0} icon={FolderOpen} loading={loadingStats} accentColor="purple" />
-        <StatCard label="TOTAL DE PROJETOS" value={stats?.totalProjects ?? 0} icon={FolderOpen} loading={loadingStats} />
-        <StatCard label="CLIENTES" value={stats?.totalClients ?? 0} icon={Users} loading={loadingStats} accentColor="teal" />
-        <StatCard label="GERENTES" value={stats?.totalGerentes ?? 0} icon={UserCheck} loading={loadingStats} />
-      </motion.div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {loading ? (
+          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl bg-white border border-gray-100" />)
+        ) : (
+          <>
+            <StatCard label="Projetos Ativos" value={stats.active} icon={FolderOpen} accentColor="purple" />
+            <StatCard label="Formulários Publicados" value={stats.published} icon={FileText} accentColor="teal" />
+            <StatCard label="Respostas Hoje" value={stats.today} icon={MessageSquare} accentColor="purple" />
+            <StatCard label="Amostras Completas" value={stats.complete} icon={CheckCircle2} accentColor="teal" />
+          </>
+        )}
+      </div>
 
-      {/* Risk Alerts Banner */}
-      <RiskAlertsBanner />
-
-      {/* Goals Mini-Cards */}
-      <DashboardGoalsCards />
-
-      {/* Recent Projects */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
+      {/* Recent Projects Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="clarifyse-section-label mb-0.5">PROJETOS RECENTES</p>
-            <h2 className="text-lg font-display font-semibold text-foreground">Últimas Atualizações</h2>
+            <p className="text-xs font-bold tracking-[0.2em] text-[#1D9E75] uppercase mb-1">PROJETOS RECENTES</p>
+            <h2 className="text-xl font-display font-bold text-[#2D1E6B]">Acompanhamento de Campo</h2>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/admin/projetos')}>
-            Ver todos <ArrowRight className="h-4 w-4 ml-1.5" />
+          <Button variant="ghost" className="text-[#1D9E75] font-bold hover:bg-[#1D9E75]/10" onClick={() => navigate('/admin/projetos')}>
+            Ver todos <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
 
-        {loadingProjects ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="clarifyse-card p-4 animate-pulse">
-                <div className="h-4 bg-muted rounded w-1/3 mb-2" />
-                <div className="h-3 bg-muted rounded w-1/4" />
-              </div>
-            ))}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-48 rounded-xl bg-white border border-gray-100" />
+            <Skeleton className="h-48 rounded-xl bg-white border border-gray-100" />
           </div>
-        ) : recentProjects.length > 0 ? (
-          <div className="space-y-3">
-            {recentProjects.map((project) => (
-              <div
-                key={project.id}
-                className="clarifyse-card-hover p-4 flex items-center justify-between cursor-pointer"
-                onClick={() => navigate(`/admin/projetos/${project.id}`)}
-              >
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground truncate">{project.nome}</h3>
-                  <p className="text-sm text-muted-foreground truncate">{project.cliente_empresa || '—'}</p>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                  {project.data_entrega_prevista && (
-                    <span className="text-xs text-muted-foreground hidden sm:block">
-                      Entrega: {formatDate(project.data_entrega_prevista)}
-                    </span>
-                  )}
-                  <HealthThermometer project={project} />
-                  <ProjectStatusBadge status={project.status} size="sm" />
-                </div>
-              </div>
+        ) : db?.projects?.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {db.projects.slice(0, 4).map((project: any) => (
+              <DashboardCard 
+                key={project.id} 
+                project={project} 
+                onClick={() => navigate(`/admin/projetos/${project.id}`)} 
+              />
             ))}
           </div>
         ) : (
           <EmptyState
             icon={FolderOpen}
-            title="Nenhum projeto encontrado"
-            description="Os projetos criados aparecerão aqui. Comece criando seu primeiro projeto."
+            title="Nenhum projeto em andamento"
+            description="Comece criando um novo projeto de pesquisa para coletar dados."
             action={
-              <Button variant="gradient" size="sm" onClick={() => navigate('/admin/projetos')}>
-                <FolderOpen className="h-4 w-4 mr-1.5" /> Ir para Projetos
+              <Button onClick={() => navigate('/admin/projetos/novo')} className="bg-[#2D1E6B] text-white">
+                Criar Primeiro Projeto
               </Button>
             }
           />

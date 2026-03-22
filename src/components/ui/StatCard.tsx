@@ -17,35 +17,35 @@ export const StatCard = React.memo(function StatCard({
   loading = false,
   accentColor = 'default',
 }: StatCardProps) {
-  const iconBg = accentColor === 'teal'
-    ? 'bg-accent/10 text-accent'
+  const iconColor = accentColor === 'teal'
+    ? 'text-[#1D9E75]'
     : accentColor === 'purple'
-    ? 'bg-clarifyse-purple-start/10 text-clarifyse-purple-start'
-    : 'bg-primary/10 text-primary';
+    ? 'text-[#2D1E6B]'
+    : 'text-[#7F77DD]';
 
   if (loading) {
     return (
-      <div className="clarifyse-card p-5">
+      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-24" />
             <Skeleton className="h-8 w-16" />
           </div>
-          <Skeleton className="h-10 w-10 rounded-lg" />
+          <Skeleton className="h-10 w-10 rounded-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="clarifyse-card-hover p-5">
+    <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="clarifyse-section-label text-xs">{label}</p>
-          <p className="text-2xl font-bold font-display mt-1 text-foreground">{value}</p>
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.2em]">{label}</p>
+          <p className="text-3xl font-bold font-display text-[#2D1E6B]">{value}</p>
         </div>
-        <div className={`p-2.5 rounded-lg ${iconBg}`}>
-          <Icon className="h-5 w-5" />
+        <div className={`p-3 rounded-xl bg-gray-50 ${iconColor}`}>
+          <Icon className="h-6 w-6" />
         </div>
       </div>
     </div>

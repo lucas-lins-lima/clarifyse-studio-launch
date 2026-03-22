@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Playfair Display', 'Georgia', 'serif'],
       },
       colors: {
@@ -62,20 +62,18 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         clarifyse: {
-          navy: "hsl(var(--clarifyse-navy))",
-          teal: "hsl(var(--clarifyse-teal))",
-          "teal-light": "hsl(var(--clarifyse-teal-light))",
-          "purple-start": "hsl(var(--clarifyse-purple-start))",
-          "purple-end": "hsl(var(--clarifyse-purple-end))",
-          "deep-purple": "#2D1E6B",
-          "light-gray": "#F1EFE8",
-          "accent-purple": "#A855F7",
+          "purple-deep": "#2D1E6B",
+          "teal": "#1D9E75",
+          "purple-vibrant": "#7F77DD",
+          "bg": "#F1EFE8",
+          "text": "#2D1E6B",
+          "text-secondary": "#64748B",
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "12px",
+        md: "10px",
+        sm: "8px",
       },
       keyframes: {
         "accordion-down": {
