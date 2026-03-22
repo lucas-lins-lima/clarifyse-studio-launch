@@ -356,19 +356,47 @@ export default function FormBuilderTab({ project, onSave, isLocked }: { project:
 
                 <div className="space-y-3">
                   {['single', 'multiple'].includes(activeQuestion.type) ? (
-                    activeQuestion.options.map((opt: any) => (
+                    (activeQuestion.options || []).map((opt: any) => (
                       <div key={opt.id} className="p-4 border-2 border-gray-100 rounded-2xl hover:border-[#2D1E6B] transition-all cursor-pointer flex items-center gap-4 group">
-                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${activeQuestion.type === 'single' ? 'rounded-full' : 'rounded-md'} border-gray-200 group-hover:border-[#2D1E6B]`}>
+                        <div className={`h-6 w-6 border-2 flex items-center justify-center ${activeQuestion.type === 'single' ? 'rounded-full' : 'rounded-md'} border-gray-200 group-hover:border-[#2D1E6B]`}>
                           <div className="h-2.5 w-2.5 bg-[#2D1E6B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <span className="font-medium text-[#2D1E6B]">{opt.text}</span>
+                        {opt.code && <span className="ml-auto text-[10px] text-gray-400 font-mono">{opt.code}</span>}
                       </div>
                     ))
                   ) : activeQuestion.type === 'text' ? (
                     <Textarea placeholder="Digite sua resposta aqui..." className="min-h-[120px] rounded-2xl border-2 border-gray-100 focus:border-[#2D1E6B] p-4" />
+                  ) : activeQuestion.type === 'number' ? (
+                    <input type="number" placeholder="0" className="w-full h-14 text-2xl font-bold text-center rounded-xl border-2 border-gray-100 focus:border-[#2D1E6B] outline-none bg-white" />
+                  ) : activeQuestion.type === 'boolean' ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Sim', 'N\u00e3o'].map(opt => (
+                        <div key={opt} className="p-5 rounded-xl border-2 border-gray-100 text-center font-bold text-[#2D1E6B] cursor-pointer hover:border-[#2D1E6B]">{opt}</div>
+                      ))}
+                    </div>
+                  ) : ['likert', 'nps', 'rating'].includes(activeQuestion.type) ? (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {Array.from({ length: activeQuestion.type === 'nps' ? 11 : (activeQuestion.scale || 5) }, (_, i) => (
+                        <div key={i} className="w-10 h-10 rounded-xl bg-[#F1EFE8] flex items-center justify-center text-sm font-bold text-[#2D1E6B] cursor-pointer hover:bg-[#2D1E6B] hover:text-white transition-all">
+                          {activeQuestion.type === 'nps' ? i : i + 1}
+                        </div>
+                      ))}
+                    </div>
+                  ) : activeQuestion.type === 'date' ? (
+                    <input type="date" className="w-full h-12 px-4 rounded-xl border-2 border-gray-100 text-[#2D1E6B] font-bold outline-none" />
+                  ) : activeQuestion.type === 'ranking' ? (
+                    <div className="space-y-2">
+                      {(activeQuestion.options || []).map((opt: any, idx: number) => (
+                        <div key={opt.id} className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100">
+                          <span className="w-6 h-6 rounded-full bg-[#2D1E6B] text-white text-xs font-bold flex items-center justify-center">{idx + 1}</span>
+                          <span className="flex-1 text-sm font-medium text-[#2D1E6B]">{opt.text}</span>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     <div className="p-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-center">
-                      <p className="text-sm text-gray-400 font-medium">Preview para o tipo "{activeQuestion.type}" em desenvolvimento.</p>
+                      <p className="text-sm text-gray-400 font-medium">Preview \u2014 tipo: <span className="font-bold text-[#2D1E6B]">{activeQuestion.type}</span></p>
                     </div>
                   )}
                 </div>

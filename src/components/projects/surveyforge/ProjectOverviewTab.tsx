@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StatCard } from '@/components/ui/StatCard';
 import { HealthThermometer } from '@/components/projects/HealthThermometer';
 import { Progress } from '@/components/ui/progress';
-import { Users, MessageSquare, Clock, CheckCircle2, Copy, ExternalLink, FileJson, BarChart3, ArrowRight } from 'lucide-react';
+import { Users, MessageSquare, Clock, CheckCircle2, Copy, ExternalLink, FileJson, BarChart3, ArrowRight, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,13 @@ export default function ProjectOverviewTab({ project }: { project: any }) {
   };
 
   const publicLink = `${window.location.origin}/survey/${project.id}`;
+
+  const handleShareWithInsights = () => {
+    const projectId = project.id;
+    const info = `ID do Projeto SurveyForge: ${projectId}\nNome: ${project.name}\n\nNo Clarifyse Insights, acesse a aba Campo do projeto e informe este ID para vincular e monitorar as respostas em tempo real.`;
+    navigator.clipboard.writeText(info);
+    toast.success('Informações de integração copiadas! Cole no Clarifyse Insights para vincular.');
+  };
 
   const handleExportJSON = () => {
     if (!project.responses || project.responses.length === 0) {
@@ -136,6 +143,21 @@ export default function ProjectOverviewTab({ project }: { project: any }) {
                   </div>
                 </div>
 
+                {/* Compartilhar com Insights */}
+                <div className="p-4 bg-gradient-to-br from-[#2D1E6B]/5 to-[#1D9E75]/5 rounded-xl border border-[#1D9E75]/20 flex items-center justify-between gap-2 group col-span-full">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-widest mb-1">INTEGRAÇÃO COM INSIGHTS</p>
+                    <p className="text-sm text-[#2D1E6B] font-medium">ID do projeto: <span className="font-mono font-bold">{project.id}</span></p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-lg text-[#1D9E75] hover:bg-[#1D9E75]/10 font-bold text-xs flex-shrink-0 gap-1"
+                    onClick={handleShareWithInsights}
+                  >
+                    <Share2 className="h-4 w-4" /> Copiar ID
+                  </Button>
+                </div>
                 {/* JSON Export */}
                 <div className="p-4 bg-[#F1EFE8] rounded-xl flex items-center justify-between gap-2 group">
                   <div className="min-w-0 flex-1">
