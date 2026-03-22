@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Clarifyse Design System */
+    --background: 210 25% 97%; /* #F0F4F8 */
+    --foreground: 215 45% 17%; /* #1E293B */
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 45% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 45% 17%;
+
+    /* Azul escuro institucional #1B2B6B */
+    --primary: 228 59% 26%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary - light blue-gray */
+    --secondary: 210 25% 95%;
+    --secondary-foreground: 228 59% 26%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%; /* #64748B */
+
+    /* Teal accent #0D9488 / #14B8A6 */
+    --accent: 175 85% 32%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 228 59% 26%;
+
+    --radius: 0.75rem;
+
+    /* Clarifyse custom tokens */
+    --clarifyse-navy: 228 59% 26%;
+    --clarifyse-purple-start: 289 52% 36%; /* #7B2D8B */
+    --clarifyse-purple-end: 271 91% 65%; /* #A855F7 */
+    --clarifyse-teal: 175 85% 32%; /* #0D9488 */
+    --clarifyse-teal-light: 174 63% 53%; /* #14B8A6 */
+    --clarifyse-bg: 210 25% 97%;
+    --clarifyse-text: 215 45% 17%;
+    --clarifyse-text-secondary: 215 16% 47%;
+
+    /* Sidebar */
+    --sidebar-background: 228 59% 26%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 228 59% 26%;
+    --sidebar-accent: 228 50% 32%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 228 50% 35%;
+    --sidebar-ring: 175 85% 32%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 228 59% 26%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 175 85% 32%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 212 27% 84%;
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 175 85% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 14%;
+    --sidebar-ring: 175 85% 32%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .clarifyse-gradient {
+    background: linear-gradient(135deg, hsl(var(--clarifyse-purple-start)), hsl(var(--clarifyse-purple-end)));
+  }
+  .clarifyse-gradient-text {
+    background: linear-gradient(135deg, hsl(var(--clarifyse-purple-start)), hsl(var(--clarifyse-purple-end)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .clarifyse-section-label {
+    @apply text-xs font-semibold tracking-widest uppercase;
+    color: hsl(var(--clarifyse-teal));
+  }
+  .clarifyse-card {
+    @apply bg-card rounded-xl border shadow-sm;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  }
+  .clarifyse-card-hover {
+    @apply clarifyse-card transition-all duration-200;
+  }
+  .clarifyse-card-hover:hover {
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.04);
+    transform: translateY(-1px);
+  }
+}
+
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .login-input {
+    @apply bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 transition-all duration-300;
+  }
+  
+  .login-input:focus {
+    @apply border-clarifyse-teal ring-2 ring-clarifyse-teal/20;
+  }
+  
+  .login-button {
+    @apply bg-clarifyse-teal hover:bg-clarifyse-teal-light text-black font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+  }
+}
