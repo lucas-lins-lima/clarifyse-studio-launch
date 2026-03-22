@@ -1,4 +1,5 @@
 const DB_KEY = "surveyForgeDB";
+const NOTIFICATIONS_KEY = "surveyForgeNotifications";
 
 const initialData = {
   projects: [
@@ -59,7 +60,28 @@ export const addProject = (project) => {
   };
   db.projects.push(newProject);
   saveDB(db);
+  addNotification({
+    type: 'project_created',
+    title: 'Projeto criado',
+    message: `O projeto "${newProject.name}" foi criado com sucesso.`,
+    projectId: newProject.id
+  });
   return newProject;
+};
+
+export const resetProjectResponses = (id) => {
+  const db = loadDB();
+  const index = db.projects.findIndex(p => p.id === id);
+  if (index !== -1) {
+    db.projects[index].responses = [];
+    db.projects[index].lastResponseAt = null;
+    if (db.projects[index].status === 'Em Campo' || db.projects[index].status === 'Análise Disponível') {
+      db.projects[index].status = 'Formulário Pronto';
+    }
+    saveDB(db);
+    return db.projects[index];
+  }
+  return null;
 };
 
 export const updateProject = (id, updates) => {
@@ -102,9 +124,76 @@ export const addResponse = (projectId, responseData) => {
     if (db.projects[projectIndex].status === "Formulário Pronto") {
       db.projects[projectIndex].status = "Em Campo";
     }
+
+    const totalResponses = db.projects[projectIndex].responses.length;
+    const sampleSize = db.projects[projectIndex].sampleSize;
+
+    // Check if sample is complete
+    if (sampleSize > 0 && totalResponses >= sampleSize) {
+      db.projects[projectIndex].status = "Análise Disponível";
+      addNotification({
+        type: 'sample_complete',
+        title: 'Meta de amostra atingida!',
+        message: `O projeto "${db.projects[projectIndex].name}" atingiu ${sampleSize} respostas. A análise está disponível.`,
+        projectId
+      });
+    } else {
+      addNotification({
+        type: 'new_response',
+        title: 'Nova resposta recebida',
+        message: `Nova resposta no projeto "${db.projects[projectIndex].name}" (${totalResponses}/${sampleSize}).`,
+        projectId
+      });
+    }
     
     saveDB(db);
     return newResponse;
   }
   return null;
+};
+
+// ---- NOTIFICATIONS ----
+
+export const loadNotifications = () => {
+  const data = localStorage.getItem(NOTIFICATIONS_KEY);
+  if (!data) return [];
+  return JSON.parse(data);
+};
+
+export const saveNotifications = (notifications) => {
+  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+};
+
+export const addNotification = (notification) => {
+  const notifications = loadNotifications();
+  const newNotification = {
+    id: Math.random().toString(36).substr(2, 9),
+    timestamp: new Date().toISOString(),
+    read: false,
+    ...notification
+  };
+  notifications.unshift(newNotification);
+  const trimmed = notifications.slice(0, 50);
+  saveNotifications(trimmed);
+  return newNotification;
+};
+
+export const markNotificationAsRead = (id) => {
+  const notifications = loadNotifications();
+  const index = notifications.findIndex(n => n.id === id);
+  if (index !== -1) {
+    notifications[index].read = true;
+    saveNotifications(notifications);
+  }
+};
+
+export const markAllNotificationsAsRead = () => {
+  const notifications = loadNotifications();
+  const updated = notifications.map(n => ({ ...n, read: true }));
+  saveNotifications(updated);
+};
+
+export const getUnreadNotificationsCount = () => {
+  const notifications = loadNotifications();
+  return notifications.filter(n => !n.read).length;
 };

@@ -3,12 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Download, TrendingUp, AlertCircle, CheckCircle2, BarChart3, 
-  PieChart, Activity, Zap, FileJson, FileSpreadsheet 
+  PieChart, Activity, Zap, FileJson, FileSpreadsheet, ArrowRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { generateInsights, AnalysisResult } from '@/lib/analyticsEngine';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell } from 'recharts';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const COLORS = ['#2D1E6B', '#1D9E75', '#7F77DD', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
 
@@ -17,6 +18,7 @@ interface AnalysisTabProps {
 }
 
 export default function AnalysisTab({ project }: AnalysisTabProps) {
+  const navigate = useNavigate();
   const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('json');
 
   // Gerar análises
@@ -83,16 +85,20 @@ export default function AnalysisTab({ project }: AnalysisTabProps) {
       <div className="space-y-6">
         <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-start gap-4">
           <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <h3 className="font-bold text-blue-900 mb-1">Análise não disponível</h3>
             <p className="text-sm text-blue-800">
-              A análise automática será liberada quando a coleta de respostas for concluída (amostra total atingida).
+              A análise automática será liberada quando a coleta de respostas for concluída (amostra total atingida). Atualmente: {project.responses?.length || 0} / {project.sampleSize} respostas.
             </p>
           </div>
         </div>
       </div>
     );
   }
+
+  const isAnalysisReady =
+    project.status === 'Análise Disponível' ||
+    ((project.responses?.length || 0) >= project.sampleSize && project.sampleSize > 0);
 
   return (
     <div className="space-y-8 pb-12">
@@ -102,7 +108,17 @@ export default function AnalysisTab({ project }: AnalysisTabProps) {
           <h2 className="text-2xl font-display font-bold text-[#2D1E6B]">Análise Automática de Dados</h2>
           <p className="text-sm text-[#64748B] mt-1">Insights inteligentes baseados em {analysis.summary.totalResponses} respostas</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {isAnalysisReady && (
+            <Button
+              onClick={() => navigate(`/admin/insights/${project.id}`)}
+              className="bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white rounded-xl font-bold gap-2 shadow-lg shadow-purple-900/20"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Ver Insights Completos
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
           <select
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json')}
@@ -113,7 +129,8 @@ export default function AnalysisTab({ project }: AnalysisTabProps) {
           </select>
           <Button
             onClick={handleExport}
-            className="bg-[#2D1E6B] text-white rounded-xl font-bold gap-2"
+            variant="outline"
+            className="rounded-xl font-bold gap-2 border-gray-200 text-[#2D1E6B]"
           >
             <Download className="h-4 w-4" />
             Exportar

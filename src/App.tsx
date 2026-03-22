@@ -15,6 +15,8 @@ const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const ProjetosPage = React.lazy(() => import("./pages/admin/ProjetosPage"));
 const ProjectDetailPage = React.lazy(() => import("./pages/admin/ProjectDetailPage"));
 const AdminConfiguracoes = React.lazy(() => import("./pages/admin/AdminConfiguracoes"));
+const InsightsPage = React.lazy(() => import("./pages/admin/InsightsPage"));
+const AdminAnalises = React.lazy(() => import("./pages/admin/AdminAnalises"));
 const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
@@ -54,7 +56,8 @@ const App = () => {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/projetos" element={<ProjetosPage />} />
                 <Route path="/admin/projetos/:id" element={<ProjectDetailPage />} />
-                <Route path="/admin/analises" element={<AdminDashboard />} />
+                <Route path="/admin/analises" element={<AdminAnalises />} />
+                <Route path="/admin/insights/:id" element={<InsightsPage />} />
                 <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
               </Route>
 

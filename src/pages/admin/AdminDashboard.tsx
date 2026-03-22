@@ -6,26 +6,32 @@ import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import { HealthThermometer } from '@/components/projects/HealthThermometer';
-import { FolderOpen, FileText, MessageSquare, CheckCircle2, Plus, ArrowRight } from 'lucide-react';
+import { FolderOpen, FileText, MessageSquare, CheckCircle2, Plus, ArrowRight, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const DashboardCard = React.memo(({ project, onClick }: { project: any, onClick: () => void }) => {
+const DashboardCard = React.memo(({ project, onManage, onInsights }: { project: any; onManage: () => void; onInsights: () => void }) => {
   const progress = useMemo(() => {
     if (!project.sampleSize) return 0;
     return Math.min(100, Math.round((project.responses?.length || 0) / project.sampleSize * 100));
   }, [project.responses, project.sampleSize]);
 
+  const isAnalysisReady =
+    project.status === 'Análise Disponível' ||
+    ((project.responses?.length || 0) >= project.sampleSize && project.sampleSize > 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-      onClick={onClick}
+      className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all group"
     >
-      <div className="flex justify-between items-start mb-4">
+      <div
+        className="flex justify-between items-start mb-4 cursor-pointer"
+        onClick={onManage}
+      >
         <div className="space-y-1 flex-1 min-w-0">
           <h3 className="font-bold text-[#2D1E6B] truncate group-hover:text-[#1D9E75] transition-colors">
             {project.name}
@@ -40,8 +46,12 @@ const DashboardCard = React.memo(({ project, onClick }: { project: any, onClick:
           <span className="text-[#64748B] font-medium">Progresso de Respostas</span>
           <span className="text-[#2D1E6B] font-bold">{progress}%</span>
         </div>
-        <Progress value={progress} className="h-2 bg-gray-100" indicatorClassName="bg-[#1D9E75]" />
-        
+        <Progress
+          value={progress}
+          className="h-2 bg-gray-100"
+          indicatorClassName={isAnalysisReady ? 'bg-[#1D9E75]' : 'bg-[#1D9E75]'}
+        />
+
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-3">
             <HealthThermometer project={project} />
@@ -52,6 +62,20 @@ const DashboardCard = React.memo(({ project, onClick }: { project: any, onClick:
             <p className="text-[10px] text-[#64748B] uppercase tracking-widest">Amostra</p>
           </div>
         </div>
+
+        {isAnalysisReady && (
+          <div className="pt-2 border-t border-gray-100">
+            <Button
+              size="sm"
+              className="w-full bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white rounded-xl font-bold gap-2 shadow-md"
+              onClick={(e) => { e.stopPropagation(); onInsights(); }}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Ver Insights
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -67,25 +91,48 @@ export default function AdminDashboard() {
     const timer = setTimeout(() => {
       setDb(loadDB());
       setLoading(false);
-    }, 800); // Skeleton loading simulation
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
   const stats = useMemo(() => {
     if (!db) return { active: 0, published: 0, today: 0, complete: 0 };
-    
+
     const active = db.projects.filter((p: any) => p.status === 'Em Campo').length;
-    const published = db.projects.filter((p: any) => p.status === 'Formulário Pronto' || p.status === 'Em Campo').length;
-    
+    const published = db.projects.filter(
+      (p: any) => p.status === 'Formulário Pronto' || p.status === 'Em Campo'
+    ).length;
+
     const today = db.projects.reduce((acc: number, p: any) => {
       const todayStr = new Date().toISOString().split('T')[0];
-      const todayResponses = p.responses?.filter((r: any) => r.timestamp.startsWith(todayStr)).length || 0;
+      const todayResponses =
+        p.responses?.filter((r: any) => r.timestamp?.startsWith(todayStr)).length || 0;
       return acc + todayResponses;
     }, 0);
 
-    const complete = db.projects.filter((p: any) => (p.responses?.length || 0) >= p.sampleSize).length;
+    const complete = db.projects.filter(
+      (p: any) => (p.responses?.length || 0) >= p.sampleSize && p.sampleSize > 0
+    ).length;
 
     return { active, published, today, complete };
+  }, [db]);
+
+  // Sort projects: analysis ready first, then by date
+  const recentProjects = useMemo(() => {
+    if (!db) return [];
+    return [...db.projects]
+      .sort((a: any, b: any) => {
+        const aReady = (a.responses?.length || 0) >= a.sampleSize && a.sampleSize > 0;
+        const bReady = (b.responses?.length || 0) >= b.sampleSize && b.sampleSize > 0;
+        if (aReady && !bReady) return -1;
+        if (!aReady && bReady) return 1;
+        try {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        } catch {
+          return 0;
+        }
+      })
+      .slice(0, 4);
   }, [db]);
 
   return (
@@ -98,8 +145,8 @@ export default function AdminDashboard() {
             Olá, {profile?.name?.split(' ')[0]}
           </h1>
         </div>
-        <Button 
-          onClick={() => navigate('/admin/projetos/novo')}
+        <Button
+          onClick={() => navigate('/admin/projetos')}
           className="bg-[#2D1E6B] hover:bg-[#1D9E75] text-white rounded-xl px-6 h-12 font-bold transition-all shadow-lg shadow-purple-900/10"
         >
           <Plus className="h-5 w-5 mr-2" /> Criar Novo Projeto
@@ -109,7 +156,9 @@ export default function AdminDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
-          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl bg-white border border-gray-100" />)
+          Array(4).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl bg-white border border-gray-100" />
+          ))
         ) : (
           <>
             <StatCard label="Projetos Ativos" value={stats.active} icon={FolderOpen} accentColor="purple" />
@@ -127,7 +176,11 @@ export default function AdminDashboard() {
             <p className="text-xs font-bold tracking-[0.2em] text-[#1D9E75] uppercase mb-1">PROJETOS RECENTES</p>
             <h2 className="text-xl font-display font-bold text-[#2D1E6B]">Acompanhamento de Campo</h2>
           </div>
-          <Button variant="ghost" className="text-[#1D9E75] font-bold hover:bg-[#1D9E75]/10" onClick={() => navigate('/admin/projetos')}>
+          <Button
+            variant="ghost"
+            className="text-[#1D9E75] font-bold hover:bg-[#1D9E75]/10"
+            onClick={() => navigate('/admin/projetos')}
+          >
             Ver todos <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
@@ -137,13 +190,14 @@ export default function AdminDashboard() {
             <Skeleton className="h-48 rounded-xl bg-white border border-gray-100" />
             <Skeleton className="h-48 rounded-xl bg-white border border-gray-100" />
           </div>
-        ) : db?.projects?.length > 0 ? (
+        ) : recentProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {db.projects.slice(0, 4).map((project: any) => (
-              <DashboardCard 
-                key={project.id} 
-                project={project} 
-                onClick={() => navigate(`/admin/projetos/${project.id}`)} 
+            {recentProjects.map((project: any) => (
+              <DashboardCard
+                key={project.id}
+                project={project}
+                onManage={() => navigate(`/admin/projetos/${project.id}`)}
+                onInsights={() => navigate(`/admin/insights/${project.id}`)}
               />
             ))}
           </div>
@@ -153,7 +207,10 @@ export default function AdminDashboard() {
             title="Nenhum projeto em andamento"
             description="Comece criando um novo projeto de pesquisa para coletar dados."
             action={
-              <Button onClick={() => navigate('/admin/projetos/novo')} className="bg-[#2D1E6B] text-white">
+              <Button
+                onClick={() => navigate('/admin/projetos')}
+                className="bg-[#2D1E6B] text-white rounded-xl"
+              >
                 Criar Primeiro Projeto
               </Button>
             }

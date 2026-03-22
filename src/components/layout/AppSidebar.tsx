@@ -7,7 +7,6 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Globe,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -27,7 +26,7 @@ import { cn } from '@/lib/utils';
 const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
   { title: 'Projetos', url: '/admin/projetos', icon: FolderOpen },
-  { title: 'Análises Globais', url: '/admin/analises', icon: Globe },
+  { title: 'Análises Globais', url: '/admin/analises', icon: BarChart3 },
   { title: 'Configurações', url: '/admin/configuracoes', icon: Settings },
 ];
 
@@ -56,11 +55,12 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
+                      end={item.url === '/admin'}
                       className={({ isActive }) => cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                        isActive 
-                          ? "bg-[#1D9E75] text-white font-semibold shadow-lg shadow-[#1D9E75]/20" 
-                          : "text-white/70 hover:bg-white/10 hover:text-white"
+                        'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                        isActive
+                          ? 'bg-[#1D9E75] text-white font-semibold shadow-lg shadow-[#1D9E75]/20'
+                          : 'text-white/70 hover:bg-white/10 hover:text-white'
                       )}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />

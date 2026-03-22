@@ -20,6 +20,7 @@ export default function SurveyPage() {
   const [verbatims, setVerbatims] = useState<Record<string, string>>({});
   const [startTime] = useState(Date.now());
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null); // 'quota', 'sample', or 'submitted'
 
   useEffect(() => {
@@ -92,7 +93,8 @@ export default function SurveyPage() {
   };
 
   const handleSubmit = () => {
-    if (!project) return;
+    if (!project || submitting) return;
+    setSubmitting(true);
 
     const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
     
@@ -141,7 +143,10 @@ export default function SurveyPage() {
     // Protection against multiple submissions
     localStorage.setItem(`survey_submitted_${project.id}`, 'true');
 
-    setSubmitted(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+    }, 800);
   };
 
   if (loading) {
@@ -334,11 +339,16 @@ export default function SurveyPage() {
         </div>
 
         <div className="w-1/3 flex justify-end">
-          <Button 
+          <Button
             onClick={handleNext}
-            className="h-12 px-8 bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white font-bold rounded-xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+            disabled={submitting}
+            className="h-12 px-8 bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white font-bold rounded-xl flex items-center gap-2 shadow-md hover:shadow-lg transition-all disabled:opacity-70"
           >
-            {currentQuestionIndex === project.formQuestions.length - 1 ? 'Finalizar' : 'Próxima'} <ChevronRight className="h-4 w-4" />
+            {submitting ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</>
+            ) : (
+              <>{currentQuestionIndex === project.formQuestions.length - 1 ? 'Finalizar' : 'Próxima'} <ChevronRight className="h-4 w-4" /></>
+            )}
           </Button>
         </div>
       </footer>

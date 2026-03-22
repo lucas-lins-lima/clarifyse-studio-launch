@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { Loader2 } from 'lucide-react';
+import { SurveyForgeNotificationsBell } from '@/components/notifications/SurveyForgeNotificationsBell';
 
 interface AppLayoutProps {
   allowedRoles: string[];
@@ -39,7 +40,9 @@ export function AppLayout({ allowedRoles }: AppLayoutProps) {
           {/* Header */}
           <header className="h-16 flex items-center justify-between border-b border-gray-200 bg-white/50 backdrop-blur-md px-6 sticky top-0 z-30">
             <SidebarTrigger className="text-[#2D1E6B]" />
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <SurveyForgeNotificationsBell />
+              <div className="w-px h-6 bg-gray-200" />
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-bold text-[#2D1E6B]">{profile.name}</p>
                 <p className="text-[10px] text-[#1D9E75] font-bold uppercase tracking-wider">{profile.role}</p>

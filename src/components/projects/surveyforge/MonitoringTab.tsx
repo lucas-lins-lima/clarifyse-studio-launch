@@ -4,9 +4,10 @@ import { StatCard } from '@/components/ui/StatCard';
 import { HealthThermometer } from '@/components/projects/HealthThermometer';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle2, AlertTriangle, Eye, Copy, RefreshCw, Clock, TrendingUp } from 'lucide-react';
+import { AlertCircle, CheckCircle2, AlertTriangle, Eye, Copy, RefreshCw, Clock, TrendingUp, BarChart3, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -91,6 +92,7 @@ const getQuotaStatusColor = (status: string) => {
 };
 
 export default function MonitoringTab({ project }: { project: any }) {
+  const navigate = useNavigate();
   const [responses, setResponses] = useState<ResponseWithQuality[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedResponse, setSelectedResponse] = useState<ResponseWithQuality | null>(null);
@@ -308,13 +310,41 @@ export default function MonitoringTab({ project }: { project: any }) {
         </div>
       </div>
 
+      {/* Completion Banner */}
+      {stats.progress >= 100 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-[#1D9E75] to-[#2D1E6B] rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-white" />
+              <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">COLETA CONCLUÍDA</p>
+            </div>
+            <h3 className="text-xl font-display font-bold text-white">Amostra completa! Análise disponível.</h3>
+            <p className="text-sm text-white/70">
+              {responses.length} respostas coletadas — acesse os insights automáticos agora.
+            </p>
+          </div>
+          <Button
+            onClick={() => navigate(`/admin/insights/${project.id}`)}
+            className="bg-white text-[#2D1E6B] hover:bg-white/90 rounded-xl font-bold gap-2 flex-shrink-0 shadow-lg"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Ver Insights
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      )}
+
       {/* Progress Bar */}
       <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-display font-bold text-[#2D1E6B]">Progresso Geral</h3>
           <span className="text-2xl font-bold text-[#2D1E6B]">{stats.progress}%</span>
         </div>
-        <Progress value={stats.progress} className="h-4 bg-gray-100" />
+        <Progress value={stats.progress} className="h-4 bg-gray-100" indicatorClassName={stats.progress >= 100 ? 'bg-[#1D9E75]' : 'bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD]'} />
         <div className="flex justify-between text-xs font-bold text-[#64748B] uppercase tracking-widest">
           <span>0 Respostas</span>
           <span>{project.sampleSize} Respondentes (Meta)</span>
