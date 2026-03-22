@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadDB, addProject, deleteProject } from '@/lib/surveyForgeDB';
+import { useAuth } from '@/contexts/AuthContext';
+import { loadDB, addProject, deleteProject, getProjectsByUser } from '@/lib/surveyForgeDB';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import { HealthThermometer } from '@/components/projects/HealthThermometer';
 import { FolderOpen, Plus, Search, MoreVertical, Trash2, Edit3, BarChart3 } from 'lucide-react';
@@ -49,6 +50,7 @@ const PILARES = ['DISCOVER', 'BRAND', 'INNOVATE', 'DECIDE', 'EXPERIENCE', 'ANALY
 
 export default function ProjetosPage() {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [db, setDb] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,26 +74,26 @@ export default function ProjetosPage() {
   }, []);
 
   const filteredProjects = useMemo(() => {
-    if (!db) return [];
-    return db.projects
+    if (!db || !profile) return [];
+    const userProjects = getProjectsByUser(user?.id, profile.role);
+    return userProjects
       .filter(
         (p: any) =>
           p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (p.objective || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
       .sort((a: any, b: any) => {
-        // Sort by creation date descending
         try {
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         } catch {
           return 0;
         }
       });
-  }, [db, searchTerm]);
+  }, [db, searchTerm, profile, user?.id]);
 
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.sampleSize || !formData.pilar) {
+    if (!formData.name || !formData.sampleSize || !formData.pilar || !user?.id) {
       toast.error('Preencha todos os campos obrigatórios.');
       return;
     }
@@ -101,7 +103,7 @@ export default function ProjetosPage() {
       sampleSize: parseInt(formData.sampleSize),
       pilar: formData.pilar,
       status: 'Rascunho',
-    });
+    }, user.id);
     setDb(loadDB());
     setIsModalOpen(false);
     setFormData({ name: '', objective: '', sampleSize: '', pilar: '' });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { loadDB } from '@/lib/surveyForgeDB';
+import { loadDB, getProjectsByUser } from '@/lib/surveyForgeDB';
 import { StatCard } from '@/components/ui/StatCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
@@ -82,7 +82,7 @@ const DashboardCard = React.memo(({ project, onManage, onInsights }: { project: 
 });
 
 export default function AdminDashboard() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [db, setDb] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -96,31 +96,32 @@ export default function AdminDashboard() {
   }, []);
 
   const stats = useMemo(() => {
-    if (!db) return { active: 0, published: 0, today: 0, complete: 0 };
+    if (!db || !profile) return { active: 0, published: 0, today: 0, complete: 0 };
 
-    const active = db.projects.filter((p: any) => p.status === 'Em Campo').length;
-    const published = db.projects.filter(
+    const userProjects = getProjectsByUser(user?.id, profile.role);
+    const active = userProjects.filter((p: any) => p.status === 'Em Campo').length;
+    const published = userProjects.filter(
       (p: any) => p.status === 'Formulário Pronto' || p.status === 'Em Campo'
     ).length;
 
-    const today = db.projects.reduce((acc: number, p: any) => {
+    const today = userProjects.reduce((acc: number, p: any) => {
       const todayStr = new Date().toISOString().split('T')[0];
       const todayResponses =
         p.responses?.filter((r: any) => r.timestamp?.startsWith(todayStr)).length || 0;
       return acc + todayResponses;
     }, 0);
 
-    const complete = db.projects.filter(
+    const complete = userProjects.filter(
       (p: any) => (p.responses?.length || 0) >= p.sampleSize && p.sampleSize > 0
     ).length;
 
     return { active, published, today, complete };
-  }, [db]);
+  }, [db, profile, user?.id]);
 
-  // Sort projects: analysis ready first, then by date
   const recentProjects = useMemo(() => {
-    if (!db) return [];
-    return [...db.projects]
+    if (!db || !profile) return [];
+    const userProjects = getProjectsByUser(user?.id, profile.role);
+    return [...userProjects]
       .sort((a: any, b: any) => {
         const aReady = (a.responses?.length || 0) >= a.sampleSize && a.sampleSize > 0;
         const bReady = (b.responses?.length || 0) >= b.sampleSize && b.sampleSize > 0;
@@ -133,14 +134,14 @@ export default function AdminDashboard() {
         }
       })
       .slice(0, 4);
-  }, [db]);
+  }, [db, profile, user?.id]);
 
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-bold tracking-[0.2em] text-[#1D9E75] uppercase mb-1">PAINEL DO PESQUISADOR</p>
+          <p className="text-xs font-bold tracking-[0.2em] text-[#1D9E75] uppercase mb-1">{profile?.role === 'admin' ? 'PAINEL DO ADMINISTRADOR' : 'PAINEL DO PESQUISADOR'}</p>
           <h1 className="text-3xl font-display font-bold text-[#2D1E6B]">
             Olá, {profile?.name?.split(' ')[0]}
           </h1>
