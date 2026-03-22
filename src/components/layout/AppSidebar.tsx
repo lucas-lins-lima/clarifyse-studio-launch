@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   FileText,
@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import logo from "@/assets/clarifyse-logo.png";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore";
 
 interface SidebarProps {
   userRole?: "admin" | "pesquisador";
@@ -36,7 +37,15 @@ const researcherMenu = [
 const AppSidebar = ({ userRole = "admin" }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const menu = userRole === "admin" ? adminMenu : researcherMenu;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <aside
@@ -45,7 +54,6 @@ const AppSidebar = ({ userRole = "admin" }: SidebarProps) => {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      {/* Logo */}
       <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
         {!collapsed && <img src={logo} alt="Clarifyse" className="h-8" />}
         <button
@@ -56,7 +64,6 @@ const AppSidebar = ({ userRole = "admin" }: SidebarProps) => {
         </button>
       </div>
 
-      {/* Menu */}
       <nav className="flex-1 space-y-1 px-2 py-4">
         {menu.map((item) => {
           const isActive = location.pathname === item.path;
@@ -78,15 +85,17 @@ const AppSidebar = ({ userRole = "admin" }: SidebarProps) => {
         })}
       </nav>
 
-      {/* User / Logout */}
       <div className="border-t border-sidebar-border p-3">
-        {!collapsed && (
+        {!collapsed && currentUser && (
           <div className="mb-2 px-2">
-            <p className="text-sm font-medium text-sidebar-foreground">Administrador</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">admin@clarifyse.com</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">{currentUser.email}</p>
           </div>
         )}
-        <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+        >
           <LogOut size={18} />
           {!collapsed && <span>Sair</span>}
         </button>

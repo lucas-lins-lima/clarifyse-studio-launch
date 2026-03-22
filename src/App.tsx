@@ -4,8 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Login from "./pages/Login";
+import ChangePassword from "./pages/ChangePassword";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
+import CreateProject from "./pages/CreateProject";
+import Researchers from "./pages/Researchers";
+import FormBuilder from "./pages/FormBuilder";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -20,9 +24,13 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/trocar-senha" element={<ChangePassword />} />
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projetos" element={<Projects />} />
+            <Route path="/projetos/novo" element={<CreateProject />} />
+            <Route path="/projetos/:projectId/formulario" element={<FormBuilder />} />
+            <Route path="/pesquisadores" element={<Researchers />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
