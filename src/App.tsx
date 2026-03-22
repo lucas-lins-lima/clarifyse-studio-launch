@@ -11,6 +11,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 // Lazy load pages
 const Login = React.lazy(() => import("./pages/Login"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const ProjetosPage = React.lazy(() => import("./pages/admin/ProjetosPage"));
+const ProjectDetailPage = React.lazy(() => import("./pages/admin/ProjectDetailPage"));
 const AdminConfiguracoes = React.lazy(() => import("./pages/admin/AdminConfiguracoes"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
@@ -47,7 +49,8 @@ const App = () => {
               {/* Protected routes */}
               <Route element={<AppLayout allowedRoles={['admin', 'pesquisador']} />}>
                 <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/projetos" element={<AdminDashboard />} />
+                <Route path="/admin/projetos" element={<ProjetosPage />} />
+                <Route path="/admin/projetos/:id" element={<ProjectDetailPage />} />
                 <Route path="/admin/analises" element={<AdminDashboard />} />
                 <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
               </Route>

@@ -45,6 +45,40 @@ export const getProjectById = (id) => {
   return db.projects.find(p => p.id === id);
 };
 
+export const addProject = (project) => {
+  const db = loadDB();
+  const newProject = {
+    id: Date.now().toString(),
+    responses: [],
+    status: "Rascunho",
+    createdAt: new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"}),
+    lastResponseAt: null,
+    quotas: [],
+    formQuestions: [],
+    ...project
+  };
+  db.projects.push(newProject);
+  saveDB(db);
+  return newProject;
+};
+
+export const updateProject = (id, updates) => {
+  const db = loadDB();
+  const index = db.projects.findIndex(p => p.id === id);
+  if (index !== -1) {
+    db.projects[index] = { ...db.projects[index], ...updates };
+    saveDB(db);
+    return db.projects[index];
+  }
+  return null;
+};
+
+export const deleteProject = (id) => {
+  const db = loadDB();
+  db.projects = db.projects.filter(p => p.id !== id);
+  saveDB(db);
+};
+
 export const addResponse = (projectId, answersObject) => {
   const db = loadDB();
   const projectIndex = db.projects.findIndex(p => p.id === projectId);
