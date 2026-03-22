@@ -14,6 +14,7 @@ const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const ProjetosPage = React.lazy(() => import("./pages/admin/ProjetosPage"));
 const ProjectDetailPage = React.lazy(() => import("./pages/admin/ProjectDetailPage"));
 const AdminConfiguracoes = React.lazy(() => import("./pages/admin/AdminConfiguracoes"));
+const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -55,6 +56,7 @@ const App = () => {
                 <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
               </Route>
 
+              <Route path="/survey/:id" element={<SurveyPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

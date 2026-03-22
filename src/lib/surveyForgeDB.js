@@ -79,17 +79,32 @@ export const deleteProject = (id) => {
   saveDB(db);
 };
 
-export const addResponse = (projectId, answersObject) => {
+export const addResponse = (projectId, responseData) => {
   const db = loadDB();
   const projectIndex = db.projects.findIndex(p => p.id === projectId);
   if (projectIndex !== -1) {
     const now = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"});
-    db.projects[projectIndex].responses.push({
-      id: Date.now().toString(),
+    const newResponse = {
+      id: Math.random().toString(36).substr(2, 9),
       timestamp: now,
-      answers: answersObject
-    });
+      projectId,
+      ...responseData
+    };
+    
+    if (!db.projects[projectIndex].responses) {
+      db.projects[projectIndex].responses = [];
+    }
+    
+    db.projects[projectIndex].responses.push(newResponse);
     db.projects[projectIndex].lastResponseAt = now;
+    
+    // Update status to "Em Campo" if it was "Formulário Pronto"
+    if (db.projects[projectIndex].status === "Formulário Pronto") {
+      db.projects[projectIndex].status = "Em Campo";
+    }
+    
     saveDB(db);
+    return newResponse;
   }
+  return null;
 };

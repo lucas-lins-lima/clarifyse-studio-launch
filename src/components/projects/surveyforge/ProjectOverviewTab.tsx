@@ -17,7 +17,7 @@ export default function ProjectOverviewTab({ project }: { project: any }) {
     toast.success(`${label} copiado para a área de transferência!`);
   };
 
-  const publicLink = `https://seusite.com/survey/${project.id}`;
+  const publicLink = `${window.location.origin}/survey/${project.id}`;
 
   return (
     <div className="space-y-8">

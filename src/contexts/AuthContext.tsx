@@ -26,6 +26,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const MOCK_USERS = [
   {
+    id: 'admin-clarifyse',
+    email: 'clarifysestrategyresearch@gmail.com',
+    password: 'Clarifyse2026!',
+    profile: {
+      id: 'admin-clarifyse',
+      name: 'Admin Clarifyse Strategy',
+      email: 'clarifysestrategyresearch@gmail.com',
+      empresa: 'Clarifyse Strategy & Research',
+      cargo: 'Administrador',
+      role: 'admin' as AppRole,
+      status: 'active'
+    }
+  },
+  {
     id: '1',
     email: 'admin@clarifyse.com',
     password: 'admin',
