@@ -1,0 +1,14 @@
+[
+  {
+    "id": "admin-primary",
+    "name": "Administrador Clarifyse",
+    "email": "clarifysestrategyresearch@gmail.com",
+    "empresa": "Clarifyse",
+    "cargo": "CEO",
+    "role": "admin",
+    "status": "active",
+    "must_change_password": false,
+    "first_access_done": true,
+    "created_at": "2026-03-20T00:00:00Z"
+  }
+]
