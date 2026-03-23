@@ -27,7 +27,7 @@ const SobreAClarifyse = React.lazy(() => import("./pages/cliente/SobreAClarifyse
 const GerenteDashboard = React.lazy(() => import("./pages/gerente/GerenteDashboard"));
 const GerenteFinanceiro = React.lazy(() => import("./pages/gerente/GerenteFinanceiro"));
 
-const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage_BACKEND"));
+const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
