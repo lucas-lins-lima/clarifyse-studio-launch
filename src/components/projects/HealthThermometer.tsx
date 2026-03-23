@@ -62,12 +62,7 @@ const levelConfig = {
   critico:  { color: 'bg-red-500',   label: 'Crítico',   emoji: '🔴', textColor: 'text-red-700' },
 };
 
-export interface FieldProgress {
-  total: number;
-  completed: number;
-  percentage: number;
-  [key: string]: any;
-}
+export type FieldProgress = Record<string, any>;
 
 interface Props {
   project: any;
