@@ -275,7 +275,7 @@ O módulo financeiro implementa a UI completa (calculadora de precificação, di
 
 1. **Ativar Lovable Cloud (Supabase)** — Migrar TODA a persistência de localStorage para banco de dados real. As 14 migrações SQL já existem e cobrem a maioria das tabelas.
 2. **Implementar autenticação real** — Usar Supabase Auth com email/senha e RLS.
-3. **Registrar rotas do cliente e gerente** no App.tsx.
+3. **Corrigir AuthContext** para suportar login de roles `cliente` e `gerente` (rotas já registradas no App.tsx).
 4. **Deployar backend** ou migrar a lógica de formulários públicos para Supabase (recomendado).
 5. **Implementar bloqueio de cotas** — rejeitar respostas quando cota estiver cheia.
 
