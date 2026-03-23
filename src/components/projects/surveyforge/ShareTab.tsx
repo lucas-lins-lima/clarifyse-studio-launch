@@ -9,10 +9,12 @@ interface ShareTabProps {
   project: any;
   onPublish: () => void;
   isLocked: boolean;
+  onProjectUpdate?: (updatedProject: any) => void;
 }
 
-export default function ShareTab({ project, onPublish, isLocked }: ShareTabProps) {
+export default function ShareTab({ project, onPublish, isLocked, onProjectUpdate }: ShareTabProps) {
   const navigate = useNavigate();
+  const [isPublishing, setIsPublishing] = React.useState(false);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -20,6 +22,44 @@ export default function ShareTab({ project, onPublish, isLocked }: ShareTabProps
     }).catch(() => {
       toast.error('Erro ao copiar. Tente manualmente.');
     });
+  };
+
+  const handlePublishToBackend = async () => {
+    if (!project || isPublishing) return;
+    
+    setIsPublishing(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/forms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(project)
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao publicar no backend');
+      }
+
+      const result = await response.json();
+      
+      // Atualizar projeto com publicLink e status do backend
+      const updatedProject = {
+        ...project,
+        publicLink: result.publicLink,
+        status: 'Formulário Pronto'
+      };
+      
+      if (onProjectUpdate) {
+        onProjectUpdate(updatedProject);
+      }
+      
+      toast.success('Formulário publicado no backend com sucesso!');
+    } catch (error) {
+      console.error('Erro ao publicar:', error);
+      toast.error('Erro ao publicar formulário. Verifique a conexão com o backend.');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const publicLink = project.publicLink || `${window.location.origin}/survey/${project.id}`;
@@ -41,10 +81,11 @@ export default function ShareTab({ project, onPublish, isLocked }: ShareTabProps
             </p>
           </div>
           <Button
-            onClick={onPublish}
-            className="bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white rounded-xl px-6 font-bold shadow-lg flex-shrink-0"
+            onClick={handlePublishToBackend}
+            disabled={isPublishing}
+            className="bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white rounded-xl px-6 font-bold shadow-lg flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Play className="h-4 w-4 mr-2" /> Publicar Agora
+            <Play className="h-4 w-4 mr-2" /> {isPublishing ? 'Publicando...' : 'Publicar Agora'}
           </Button>
         </motion.div>
       ) : (

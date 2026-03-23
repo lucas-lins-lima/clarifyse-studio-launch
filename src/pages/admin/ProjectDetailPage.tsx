@@ -285,6 +285,7 @@ export default function ProjectDetailPage() {
               project={project}
               onPublish={handlePublish}
               isLocked={isLocked}
+              onProjectUpdate={handleProjectUpdate}
             />
           </TabsContent>
         </div>

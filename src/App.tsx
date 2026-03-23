@@ -17,7 +17,7 @@ const ProjectDetailPage = React.lazy(() => import("./pages/admin/ProjectDetailPa
 const AdminConfiguracoes = React.lazy(() => import("./pages/admin/AdminConfiguracoes"));
 const InsightsPage = React.lazy(() => import("./pages/admin/InsightsPage"));
 const AdminAnalises = React.lazy(() => import("./pages/admin/AdminAnalises"));
-const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage"));
+const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage_BACKEND"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
