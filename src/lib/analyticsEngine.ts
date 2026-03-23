@@ -1,448 +1,644 @@
-import { mean, median, std, percentile } from 'simple-statistics';
-import { kmeans } from 'ml-kmeans';
-
 /**
- * ✅ FIX: Complete analytics engine for survey data
- * Implements all statistical methods from Clarifyse docs
+ * Motor de Análise Automática - Fase 5
+ * Transforma respostas brutas em insights inteligentes
  */
 
-export interface SurveyResponse {
+export interface AnalysisResponse {
   id: string;
+  timestamp: string;
   answers: Record<string, any>;
-  quotaGroup: string;
-  timeSpentSeconds: number;
+  quotaProfile: Record<string, string>;
+  timeSpent: number;
+  qualityFlag: 'excellent' | 'good' | 'warning' | 'critical';
 }
 
-export interface AnalyticsResult {
-  descriptive: DescriptiveStats;
-  frequencies: FrequencyAnalysis;
-  clustering?: ClusteringResult;
-  segmentation?: SegmentationResult;
-  correlations?: CorrelationMatrix;
-  penalties?: PenaltyAnalysis;
-  npsAnalysis?: NPSAnalysis;
+export interface Question {
+  id: string;
+  question: string;
+  type: string;
+  options?: Array<{ code: string | number; text: string }>;
+  variableCode?: string;
 }
 
-interface DescriptiveStats {
-  [key: string]: {
+export interface QuotaGroup {
+  id: string;
+  name: string;
+  target: number;
+}
+
+export interface Quota {
+  id: string;
+  name: string;
+  type: string;
+  groups: QuotaGroup[];
+  questionId: string;
+}
+
+export interface AnalysisResult {
+  summary: SummaryStats;
+  questionAnalysis: QuestionAnalysis[];
+  crossAnalysis: CrossAnalysis[];
+  qualityScore: number;
+  keyInsights: string[];
+  quotaComparison: QuotaComparison[];
+}
+
+export interface SummaryStats {
+  totalResponses: number;
+  averageTimeSpent: string;
+  qualityRate: number;
+  quotasComplete: number;
+  quotasTotal: number;
+  quotasCompletePercentage: number;
+}
+
+export interface QuestionAnalysis {
+  questionId: string;
+  question: string;
+  type: string;
+  distribution: DistributionItem[];
+  stats?: {
     mean?: number;
     median?: number;
-    std?: number;
-    min?: number;
-    max?: number;
-    q1?: number;
-    q3?: number;
-    count: number;
-    type: 'numeric' | 'categorical' | 'text';
+    stdDev?: number;
+    classification?: string;
+  };
+  topWords?: WordFrequency[];
+}
+
+export interface DistributionItem {
+  label: string;
+  code: string | number;
+  count: number;
+  percentage: number;
+}
+
+export interface WordFrequency {
+  word: string;
+  count: number;
+  percentage: number;
+}
+
+export interface CrossAnalysis {
+  primaryQuestion: string;
+  secondaryQuestion: string;
+  crossTab: CrossTabItem[];
+  significantDifference: boolean;
+  insight: string;
+}
+
+export interface CrossTabItem {
+  primaryValue: string;
+  secondaryValue: string;
+  count: number;
+  percentage: number;
+}
+
+export interface QuotaComparison {
+  quotaName: string;
+  groups: QuotaGroupComparison[];
+  mainInsight: string;
+}
+
+export interface QuotaGroupComparison {
+  groupName: string;
+  targetMet: number;
+  targetTotal: number;
+  percentage: number;
+  topAnswers: Record<string, number>;
+}
+
+/**
+ * Gera insights automáticos a partir das respostas
+ */
+export function generateInsights(
+  responses: AnalysisResponse[],
+  questions: Question[],
+  quotas: Quota[],
+  sampleSize: number
+): AnalysisResult {
+  const summary = generateSummary(responses, quotas, sampleSize);
+  const questionAnalysis = analyzeQuestions(responses, questions);
+  const crossAnalysis = generateCrossAnalysis(responses, questions, questionAnalysis);
+  const qualityScore = calculateQualityScore(responses);
+  const keyInsights = generateKeyInsights(
+    summary,
+    questionAnalysis,
+    crossAnalysis,
+    quotas,
+    responses
+  );
+  const quotaComparison = analyzeQuotaComparison(responses, quotas, questions);
+
+  return {
+    summary,
+    questionAnalysis,
+    crossAnalysis,
+    qualityScore,
+    keyInsights,
+    quotaComparison,
   };
 }
 
-interface FrequencyAnalysis {
-  [key: string]: {
-    [value: string]: {
-      count: number;
-      percentage: number;
-    };
+/**
+ * Gera estatísticas resumidas
+ */
+function generateSummary(
+  responses: AnalysisResponse[],
+  quotas: Quota[],
+  sampleSize: number
+): SummaryStats {
+  const totalResponses = responses.length;
+  const avgTime =
+    totalResponses > 0
+      ? responses.reduce((sum, r) => sum + (r.timeSpent || 0), 0) / totalResponses
+      : 0;
+
+  const qualityFlags = responses.filter(
+    (r) => r.qualityFlag === 'excellent' || r.qualityFlag === 'good'
+  ).length;
+  const qualityRate = totalResponses > 0 ? (qualityFlags / totalResponses) * 100 : 0;
+
+  const quotasTotal = quotas.length;
+  let quotasComplete = 0;
+
+  quotas.forEach((quota) => {
+    const quotaResponses = responses.filter((r) => r.quotaProfile[quota.id]);
+    const allGroupsMet = quota.groups.every((group) => {
+      const groupCount = quotaResponses.filter(
+        (r) => r.quotaProfile[quota.id] === group.id
+      ).length;
+      return groupCount >= group.target;
+    });
+    if (allGroupsMet) quotasComplete++;
+  });
+
+  return {
+    totalResponses,
+    averageTimeSpent: formatTime(avgTime),
+    qualityRate: Math.round(qualityRate),
+    quotasComplete,
+    quotasTotal,
+    quotasCompletePercentage: quotasTotal > 0 ? Math.round((quotasComplete / quotasTotal) * 100) : 0,
   };
 }
 
-interface ClusteringResult {
-  clusters: Array<{
-    id: number;
-    centroid: number[];
-    members: string[];
-    size: number;
-  }>; 
-  silhouetteScore: number;
-}
+/**
+ * Analisa cada pergunta individualmente
+ */
+function analyzeQuestions(
+  responses: AnalysisResponse[],
+  questions: Question[]
+): QuestionAnalysis[] {
+  return questions.map((question) => {
+    // Usar variableCode se disponível, caso contrário usar id
+    const answerKey = question.variableCode || question.id;
+    const answers = responses
+      .map((r) => r.answers[answerKey] ?? r.answers[question.id])
+      .filter((a) => a !== undefined && a !== null);
 
-interface SegmentationResult {
-  [segmentName: string]: {
-    count: number;
-    percentage: number;
-    characteristics: Record<string, any>;
-  };
-}
-
-interface CorrelationMatrix {
-  [key1: string]: {
-    [key2: string]: number;
-  };
-}
-
-interface PenaltyAnalysis {
-  [attributeName: string]: {
-    overall: number;
-    attributeRating: number;
-    penalty: number;
-    importance: number;
-  };
-}
-
-interface NPSAnalysis {
-  npsScore: number;
-  promoters: number;
-  passives: number;
-  detractors: number;
-  promotersPercentage: number;
-  passivesPercentage: number;
-  detractorsPercentage: number;
-  topReasons: { category: string; count: number }[];
-}
-
-// ============================================================================
-// DESCRIPTIVE STATISTICS
-// ============================================================================
-
-function calculateDescriptiveStats(
-  responses: SurveyResponse[],
-  questionType: 'numeric' | 'categorical' | 'text' = 'numeric'
-): DescriptiveStats {
-  const stats: DescriptiveStats = {};
-
-  Object.entries(responses[0]?.answers || {}).forEach(([key]) => {
-    const values = responses
-      .map(r => r.answers[key])
-      .filter(v => v !== undefined && v !== null);
-
-    if (questionType === 'numeric') {
-      const numValues = values.filter(v => !isNaN(Number(v))).map(Number);
-
-      if (numValues.length > 0) {
-        stats[key] = {
-          mean: mean(numValues),
-          median: median(numValues),
-          std: std(numValues),
-          min: Math.min(...numValues),
-          max: Math.max(...numValues),
-          q1: percentile(numValues, 0.25),
-          q3: percentile(numValues, 0.75),
-          count: numValues.length,
-          type: 'numeric',
-        };
-      }
-    } else if (questionType === 'categorical') {
-      stats[key] = {
-        count: values.length,
-        type: 'categorical',
+    if (question.type === 'single' || question.type === 'multiple') {
+      return analyzeClosedQuestion(question, answers);
+    } else if (
+      question.type === 'likert' ||
+      question.type === 'nps' ||
+      question.type === 'rating'
+    ) {
+      return analyzeScaleQuestion(question, answers);
+    } else if (question.type === 'text' || question.type === 'textarea') {
+      return analyzeOpenQuestion(question, answers);
+    } else {
+      return {
+        questionId: question.id,
+        question: question.question,
+        type: question.type,
+        distribution: [],
       };
     }
   });
-
-  return stats;
 }
 
-// ============================================================================
-// FREQUENCY ANALYSIS
-// ============================================================================
+/**
+ * Analisa perguntas fechadas (single/multiple choice)
+ */
+function analyzeClosedQuestion(
+  question: Question,
+  answers: any[]
+): QuestionAnalysis {
+  const distribution: Record<string, number> = {};
+  const optionLabels: Record<string, string> = {};
 
-function calculateFrequencies(responses: SurveyResponse[]): FrequencyAnalysis {
-  const frequencies: FrequencyAnalysis = {};
-
-  Object.entries(responses[0]?.answers || {}).forEach(([key]) => {
-    const valueCounts: Record<string, number> = {};
-
-    responses.forEach(r => {
-      const value = String(r.answers[key]);
-      valueCounts[value] = (valueCounts[value] || 0) + 1;
-    });
-
-    frequencies[key] = {};
-    const total = responses.length;
-
-    Object.entries(valueCounts).forEach(([value, count]) => {
-      frequencies[key][value] = {
-        count,
-        percentage: (count / total) * 100,
-      };
-    });
+  // Mapear opções
+  (question.options || []).forEach((opt) => {
+    const code = String(opt.code);
+    optionLabels[code] = opt.text;
+    distribution[code] = 0;
   });
 
-  return frequencies;
+  // Contar respostas
+  answers.forEach((answer) => {
+    if (Array.isArray(answer)) {
+      // Multiple choice
+      answer.forEach((a) => {
+        const code = String(a);
+        if (code in distribution) distribution[code]++;
+      });
+    } else {
+      // Single choice
+      const code = String(answer);
+      if (code in distribution) distribution[code]++;
+    }
+  });
+
+  const total = answers.length;
+  const distributionArray = Object.entries(distribution)
+    .map(([code, count]) => ({
+      label: optionLabels[code] || code,
+      code,
+      count,
+      percentage: total > 0 ? (count / total) * 100 : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    questionId: question.id,
+    question: question.question,
+    type: question.type,
+    distribution: distributionArray,
+  };
 }
 
-// ============================================================================
-// CLUSTERING ANALYSIS
-// ============================================================================
-
-function performClustering(
-  responses: SurveyResponse[],
-  k: number = 3
-): ClusteringResult {
-  const data = responses.map(r => {
-    const values: number[] = [];
-    Object.values(r.answers).forEach(v => {
-      if (typeof v === 'number') {
-        values.push(v);
-      } else if (v === true) {
-        values.push(1);
-      } else if (v === false) {
-        values.push(0);
+/**
+ * Analisa perguntas em escala (Likert, NPS, Rating)
+ */
+function analyzeScaleQuestion(
+  question: Question,
+  answers: any[]
+): QuestionAnalysis {
+  const numericAnswers = answers
+    .map((a) => {
+      if (typeof a === 'number') return a;
+      if (typeof a === 'string') {
+        const num = parseInt(a);
+        return isNaN(num) ? null : num;
       }
-    });
-    return values;
+      return null;
+    })
+    .filter((a) => a !== null) as number[];
+
+  if (numericAnswers.length === 0) {
+    return {
+      questionId: question.id,
+      question: question.question,
+      type: question.type,
+      distribution: [],
+    };
+  }
+
+  const mean = numericAnswers.reduce((a, b) => a + b, 0) / numericAnswers.length;
+  const sorted = [...numericAnswers].sort((a, b) => a - b);
+  const median =
+    sorted.length % 2 === 0
+      ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+      : sorted[Math.floor(sorted.length / 2)];
+
+  const variance =
+    numericAnswers.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    numericAnswers.length;
+  const stdDev = Math.sqrt(variance);
+
+  // Classificação automática
+  let classification = 'Regular';
+  if (mean >= 8) classification = 'Forte';
+  else if (mean >= 5) classification = 'Regular';
+  else classification = 'Crítico';
+
+  // Distribuição por faixa
+  const distribution: Record<number, number> = {};
+  numericAnswers.forEach((val) => {
+    distribution[val] = (distribution[val] || 0) + 1;
   });
 
-  const result = kmeans(data, k);
-  const { clusters, centroids } = result;
+  const distributionArray = Object.entries(distribution)
+    .map(([value, count]) => ({
+      label: `${value}`,
+      code: value,
+      count,
+      percentage: (count / numericAnswers.length) * 100,
+    }))
+    .sort((a, b) => Number(a.code) - Number(b.code));
 
-  let silhouetteSum = 0;
-  clusters.forEach((cluster, idx) => {
-    cluster.forEach(pointIdx => {
-      const point = data[pointIdx];
-      const centroid = centroids[idx];
+  return {
+    questionId: question.id,
+    question: question.question,
+    type: question.type,
+    distribution: distributionArray,
+    stats: {
+      mean: Math.round(mean * 100) / 100,
+      median: Math.round(median * 100) / 100,
+      stdDev: Math.round(stdDev * 100) / 100,
+      classification,
+    },
+  };
+}
 
-      const inClusterDist = Math.sqrt(
-        point.reduce((sum, v, i) => sum + Math.pow(v - centroid[i], 2), 0)
+/**
+ * Analisa perguntas abertas (texto)
+ */
+function analyzeOpenQuestion(
+  question: Question,
+  answers: any[]
+): QuestionAnalysis {
+  const textAnswers = answers.filter((a) => typeof a === 'string');
+
+  if (textAnswers.length === 0) {
+    return {
+      questionId: question.id,
+      question: question.question,
+      type: question.type,
+      distribution: [],
+    };
+  }
+
+  // Extrair palavras mais frequentes
+  const wordFreq: Record<string, number> = {};
+  const stopWords = new Set([
+    'o',
+    'a',
+    'de',
+    'para',
+    'com',
+    'em',
+    'é',
+    'e',
+    'que',
+    'do',
+    'da',
+    'os',
+    'as',
+    'um',
+    'uma',
+    'por',
+    'ou',
+    'ao',
+    'aos',
+    'à',
+    'às',
+  ]);
+
+  textAnswers.forEach((text) => {
+    const words = text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !stopWords.has(w));
+
+    words.forEach((word) => {
+      wordFreq[word] = (wordFreq[word] || 0) + 1;
+    });
+  });
+
+  const topWords = Object.entries(wordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([word, count]) => ({
+      word,
+      count,
+      percentage: (count / textAnswers.length) * 100,
+    }));
+
+  return {
+    questionId: question.id,
+    question: question.question,
+    type: question.type,
+    distribution: [],
+    topWords,
+  };
+}
+
+/**
+ * Gera análise cruzada entre perguntas
+ */
+function generateCrossAnalysis(
+  responses: AnalysisResponse[],
+  questions: Question[],
+  questionAnalysis: QuestionAnalysis[]
+): CrossAnalysis[] {
+  const crossAnalyses: CrossAnalysis[] = [];
+
+  // Selecionar perguntas fechadas para cruzamento
+  const closedQuestions = questions.filter(
+    (q) => q.type === 'single' || q.type === 'multiple'
+  );
+
+  if (closedQuestions.length < 2) return [];
+
+  // Cruzar primeira pergunta com as demais
+  const primary = closedQuestions[0];
+  for (let i = 1; i < Math.min(closedQuestions.length, 3); i++) {
+    const secondary = closedQuestions[i];
+    const crossTab = generateCrossTab(responses, primary, secondary);
+
+    const insight = generateCrossInsight(
+      primary.question,
+      secondary.question,
+      crossTab
+    );
+
+    crossAnalyses.push({
+      primaryQuestion: primary.question,
+      secondaryQuestion: secondary.question,
+      crossTab,
+      significantDifference: true,
+      insight,
+    });
+  }
+
+  return crossAnalyses;
+}
+
+/**
+ * Gera tabela cruzada entre duas perguntas
+ */
+function generateCrossTab(
+  responses: AnalysisResponse[],
+  primary: Question,
+  secondary: Question
+): CrossTabItem[] {
+  const crossTab: Record<string, Record<string, number>> = {};
+
+  responses.forEach((response) => {
+    const primaryKey = primary.variableCode || primary.id;
+    const secondaryKey = secondary.variableCode || secondary.id;
+    const primaryAnswer = String(response.answers[primaryKey] ?? response.answers[primary.id] ?? 'N/A');
+    const secondaryAnswer = String(response.answers[secondaryKey] ?? response.answers[secondary.id] ?? 'N/A');
+
+    if (!crossTab[primaryAnswer]) crossTab[primaryAnswer] = {};
+    crossTab[primaryAnswer][secondaryAnswer] =
+      (crossTab[primaryAnswer][secondaryAnswer] || 0) + 1;
+  });
+
+  const total = responses.length;
+  const result: CrossTabItem[] = [];
+
+  Object.entries(crossTab).forEach(([pValue, sValues]) => {
+    Object.entries(sValues).forEach(([sValue, count]) => {
+      result.push({
+        primaryValue: pValue,
+        secondaryValue: sValue,
+        count,
+        percentage: total > 0 ? (count / total) * 100 : 0,
+      });
+    });
+  });
+
+  return result.sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Gera insight automático para análise cruzada
+ */
+function generateCrossInsight(
+  primaryQuestion: string,
+  secondaryQuestion: string,
+  crossTab: CrossTabItem[]
+): string {
+  if (crossTab.length === 0) return 'Sem dados para análise cruzada.';
+
+  const topCombination = crossTab[0];
+  return `A combinação mais frequente é "${topCombination.primaryValue}" com "${topCombination.secondaryValue}" (${Math.round(topCombination.percentage)}% das respostas).`;
+}
+
+/**
+ * Calcula score de qualidade do projeto
+ */
+function calculateQualityScore(responses: AnalysisResponse[]): number {
+  if (responses.length === 0) return 0;
+
+  const excellentCount = responses.filter(
+    (r) => r.qualityFlag === 'excellent'
+  ).length;
+  const goodCount = responses.filter((r) => r.qualityFlag === 'good').length;
+  const warningCount = responses.filter((r) => r.qualityFlag === 'warning').length;
+
+  const score =
+    (excellentCount * 100 + goodCount * 75 + warningCount * 50) / responses.length;
+  return Math.round(score);
+}
+
+/**
+ * Gera insights automáticos em linguagem natural
+ */
+function generateKeyInsights(
+  summary: SummaryStats,
+  questionAnalysis: QuestionAnalysis[],
+  crossAnalysis: CrossAnalysis[],
+  quotas: Quota[],
+  responses: AnalysisResponse[]
+): string[] {
+  const insights: string[] = [];
+
+  // Insight sobre amostra
+  insights.push(
+    `Total de ${summary.totalResponses} respostas coletadas com tempo médio de ${summary.averageTimeSpent}.`
+  );
+
+  // Insight sobre qualidade
+  if (summary.qualityRate >= 90) {
+    insights.push(`Excelente qualidade de dados: ${summary.qualityRate}% das respostas estão em bom estado.`);
+  } else if (summary.qualityRate >= 75) {
+    insights.push(`Qualidade de dados satisfatória: ${summary.qualityRate}% das respostas validadas.`);
+  } else {
+    insights.push(`Atenção: Apenas ${summary.qualityRate}% das respostas passaram na validação de qualidade.`);
+  }
+
+  // Insight sobre cotas
+  if (summary.quotasCompletePercentage === 100) {
+    insights.push('Todas as cotas foram atingidas com sucesso!');
+  } else if (summary.quotasCompletePercentage >= 75) {
+    insights.push(`${summary.quotasCompletePercentage}% das cotas foram completadas.`);
+  }
+
+  // Insights sobre perguntas principais
+  questionAnalysis.slice(0, 3).forEach((qa) => {
+    if (qa.distribution.length > 0) {
+      const top = qa.distribution[0];
+      insights.push(
+        `Na pergunta "${qa.question}": "${top.label}" é a resposta mais frequente (${Math.round(top.percentage)}%).`
+      );
+    }
+    if (qa.stats && qa.stats.classification) {
+      insights.push(
+        `Nível geral de satisfação: ${qa.stats.classification.toLowerCase()} (média: ${qa.stats.mean}).`
+      );
+    }
+  });
+
+  // Insights sobre análise cruzada
+  crossAnalysis.slice(0, 2).forEach((ca) => {
+    insights.push(ca.insight);
+  });
+
+  return insights.slice(0, 8); // Limitar a 8 insights principais
+}
+
+/**
+ * Analisa comparação entre grupos de cotas
+ */
+function analyzeQuotaComparison(
+  responses: AnalysisResponse[],
+  quotas: Quota[],
+  questions: Question[]
+): QuotaComparison[] {
+  return quotas.map((quota) => {
+    const groups = quota.groups.map((group) => {
+      // Filtrar respostas pelo nome do grupo (campo quotaGroup salvo no banco)
+      const groupResponses = responses.filter(
+        (r) => (r as any).quotaGroup === group.name
       );
 
-      let minOutClusterDist = Infinity;
-      centroids.forEach((otherCentroid, otherIdx) => {
-        if (otherIdx !== idx) {
-          const dist = Math.sqrt(
-            point.reduce((sum, v, i) => sum + Math.pow(v - otherCentroid[i], 2), 0)
-          );
-          minOutClusterDist = Math.min(minOutClusterDist, dist);
+      // Encontrar respostas mais frequentes para este grupo
+      const topAnswers: Record<string, number> = {};
+      groupResponses.forEach((resp) => {
+        // Pegar primeira pergunta como exemplo
+        const firstQuestion = questions[0];
+        if (firstQuestion) {
+          const answerKey = firstQuestion.variableCode || firstQuestion.id;
+          const rawAnswer = resp.answers[answerKey] ?? resp.answers[firstQuestion.id];
+          if (rawAnswer !== undefined && rawAnswer !== null) {
+            const answer = String(rawAnswer);
+            topAnswers[answer] = (topAnswers[answer] || 0) + 1;
+          }
         }
       });
 
-      const silhouette =
-        (minOutClusterDist - inClusterDist) / Math.max(inClusterDist, minOutClusterDist);
-      silhouetteSum += silhouette;
-    });
-  });
-
-  const silhouetteScore = silhouetteSum / data.length;
-
-  const formattedClusters = clusters.map((cluster, idx) => ({
-    id: idx,
-    centroid: centroids[idx],
-    members: cluster.map(i => responses[i].id),
-    size: cluster.length,
-  }));
-
-  return {
-    clusters: formattedClusters,
-    silhouetteScore,
-  };
-}
-
-// ============================================================================
-// SEGMENTATION
-// ============================================================================
-
-function performSegmentation(
-  responses: SurveyResponse[]
-): SegmentationResult {
-  const clustering = performClustering(responses, 3);
-  const segmentation: SegmentationResult = {};
-
-  clustering.clusters.forEach(cluster => {
-    const clusterResponses = responses.filter(r =>
-      cluster.members.includes(r.id)
-    );
-
-    const characteristics: Record<string, any> = {};
-
-    Object.entries(clusterResponses[0]?.answers || {}).forEach(([key]) => {
-      const values = clusterResponses
-        .map(r => r.answers[key])
-        .filter(v => v !== undefined);
-
-      if (values.length > 0 && typeof values[0] === 'number') {
-        characteristics[key] = mean(values.map(Number));
-      }
+      return {
+        groupName: group.name,
+        targetMet: groupResponses.length,
+        targetTotal: group.target,
+        percentage:
+          group.target > 0
+            ? Math.round((groupResponses.length / group.target) * 100)
+            : 0,
+        topAnswers,
+      };
     });
 
-    segmentation[`Segmento ${cluster.id + 1}`] = {
-      count: cluster.size,
-      percentage: (cluster.size / responses.length) * 100,
-      characteristics,
-    };
-  });
+    const mainInsight = `${quota.name}: ${groups.filter((g) => g.targetMet >= g.targetTotal).length}/${groups.length} grupos atingiram meta.`;
 
-  return segmentation;
-}
-
-// ============================================================================
-// CORRELATION ANALYSIS
-// ============================================================================
-
-function calculateCorrelations(responses: SurveyResponse[]): CorrelationMatrix {
-  const correlations: CorrelationMatrix = {};
-
-  const numericKeys = Object.keys(responses[0]?.answers || {}).filter(key => {
-    return responses.every(r => typeof r.answers[key] === 'number');
-  });
-
-  numericKeys.forEach(key1 => {
-    correlations[key1] = {};
-
-    numericKeys.forEach(key2 => {
-      if (key1 === key2) {
-        correlations[key1][key2] = 1;
-      } else if (!correlations[key2] || !correlations[key2][key1]) {
-        const values1 = responses.map(r => r.answers[key1]);
-        const values2 = responses.map(r => r.answers[key2]);
-
-        const mean1 = mean(values1);
-        const mean2 = mean(values2);
-
-        const numerator = values1.reduce((sum, v, i) => {
-          return sum + (v - mean1) * (values2[i] - mean2);
-        }, 0);
-
-        const denominator = Math.sqrt(
-          values1.reduce((sum, v) => sum + Math.pow(v - mean1, 2), 0) *
-          values2.reduce((sum, v) => sum + Math.pow(v - mean2, 2), 0)
-        );
-
-        correlations[key1][key2] = denominator > 0 ? numerator / denominator : 0;
-      }
-    });
-  });
-
-  return correlations;
-}
-
-// ============================================================================
-// PENALTY ANALYSIS
-// ============================================================================
-
-function calculatePenalties(
-  responses: SurveyResponse[],
-  overallRatingKey: string,
-  attributeKeys: string[]
-): PenaltyAnalysis {
-  const penalties: PenaltyAnalysis = {};
-
-  const overallRatings = responses.map(r => r.answers[overallRatingKey]);
-  const overallMean = mean(overallRatings.filter(v => typeof v === 'number'));
-
-  attributeKeys.forEach(attrKey => {
-    const attributeRatings = responses.map(r => r.answers[attrKey]);
-    const attrMean = mean(attributeRatings.filter(v => typeof v === 'number'));
-
-    const lowRatings = responses.filter(r => r.answers[attrKey] < attrMean);
-    const avgRatingWhenLow = mean(
-      lowRatings
-        .map(r => r.answers[overallRatingKey])
-        .filter(v => typeof v === 'number')
-    );
-
-    const penalty = overallMean - avgRatingWhenLow;
-    const importance = penalty / overallMean;
-
-    penalties[attrKey] = {
-      overall: overallMean,
-      attributeRating: attrMean,
-      penalty: Math.max(0, penalty),
-      importance: Math.max(0, importance),
-    };
-  });
-
-  return penalties;
-}
-
-// ============================================================================
-// NPS ANALYTICS
-// ============================================================================
-
-function calculateNPS(
-  responses: SurveyResponse[],
-  npsKey: string,
-  verbatimKey?: string
-): NPSAnalysis {
-  const scores = responses
-    .map(r => r.answers[npsKey])
-    .filter(v => typeof v === 'number');
-
-  const promoters = scores.filter(s => s >= 9).length;
-  const passives = scores.filter(s => s >= 7 && s <= 8).length;
-  const detractors = scores.filter(s => s < 7).length;
-  const total = scores.length;
-
-  const npsScore = ((promoters - detractors) / total) * 100;
-
-  const topReasons: { category: string; count: number }[] = [];
-
-  if (verbatimKey) {
-    const verbatims = responses
-      .map(r => r.answers[verbatimKey])
-      .filter(v => typeof v === 'string');
-
-    const keywords: Record<string, number> = {};
-
-    verbatims.forEach(text => {
-      const words = text.toLowerCase().split(/\s+/);
-      words.forEach(word => {
-        if (word.length > 3) {
-          keywords[word] = (keywords[word] || 0) + 1;
-        }
-      });
-    });
-
-    Object.entries(keywords)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .forEach(([word, count]) => {
-        topReasons.push({ category: word, count });
-      });
-  }
-
-  return {
-    npsScore,
-    promoters,
-    passives,
-    detractors,
-    promotersPercentage: (promoters / total) * 100,
-    passivesPercentage: (passives / total) * 100,
-    detractorsPercentage: (detractors / total) * 100,
-    topReasons,
-  };
-}
-
-// ============================================================================
-// MAIN ANALYSIS FUNCTION
-// ============================================================================
-
-export function analyzeResponses(
-  responses: SurveyResponse[]
-): AnalyticsResult {
-  if (responses.length === 0) {
     return {
-      descriptive: {},
-      frequencies: {},
+      quotaName: quota.name,
+      groups,
+      mainInsight,
     };
-  }
-
-  const result: AnalyticsResult = {
-    descriptive: calculateDescriptiveStats(responses, 'numeric'),
-    frequencies: calculateFrequencies(responses),
-    correlations: calculateCorrelations(responses),
-  };
-
-  if (responses.length >= 10) {
-    result.clustering = performClustering(responses);
-    result.segmentation = performSegmentation(responses);
-  }
-
-  return result;
+  });
 }
 
-export function generateAnalyticsReport(responses: SurveyResponse[]) {
-  const analysis = analyzeResponses(responses);
-
-  return {
-    totalResponses: responses.length,
-    responseTime: {
-      average: mean(responses.map(r => r.timeSpentSeconds)),
-      median: median(responses.map(r => r.timeSpentSeconds)),
-    },
-    dataQuality: {
-      completeness: 100,
-      duplicates: 0,
-    },
-    ...analysis,
-  };
+/**
+ * Formata tempo em formato legível
+ */
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${minutes}m${secs}s`;
 }
