@@ -478,7 +478,7 @@ export default function SurveyPage() {
               {currentQuestion.type === 'matrix' && (
                 <MatrixQuestion
                   question={currentQuestion}
-                  value={answers[currentQuestion.variableCode]}
+                  answer={answers}
                   onChange={(value) => setAnswers({ ...answers, [currentQuestion.variableCode]: value })}
                 />
               )}
@@ -486,7 +486,7 @@ export default function SurveyPage() {
               {currentQuestion.type === 'file_upload' && (
                 <FileUploadQuestion
                   question={currentQuestion}
-                  value={answers[currentQuestion.variableCode]}
+                  answer={answers}
                   onChange={(value) => setAnswers({ ...answers, [currentQuestion.variableCode]: value })}
                 />
               )}
@@ -494,7 +494,7 @@ export default function SurveyPage() {
               {currentQuestion.type === 'conjoint' && (
                 <ConjointQuestion
                   question={currentQuestion}
-                  value={answers[currentQuestion.variableCode]}
+                  answer={answers}
                   onChange={(value) => setAnswers({ ...answers, [currentQuestion.variableCode]: value })}
                 />
               )}
@@ -502,7 +502,7 @@ export default function SurveyPage() {
               {currentQuestion.type === 'max_diff' && (
                 <MaxDiffQuestion
                   question={currentQuestion}
-                  value={answers[currentQuestion.variableCode]}
+                  answer={answers}
                   onChange={(value) => setAnswers({ ...answers, [currentQuestion.variableCode]: value })}
                 />
               )}
@@ -510,7 +510,7 @@ export default function SurveyPage() {
               {currentQuestion.type === 'image_choice' && (
                 <ImageChoiceQuestion
                   question={currentQuestion}
-                  value={answers[currentQuestion.variableCode]}
+                  answer={answers}
                   onChange={(value) => setAnswers({ ...answers, [currentQuestion.variableCode]: value })}
                 />
               )}

@@ -1,9 +1,9 @@
 import React from 'react';
 
-export type ProjectStatus = "Rascunho" | "Formulário Pronto" | "Em Campo" | "Análise Disponível" | "Encerrado";
+export type ProjectStatus = string;
 
 interface Props {
-  status: ProjectStatus;
+  status: string;
   size?: 'sm' | 'md';
 }
 
