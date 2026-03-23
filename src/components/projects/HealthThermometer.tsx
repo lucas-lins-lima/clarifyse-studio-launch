@@ -62,10 +62,19 @@ const levelConfig = {
   critico:  { color: 'bg-red-500',   label: 'Crítico',   emoji: '🔴', textColor: 'text-red-700' },
 };
 
+export interface FieldProgress {
+  total: number;
+  completed: number;
+  percentage: number;
+}
+
 interface Props {
   project: any;
   showLabel?: boolean;
   showScore?: boolean;
+  clientView?: boolean;
+  scheduleItems?: any[];
+  fieldProgress?: any;
 }
 
 export function HealthThermometer({ project, showLabel = false, showScore = false }: Props) {
