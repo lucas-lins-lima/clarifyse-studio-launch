@@ -1,0 +1,20 @@
+{
+  "responses": [
+    {
+      "id": "resp-1774279653725-c5n6e5lw3",
+      "answers": {
+        "q1": "1"
+      },
+      "quotaGroup": "Geral",
+      "timeSpentSeconds": 10,
+      "submittedAt": "2026-03-23T15:27:33.725Z"
+    }
+  ],
+  "quotaStatus": {
+    "Geral": {
+      "target": 10,
+      "current": 1,
+      "isFull": false
+    }
+  }
+}

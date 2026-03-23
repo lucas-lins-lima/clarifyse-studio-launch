@@ -1,0 +1,26 @@
+{
+  "id": "test-project",
+  "name": "Projeto de Teste",
+  "sampleSize": 10,
+  "formQuestions": [
+    {
+      "id": "q1",
+      "type": "single_choice",
+      "variableCode": "q1",
+      "text": "Você gosta de café?",
+      "options": [
+        {
+          "code": "1",
+          "text": "Sim"
+        },
+        {
+          "code": "2",
+          "text": "Não"
+        }
+      ],
+      "required": true
+    }
+  ],
+  "publishedAt": "2026-03-23T15:27:28.861Z",
+  "status": "Ativo"
+}
