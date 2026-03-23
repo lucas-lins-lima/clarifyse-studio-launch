@@ -28,6 +28,14 @@ const allMenuItems = [
   { title: 'Projetos', url: '/admin/projetos', icon: FolderOpen, roles: ['admin', 'pesquisador'] },
   { title: 'Análises Globais', url: '/admin/analises', icon: BarChart3, roles: ['admin'] },
   { title: 'Configurações', url: '/admin/configuracoes', icon: Settings, roles: ['admin', 'pesquisador'] },
+  
+  // Client items
+  { title: 'Meus Projetos', url: '/cliente', icon: LayoutDashboard, roles: ['cliente'] },
+  { title: 'Sobre a Clarifyse', url: '/cliente/sobre', icon: Settings, roles: ['cliente'] },
+
+  // Manager items
+  { title: 'Dashboard', url: '/gerente', icon: LayoutDashboard, roles: ['gerente'] },
+  { title: 'Financeiro', url: '/gerente/financeiro', icon: BarChart3, roles: ['gerente'] },
 ];
 
 export function AppSidebar() {
@@ -83,7 +91,9 @@ export function AppSidebar() {
           <div className="mb-4 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
             <p className="text-xs font-bold text-white truncate">{profile.name}</p>
             <p className="text-[10px] text-white/50 truncate uppercase tracking-wider mt-0.5">
-              {profile.role === 'admin' ? 'Administrador' : 'Pesquisador'}
+              {profile.role === 'admin' ? 'Administrador' : 
+               profile.role === 'pesquisador' ? 'Pesquisador' :
+               profile.role === 'gerente' ? 'Gerente' : 'Cliente'}
             </p>
           </div>
         )}

@@ -17,6 +17,16 @@ const ProjectDetailPage = React.lazy(() => import("./pages/admin/ProjectDetailPa
 const AdminConfiguracoes = React.lazy(() => import("./pages/admin/AdminConfiguracoes"));
 const InsightsPage = React.lazy(() => import("./pages/admin/InsightsPage"));
 const AdminAnalises = React.lazy(() => import("./pages/admin/AdminAnalises"));
+
+// Client pages
+const ClienteDashboard = React.lazy(() => import("./pages/cliente/ClienteDashboard"));
+const ClienteProjectDetailPage = React.lazy(() => import("./pages/cliente/ClienteProjectDetailPage"));
+const SobreAClarifyse = React.lazy(() => import("./pages/cliente/SobreAClarifyse"));
+
+// Manager pages
+const GerenteDashboard = React.lazy(() => import("./pages/gerente/GerenteDashboard"));
+const GerenteFinanceiro = React.lazy(() => import("./pages/gerente/GerenteFinanceiro"));
+
 const SurveyPage = React.lazy(() => import("./pages/public/SurveyPage_BACKEND"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
@@ -59,6 +69,19 @@ const App = () => {
                 <Route path="/admin/analises" element={<AdminAnalises />} />
                 <Route path="/admin/insights/:id" element={<InsightsPage />} />
                 <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
+              </Route>
+
+              {/* Client routes */}
+              <Route element={<AppLayout allowedRoles={['cliente']} />}>
+                <Route path="/cliente" element={<ClienteDashboard />} />
+                <Route path="/cliente/projetos/:id" element={<ClienteProjectDetailPage />} />
+                <Route path="/cliente/sobre" element={<SobreAClarifyse />} />
+              </Route>
+
+              {/* Manager routes */}
+              <Route element={<AppLayout allowedRoles={['gerente']} />}>
+                <Route path="/gerente" element={<GerenteDashboard />} />
+                <Route path="/gerente/financeiro" element={<GerenteFinanceiro />} />
               </Route>
 
               <Route path="/survey/:id" element={<SurveyPage />} />

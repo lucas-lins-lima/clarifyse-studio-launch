@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authenticateUser, changePassword as dbChangePassword, getUserById } from '@/lib/surveyForgeDB';
 
-export type AppRole = 'admin' | 'pesquisador';
+export type AppRole = 'admin' | 'pesquisador' | 'cliente' | 'gerente';
 
 export interface Profile {
   id: string;

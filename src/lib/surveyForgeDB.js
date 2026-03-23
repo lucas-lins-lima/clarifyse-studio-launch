@@ -97,6 +97,30 @@ const initialData = {
       status: "active",
       requiresPasswordChange: false,
       createdAt: new Date().toISOString()
+    },
+    {
+      id: "gerente-001",
+      email: "gerente@clarifyse.com",
+      passwordHash: simpleHash("gerente123"),
+      name: "Gerente de Projetos",
+      role: "gerente",
+      empresa: "Clarifyse",
+      cargo: "Gerente de Operações",
+      status: "active",
+      requiresPasswordChange: false,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "cliente-001",
+      email: "cliente@exemplo.com",
+      passwordHash: simpleHash("cliente123"),
+      name: "Cliente Exemplo",
+      role: "cliente",
+      empresa: "Empresa Exemplo S.A.",
+      cargo: "Diretor de Marketing",
+      status: "active",
+      requiresPasswordChange: false,
+      createdAt: new Date().toISOString()
     }
   ],
   notifications: []
