@@ -30,10 +30,17 @@ export default function ShareTab({ project, onPublish, isLocked, onProjectUpdate
     setIsPublishing(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      
+      // Limpar respostas locais antes de publicar para o backend
+      const projectToPublish = {
+        ...project,
+        responses: []
+      };
+
       const response = await fetch(`${apiUrl}/api/forms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(project)
+        body: JSON.stringify(projectToPublish)
       });
 
       if (!response.ok) {

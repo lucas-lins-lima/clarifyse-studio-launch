@@ -38,10 +38,10 @@ const handlePublish = useCallback(async () => {
     return;
   }
 
-  try {
-    // 1. Publicar no backend
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/forms`, {
+    try {
+      // 1. Publicar no backend
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/forms`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project)

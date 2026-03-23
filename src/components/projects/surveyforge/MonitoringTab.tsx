@@ -99,21 +99,40 @@ export default function MonitoringTab({ project, onRefresh }: { project: any; on
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Polling for real-time updates
+  // Polling for real-time updates from backend
   useEffect(() => {
-    const updateData = () => {
-      const updatedProject = getProjectById(project.id);
-      if (updatedProject && updatedProject.responses) {
-        const avgTime = updatedProject.responses.length > 0
-          ? updatedProject.responses.reduce((sum: number, r: any) => sum + (r.timeSpentSeconds || 0), 0) / updatedProject.responses.length
-          : 0;
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    
+    const updateData = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/responses/${project.id}`);
+        if (!response.ok) throw new Error('Erro ao buscar respostas do backend');
+        
+        const data = await response.json();
+        
+        if (data.responses) {
+          const avgTime = data.responses.length > 0
+            ? data.responses.reduce((sum: number, r: any) => sum + (r.timeSpentSeconds || 0), 0) / data.responses.length
+            : 0;
 
-        const responsesWithQuality = updatedProject.responses.map((r: any) => ({
-          ...r,
-          qualityFlag: calculateQualityFlag(r, avgTime)
-        }));
+          const responsesWithQuality = data.responses.map((r: any) => ({
+            ...r,
+            timestamp: r.submittedAt, // Mapear submittedAt para timestamp usado no componente
+            qualityFlag: calculateQualityFlag(r, avgTime)
+          }));
 
-        setResponses(responsesWithQuality);
+          setResponses(responsesWithQuality);
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar dados do monitoramento:', error);
+        // Fallback para localStorage se o backend falhar (opcional)
+        const localProject = getProjectById(project.id);
+        if (localProject && localProject.responses) {
+          setResponses(localProject.responses.map((r: any) => ({
+            ...r,
+            qualityFlag: calculateQualityFlag(r, 0)
+          })));
+        }
       }
     };
 

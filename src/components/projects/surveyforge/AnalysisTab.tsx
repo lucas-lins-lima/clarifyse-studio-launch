@@ -28,13 +28,13 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
       return null;
     }
 
-    // Mapear respostas para o formato esperado
+    // Mapear respostas para o formato esperado (suporte a campos do backend)
     const mappedResponses = project.responses.map((r: any) => ({
       id: r.id,
-      timestamp: r.timestamp,
+      timestamp: r.submittedAt || r.timestamp,
       answers: r.answers || {},
-      quotaProfile: r.quotaProfile || {},
-      timeSpent: r.timeSpent || 0,
+      quotaProfile: { [project.quotas?.[0]?.id || 'default']: r.quotaGroup }, // Mapeamento simplificado para o motor de análise
+      timeSpent: r.timeSpentSeconds || r.timeSpent || 0,
       qualityFlag: r.qualityFlag || 'good',
     }));
 
