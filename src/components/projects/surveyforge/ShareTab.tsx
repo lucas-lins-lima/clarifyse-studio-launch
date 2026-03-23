@@ -42,6 +42,10 @@ export default function ShareTab({ project, onPublish, isLocked, onProjectUpdate
 
       const result = await response.json();
       
+      // Importar dinamicamente para evitar problemas de escopo se necessário, 
+      // mas como estamos em um componente React, assumimos que as funções de lib estão disponíveis
+      // via props ou importação direta se o arquivo permitir.
+      
       // Atualizar projeto com publicLink e status do backend
       const updatedProject = {
         ...project,
@@ -49,6 +53,8 @@ export default function ShareTab({ project, onPublish, isLocked, onProjectUpdate
         status: 'Formulário Pronto'
       };
       
+      // Persistir no localStorage para que o admin veja o link e o status atualizado
+      // O ProjectDetailPage já tem handleProjectUpdate que chama updateProject do lib
       if (onProjectUpdate) {
         onProjectUpdate(updatedProject);
       }

@@ -91,8 +91,12 @@ export default function ProjectDetailPage() {
   }, [id, project]);
 
   const handleProjectUpdate = useCallback((updatedProject: any) => {
-    setProject(updatedProject);
-  }, []);
+    if (id) {
+      // Garantir que as mudanças (como publicLink e status) sejam salvas no localStorage
+      updateProject(id, updatedProject);
+      setProject(updatedProject);
+    }
+  }, [id]);
 
   const isAnalysisReady =
     project?.status === 'Análise Disponível' ||

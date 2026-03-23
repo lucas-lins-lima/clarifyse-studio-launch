@@ -205,7 +205,7 @@ app.post('/api/forms', (req, res) => {
     res.json({
       success: true,
       projectId: formData.id,
-      publicLink: `${process.env.API_URL || 'http://localhost:3001'}/survey/${formData.id}`
+      publicLink: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/survey/${formData.id}`
     });
   } catch (error) {
     console.error('Erro ao publicar formulário:', error);
