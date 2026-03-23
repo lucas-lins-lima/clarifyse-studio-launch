@@ -1,0 +1,56 @@
+{
+  "responses": [
+    {
+      "id": "resp-1774277504323-q9rnxcn1u",
+      "answers": {
+        "regiao": "1",
+        "satisfacao_nps": 8
+      },
+      "quotaGroup": "Sudeste",
+      "timeSpentSeconds": 120,
+      "submittedAt": "2026-03-23T14:51:44.323Z"
+    },
+    {
+      "id": "resp-1774277507671-hh036n8s1",
+      "answers": {
+        "regiao": "1",
+        "satisfacao_nps": 8
+      },
+      "quotaGroup": "Sudeste",
+      "timeSpentSeconds": 120,
+      "submittedAt": "2026-03-23T14:51:47.671Z"
+    }
+  ],
+  "quotaStatus": {
+    "Sudeste": {
+      "target": 2,
+      "current": 2,
+      "isFull": true
+    },
+    "Sul": {
+      "target": 2,
+      "current": 0,
+      "isFull": false
+    },
+    "Nordeste": {
+      "target": 2,
+      "current": 0,
+      "isFull": false
+    },
+    "Norte": {
+      "target": 2,
+      "current": 0,
+      "isFull": false
+    },
+    "Centro-Oeste": {
+      "target": 2,
+      "current": 0,
+      "isFull": false
+    },
+    "Geral": {
+      "target": 10,
+      "current": 2,
+      "isFull": false
+    }
+  }
+}
