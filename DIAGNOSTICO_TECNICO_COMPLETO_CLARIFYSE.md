@@ -352,8 +352,8 @@ O caminho mais eficiente é **ativar o Lovable Cloud**, aplicar as migrações e
 | C2 | Bug | 🔴 | Auth | simpleHash = sem segurança | Supabase Auth |
 | C3 | Bug | 🔴 | Survey | Backend localhost em produção | Supabase ou deploy do backend |
 | C4 | Bug | 🔴 | Roles | Client-side role check | RLS + tabela user_roles |
-| C5 | Bug | 🔴 | Portal Cliente | Rotas não registradas | Adicionar rotas no App.tsx |
-| C6 | Bug | 🔴 | Portal Gerente | Rotas não registradas | Adicionar rotas no App.tsx |
+| C5 | Bug | 🟠 | Portal Cliente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role cliente |
+| C6 | Bug | 🟠 | Portal Gerente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role gerente |
 | C7 | Bug | 🔴 | Supabase | Configurado mas não usado | Conectar componentes |
 | C8 | Bug | 🔴 | Edge Functions | Não deployadas | Deploy via Lovable Cloud |
 | A1 | Bug | 🟠 | Cotas | Não bloqueiam | Implementar bloqueio |
