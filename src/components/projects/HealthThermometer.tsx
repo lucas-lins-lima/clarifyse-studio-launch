@@ -66,6 +66,7 @@ export interface FieldProgress {
   total: number;
   completed: number;
   percentage: number;
+  [key: string]: any;
 }
 
 interface Props {
