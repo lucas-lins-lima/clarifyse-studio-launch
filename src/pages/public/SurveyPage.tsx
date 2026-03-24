@@ -268,12 +268,12 @@ export default function SurveyPage() {
   );
 
   if (!project && !loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-4 text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-        <X className="h-16 w-16 text-red-500 mx-auto mb-6" />
-        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Projeto não encontrado</h1>
-        <p className="text-[#64748B] mb-8">O link que você acessou parece estar incorreto ou a pesquisa não está mais disponível.</p>
-        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar ao início</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center" role="alert">
+      <div className="bg-card p-8 rounded-2xl shadow-sm border border-border max-w-md w-full">
+        <X className="h-16 w-16 text-destructive mx-auto mb-6" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Projeto não encontrado</h1>
+        <p className="text-muted-foreground mb-8">O link que você acessou parece estar incorreto ou a pesquisa não está mais disponível.</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-primary text-primary-foreground h-12 rounded-xl">Voltar ao início</Button>
       </div>
     </div>
   );
