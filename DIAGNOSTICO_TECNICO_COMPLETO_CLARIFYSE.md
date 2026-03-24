@@ -233,11 +233,11 @@ O documento lista **30+ métodos estatísticos** que a Clarifyse aplica. O `anal
 
 ### 6.2 Gestão de Cotas (Rigor Metodológico)
 
-O documento exige bloqueio automático de cotas. O sistema:
+O sistema agora apresenta rigor metodológico na gestão de cotas:
 - ✅ Define cotas com grupos e metas
 - ✅ Notifica quando meta é atingida
-- ❌ **NÃO bloqueia** respondentes quando cota está cheia
-- ❌ **NÃO tem** lógica de redirecionamento (screen-out)
+- ✅ **BLOQUEIA** respondentes quando cota está cheia (v2.0)
+- ❌ NÃO tem lógica de redirecionamento (screen-out) para outros links
 
 ### 6.3 Processo de Entrega (Transparência)
 
