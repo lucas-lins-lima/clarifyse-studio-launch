@@ -147,8 +147,8 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 
 | # | Módulo | Bug |
 |---|---|---|
-| M1 | **Login** | A senha padrão do admin é `admin123` com `requiresPasswordChange: false`. Não força troca. |
-| M2 | **Pesquisador** | Senha padrão `pesq123`, também sem troca obrigatória no código de seed. |
+| M1 | **Login** | ✅ Corrigido — Admin agora usa credenciais seguras com `requiresPasswordChange: true`. Força troca no primeiro acesso. |
+| M2 | **Pesquisador** | ✅ Corrigido — Pesquisador agora tem `requiresPasswordChange: true`. |
 | M3 | **Performance** | `loadDB()` faz `JSON.parse()` do localStorage inteiro a cada operação (sem cache). Com muitos projetos, isso causa lag. |
 | M4 | **Timezone** | Nenhuma lógica de timezone `America/Sao_Paulo` implementada. Datas usam `new Date().toISOString()` (UTC). |
 | M5 | **Paginação** | ProjetosPage não implementa paginação real — carrega tudo do localStorage. |
