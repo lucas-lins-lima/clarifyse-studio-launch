@@ -259,7 +259,7 @@ O módulo financeiro implementa a UI completa (calculadora de precificação, di
 
 | # | Problema | Gravidade | Detalhe |
 |---|---|---|---|
-| S1 | **Autenticação simulada** | 🔴 Crítico | `simpleHash()` não é criptografia. Sessão em localStorage manipulável. |
+| S1 | **Autenticação simulada** | 🔴 Crítico | `robustHash()` — simulada, melhor que bitshift, mas ainda inseguro para produção. |
 | S2 | **Roles client-side** | 🔴 Crítico | Roles verificadas apenas no frontend. Sem RLS, sem backend validation. |
 | S3 | **Sem HTTPS enforcement** | 🔴 Crítico | O backend Express não configura HTTPS. |
 | S4 | **CORS aberto** | 🟠 Alto | Backend Express aceita requisições de localhost apenas, mas sem proteção em produção. |
