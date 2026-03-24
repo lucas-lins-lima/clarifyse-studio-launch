@@ -333,7 +333,7 @@ O **Clarifyse SurveyForge** e o **Portal Insights** representam um projeto ambic
 | ID | Tipo | Gravidade | Módulo | Descrição | Recomendação |
 |---|---|---|---|---|---|
 | C1 | Bug | 🔴 | Persistência | localStorage = perda de dados | Migrar para Supabase |
-| C2 | Bug | 🔴 | Auth | simpleHash = sem segurança | Supabase Auth |
+| C2 | Bug | 🟠 | Auth | robustHash = melhoria, mas insuficiente | Supabase Auth |
 | C3 | Bug | 🔴 | Survey | Backend localhost em produção | Supabase ou deploy do backend |
 | C4 | Bug | 🔴 | Roles | Client-side role check | RLS + tabela user_roles |
 | C5 | Bug | 🟠 | Portal Cliente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role cliente |
