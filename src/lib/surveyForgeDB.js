@@ -137,11 +137,23 @@ const initialData = {
 // FUNÇÕES DE BANCO DE DADOS
 // ============================================================================
 
+// MEDIUM FIX: Cache em memória para evitar JSON.parse() repetido (performance)
+let dbCache = null;
+let dbCacheTimestamp = 0;
+
 export const loadDB = () => {
   try {
+    // Usar cache se disponível (não expirado)
+    if (dbCache !== null && Date.now() - dbCacheTimestamp < 1000) {
+      // Retornar cópia profunda para evitar mutações
+      return JSON.parse(JSON.stringify(dbCache));
+    }
+
     const data = localStorage.getItem(DB_KEY);
     if (!data) {
       saveDB(initialData);
+      dbCache = JSON.parse(JSON.stringify(initialData));
+      dbCacheTimestamp = Date.now();
       return JSON.parse(JSON.stringify(initialData));
     }
     const parsed = JSON.parse(data);
@@ -173,10 +185,17 @@ export const loadDB = () => {
       needsSave = true;
     }
     if (needsSave) saveDB(parsed);
+
+    // Atualizar cache
+    dbCache = JSON.parse(JSON.stringify(parsed));
+    dbCacheTimestamp = Date.now();
+
     return parsed;
   } catch (err) {
     console.error('Erro ao carregar DB:', err);
     saveDB(initialData);
+    dbCache = JSON.parse(JSON.stringify(initialData));
+    dbCacheTimestamp = Date.now();
     return JSON.parse(JSON.stringify(initialData));
   }
 };
@@ -184,6 +203,9 @@ export const loadDB = () => {
 export const saveDB = (data) => {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(data));
+    // Invalidate cache when data changes
+    dbCache = null;
+    dbCacheTimestamp = 0;
   } catch (err) {
     console.error('Erro ao salvar DB:', err);
   }
