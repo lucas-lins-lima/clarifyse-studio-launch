@@ -203,7 +203,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 |---|---|---|
 | Dashboard admin | ✅ Implementado | Dados localStorage |
 | Gestão de projetos (CRUD) | ✅ Implementado | |
-| Gestão de usuários | ✅ Implementado | Sem Edge Function real |
+| Gestão de usuários | ✅ Implementado | Chamadas para Edge Functions implementadas |
 | Financeiro completo | ✅ UI implementada | Dados mock |
 | KPIs | ✅ UI implementada | Cálculos sobre dados mock |
 | Metas | ✅ UI implementada | |
