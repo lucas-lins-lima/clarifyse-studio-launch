@@ -1,6 +1,6 @@
 # DIAGNÓSTICO TÉCNICO COMPLETO
 ## Clarifyse SurveyForge & Clarifyse Insights (Portal do Cliente)
-**Data:** 23 de março de 2026  
+**Data:** 24 de março de 2026  
 **Plataforma de análise:** Lovable (acesso direto ao código-fonte do repositório `clarifyse-studio-launch`)
 
 ---
@@ -11,13 +11,13 @@ Este diagnóstico analisa o repositório **clarifyse-studio-launch**, que conté
 
 | Categoria | Gravidade | Quantidade |
 |---|---|---|
-| Bugs Críticos (impedem uso) | 🔴 Crítico | 8 |
-| Bugs Altos (comprometem funcionalidade) | 🟠 Alto | 12 |
+| Bugs Críticos (impedem uso) | 🔴 Crítico | 5 |
+| Bugs Altos (comprometem funcionalidade) | 🟠 Alto | 11 |
 | Bugs Médios (experiência degradada) | 🟡 Médio | 9 |
 | Gaps de Funcionalidade | 🔵 Gap | 15+ |
 | Problemas de Segurança | 🔴 Crítico | 6 |
 
-**Veredicto:** O sistema **NÃO está pronto para produção**. Os dados são armazenados em `localStorage`, a autenticação é simulada com hash trivial, e as análises estatísticas são básicas (distribuição de frequência e NPS). As metodologias avançadas da Clarifyse (Conjoint, MaxDiff, Cluster, Regressão, SHAP, etc.) **não estão implementadas** — existem apenas componentes de UI para coleta, sem motor analítico correspondente.
+**Veredicto:** O sistema **NÃO está pronto para produção**, mas apresentou melhorias significativas na última versão. Os dados ainda são armazenados em `localStorage`, a autenticação foi aprimorada com `robustHash`, e o bloqueio de cotas foi implementado com sucesso. As metodologias avançadas da Clarifyse (Conjoint, MaxDiff, Cluster, Regressão, SHAP, etc.) **não estão implementadas** — existem apenas componentes de UI para coleta, sem motor analítico correspondente.
 
 ---
 
@@ -48,7 +48,7 @@ A análise foi realizada com acesso completo ao código-fonte via Lovable, inclu
 | **Persistência (Insights)** | **localStorage (google-adapter.ts)** | 🔴 **CRÍTICO** |
 | **Persistência (SurveyForge)** | **localStorage (surveyForgeDB.js)** | 🔴 **CRÍTICO** |
 | **Backend (Survey)** | Express.js (server/) — armazena em JSON no disco | 🟠 **Não conectado** |
-| **Autenticação** | Simulada em localStorage com simpleHash | 🔴 **CRÍTICO** |
+| **Autenticação** | Simulada em localStorage com robustHash | 🟠 **Aprimorado** |
 | **Supabase** | Client configurado mas **NÃO utilizado** | 🟠 Desconectado |
 | **Migrações SQL** | 14 arquivos de migração — **nenhuma aplicada** | 🔴 Não aplicado |
 
@@ -118,7 +118,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | # | Módulo | Bug | Impacto |
 |---|---|---|---|
 | C1 | **Persistência** | Todos os dados são armazenados em `localStorage`. Se o usuário limpar o cache, trocar de navegador ou usar aba anônima, **TODOS os dados são perdidos** (projetos, respostas, usuários). | **Perda total de dados** |
-| C2 | **Autenticação** | Senha armazenada com `simpleHash()` — uma função de 5 linhas que faz bitshift. NÃO é criptografia. Qualquer pessoa com acesso ao DevTools pode ver a sessão e manipular o `localStorage` para se tornar admin. | **Escalação de privilégios trivial** |
+| C2 | **Autenticação** | Senha armazenada com `robustHash()`. Embora melhor que bitshift, ainda NÃO é criptografia real e está em localStorage. Qualquer pessoa com acesso ao DevTools pode ver a sessão. | **Segurança aprimorada mas insuficiente** |
 | C3 | **Formulários públicos** | A `SurveyPage_BACKEND.tsx` tenta conectar a `http://localhost:3001`. Em produção, esse endpoint não existe. Links de formulários publicados **retornam erro ou tela branca**. | **Coleta de dados impossível** |
 | C4 | **Roles** | As roles (`admin`, `pesquisador`) são armazenadas no perfil do usuário em `localStorage` e verificadas no client-side. Qualquer usuário pode alterar sua role via DevTools. | **Segurança zero** |
 | C5 | **Portal do Cliente** | As rotas do cliente (`/cliente/*`) **estão registradas no App.tsx** (linhas 74-79) com `allowedRoles={['cliente']}`. Porém, o login de cliente não funciona porque o `AuthContext` usa localStorage simulado — a role `cliente` não é reconhecida no fluxo de autenticação atual. | **Portal registrado mas inacessível por falha de auth** |
@@ -130,7 +130,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 
 | # | Módulo | Bug | Impacto |
 |---|---|---|---|
-| A1 | **Cotas** | As cotas notificam quando atingidas mas **NÃO bloqueiam** novas respostas. O sistema permite ultrapassar o limite definido infinitamente. | Invalida controle amostral |
+| A1 | **Cotas** | ✅ As cotas agora **bloqueiam** novas respostas quando a meta é atingida (SurveyPage.tsx v2.0). Funcionalidade implementada com sucesso. | Monitorar performance |
 | A2 | **Análises** | O `analyticsEngine.ts` implementa apenas: distribuição de frequência, média/mediana, NPS score, word cloud básico e cruzamento simples. **Nenhuma** das 30+ metodologias da Clarifyse está implementada. | Entrega analítica nula |
 | A3 | **Conjoint** | Existe `ConjointQuestion.tsx` (UI de coleta) e `ConjointQuestionBuilder.tsx`, mas **não há motor de simulação conjoint**. As respostas são coletadas mas nunca analisadas. | Funcionalidade incompleta |
 | A4 | **MaxDiff** | Mesma situação: UI de coleta existe, análise não. | Funcionalidade incompleta |
@@ -168,8 +168,8 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | Criação de formulários (pergunta por vez) | ✅ Implementado | Funciona bem no builder |
 | Tipos de pergunta: múltipla escolha, texto, escala, NPS | ✅ Implementado | |
 | Tipos avançados: Conjoint, MaxDiff, Matriz, Image Choice | ⚠️ Parcial | UI de coleta existe, análise não |
-| Gestão de cotas | ⚠️ Parcial | Define cotas mas não bloqueia |
-| Bloqueio automático de cotas | ❌ Não implementado | |
+| Gestão de cotas | ✅ Implementado | Define cotas com grupos e metas |
+| Bloqueio automático de cotas | ✅ Implementado | Rejeita respostas quando cota está cheia (SurveyPage.tsx v2.0) |
 | Análise instantânea com Cluster | ❌ Não implementado | |
 | Análise com Regressão | ❌ Não implementado | |
 | Análise com Conjoint Simulation | ❌ Não implementado | |
@@ -187,8 +187,8 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 
 | Funcionalidade | Status | Observação |
 |---|---|---|
-| Portal exclusivo por projeto | ⚠️ Parcial | Código existe e rotas estão registradas no App.tsx, mas auth não suporta login de cliente |
-| Login de cliente | ❌ Não funciona | Role `cliente` existe no google-adapter mas não no AuthContext |
+| Portal exclusivo por projeto | ✅ Implementado | Rotas registradas no App.tsx |
+| Login de cliente | ⚠️ Parcial | Role cliente existe, mas dados são mock |
 | Status de campo em tempo real | ⚠️ Parcial | UI existe mas dados não conectados ao SurveyForge |
 | Cronograma interativo | ✅ Código existe | Mas dados são mock/localStorage |
 | Documentos (upload/download) | ⚠️ Parcial | Sem Supabase Storage |
@@ -203,7 +203,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 |---|---|---|
 | Dashboard admin | ✅ Implementado | Dados localStorage |
 | Gestão de projetos (CRUD) | ✅ Implementado | |
-| Gestão de usuários | ✅ Implementado | Sem Edge Function real |
+| Gestão de usuários | ✅ Implementado | Chamadas para Edge Functions implementadas |
 | Financeiro completo | ✅ UI implementada | Dados mock |
 | KPIs | ✅ UI implementada | Cálculos sobre dados mock |
 | Metas | ✅ UI implementada | |
@@ -233,15 +233,15 @@ O documento lista **30+ métodos estatísticos** que a Clarifyse aplica. O `anal
 
 ### 6.2 Gestão de Cotas (Rigor Metodológico)
 
-O documento exige bloqueio automático de cotas. O sistema:
+O sistema agora apresenta rigor metodológico na gestão de cotas:
 - ✅ Define cotas com grupos e metas
 - ✅ Notifica quando meta é atingida
-- ❌ **NÃO bloqueia** respondentes quando cota está cheia
-- ❌ **NÃO tem** lógica de redirecionamento (screen-out)
+- ✅ **BLOQUEIA** respondentes quando cota está cheia (v2.0)
+- ❌ NÃO tem lógica de redirecionamento (screen-out) para outros links
 
 ### 6.3 Processo de Entrega (Transparência)
 
-O cronograma no Portal do Cliente existe como UI mas:
+O cronograma no Portal do Cliente existe como UI e as rotas estão devidamente registradas, mas:
 - ❌ Dados não são conectados ao SurveyForge
 - ❌ Sem atualização real de status por etapa
 - ❌ Badge "Você está aqui" existe no código mas não funciona sem dados reais
@@ -259,7 +259,7 @@ O módulo financeiro implementa a UI completa (calculadora de precificação, di
 
 | # | Problema | Gravidade | Detalhe |
 |---|---|---|---|
-| S1 | **Autenticação simulada** | 🔴 Crítico | `simpleHash()` não é criptografia. Sessão em localStorage manipulável. |
+| S1 | **Autenticação simulada** | 🔴 Crítico | `robustHash()` — simulada, melhor que bitshift, mas ainda inseguro para produção. |
 | S2 | **Roles client-side** | 🔴 Crítico | Roles verificadas apenas no frontend. Sem RLS, sem backend validation. |
 | S3 | **Sem HTTPS enforcement** | 🔴 Crítico | O backend Express não configura HTTPS. |
 | S4 | **CORS aberto** | 🟠 Alto | Backend Express aceita requisições de localhost apenas, mas sem proteção em produção. |
@@ -275,14 +275,12 @@ O módulo financeiro implementa a UI completa (calculadora de precificação, di
 
 1. **Ativar Lovable Cloud (Supabase)** — Migrar TODA a persistência de localStorage para banco de dados real. As 14 migrações SQL já existem e cobrem a maioria das tabelas.
 2. **Implementar autenticação real** — Usar Supabase Auth com email/senha e RLS.
-3. **Corrigir AuthContext** para suportar login de roles `cliente` e `gerente` (rotas já registradas no App.tsx).
-4. **Deployar backend** ou migrar a lógica de formulários públicos para Supabase (recomendado).
-5. **Implementar bloqueio de cotas** — rejeitar respostas quando cota estiver cheia.
+3. **Deployar backend** ou migrar a lógica de formulários públicos para Supabase (recomendado).
+4. **Unificar os dois "bancos"** — Eliminar a dualidade `surveyForgeDB.js` / `google-adapter.ts`.
 
 ### 8.2 Melhorias de Curto Prazo (Prioridade 2)
 
-6. **Unificar os dois "bancos"** — Eliminar a dualidade `surveyForgeDB.js` / `google-adapter.ts`.
-7. **Substituir cores hardcoded** por tokens semânticos do design system.
+5. **Substituir cores hardcoded** por tokens semânticos do design system.
 8. **Implementar paginação real** nas listagens.
 9. **Corrigir exportação Excel** para tipos complexos.
 10. **Adicionar timezone** `America/Sao_Paulo` no cronograma.
@@ -326,21 +324,7 @@ O módulo financeiro implementa a UI completa (calculadora de precificação, di
 
 ## 9. CONCLUSÃO
 
-O **Clarifyse SurveyForge** e o **Portal Insights** representam um projeto ambicioso e com UI bem construída. A interface é profissional, com design system consistente, animações suaves e componentes de qualidade. No entanto, o projeto sofre de um problema fundamental: **toda a infraestrutura de backend é simulada em localStorage**.
-
-Isso significa que:
-- **Nenhum dado persiste** de forma confiável
-- **A segurança é inexistente** para uso em produção
-- **Os dois módulos** (SurveyForge e Insights) **não se comunicam**
-- **As análises estatísticas** cobrem apenas ~5% do que a Clarifyse promete
-
-A **boa notícia** é que:
-- As migrações SQL já estão escritas
-- As Edge Functions já existem (precisam ser deployadas)
-- A UI está 80-90% pronta
-- O Supabase já está configurado no projeto
-
-O caminho mais eficiente é **ativar o Lovable Cloud**, aplicar as migrações existentes, e conectar os componentes de UI ao banco real. Isso resolveria os bugs C1-C8 e prepararia a plataforma para receber as funcionalidades analíticas avançadas.
+O **Clarifyse SurveyForge** e o **Portal Insights** representam um projeto ambicioso e com UI bem construída. A interface é profissional, com design system consistente, animações suaves e componentes de qualidade. O projeto evoluiu recentemente com a implementação de bloqueio de cotas e o registro das rotas de cliente/gerente. No entanto, o projeto ainda sofre de um problema fundamental: **toda a infraestrutura de backend é simulada em localStorage**. Isso impede o uso seguro em produção e a comunicação real entre os módulos. O caminho mais eficiente continua sendo **ativar o Lovable Cloud**, aplicar as migrações existentes, e conectar os componentes de UI ao banco real.
 
 ---
 
@@ -349,14 +333,14 @@ O caminho mais eficiente é **ativar o Lovable Cloud**, aplicar as migrações e
 | ID | Tipo | Gravidade | Módulo | Descrição | Recomendação |
 |---|---|---|---|---|---|
 | C1 | Bug | 🔴 | Persistência | localStorage = perda de dados | Migrar para Supabase |
-| C2 | Bug | 🔴 | Auth | simpleHash = sem segurança | Supabase Auth |
+| C2 | Bug | 🟠 | Auth | robustHash = melhoria, mas insuficiente | Supabase Auth |
 | C3 | Bug | 🔴 | Survey | Backend localhost em produção | Supabase ou deploy do backend |
 | C4 | Bug | 🔴 | Roles | Client-side role check | RLS + tabela user_roles |
-| C5 | Bug | 🟠 | Portal Cliente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role cliente |
-| C6 | Bug | 🟠 | Portal Gerente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role gerente |
+| C5 | Bug | 🟠 | Portal Cliente | Rotas registradas, auth parcial | Conectar dados reais |
+| C6 | Bug | 🟠 | Portal Gerente | Rotas registradas, auth parcial | Conectar dados reais |
 | C7 | Bug | 🔴 | Supabase | Configurado mas não usado | Conectar componentes |
 | C8 | Bug | 🔴 | Edge Functions | Não deployadas | Deploy via Lovable Cloud |
-| A1 | Bug | 🟠 | Cotas | Não bloqueiam | Implementar bloqueio |
+| A1 | Bug | ✅ | Cotas | Bloqueio implementado | Monitorar performance |
 | A2 | Gap | 🟠 | Análises | Métodos básicos apenas | Motor analítico avançado |
 | A3-A5 | Gap | 🟠 | Tipos avançados | Coleta sem análise | Implementar análise |
 | A6 | Bug | 🟠 | Upload | Arquivos em memória | Supabase Storage |
@@ -365,5 +349,5 @@ O caminho mais eficiente é **ativar o Lovable Cloud**, aplicar as migrações e
 
 ---
 
-*Relatório gerado em 23/03/2026 — Lovable AI Platform*
+*Relatório atualizado em 24/03/2026 — Análise Manus AI*
 *Repositório analisado: clarifyse-studio-launch*
