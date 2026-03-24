@@ -338,10 +338,19 @@ export default function ClienteProjectDetailPage() {
                 </InfoCard>
               )}
               {project.metodologia?.length > 0 && (
-                <InfoCard label="Metodologia">
+                <InfoCard label="Metodologia Principal">
                   <div className="flex flex-wrap gap-1 mt-1">
                     {project.metodologia.map(m => (
                       <span key={m} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{m}</span>
+                    ))}
+                  </div>
+                </InfoCard>
+              )}
+              {project.metodologias_analise && project.metodologias_analise.length > 0 && (
+                <InfoCard label="Metodologias de Análise">
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {project.metodologias_analise.map(m => (
+                      <span key={m} className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{m}</span>
                     ))}
                   </div>
                 </InfoCard>

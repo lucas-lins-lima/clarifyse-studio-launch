@@ -16,15 +16,20 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import {
-  Project, ProjectStatus, ProjectPilar,
+  Project, ProjectStatus, ProjectPilar, SpecificMetodologia,
   PROJECT_STATUS_LIST, PROJECT_PILAR_LIST, METODOLOGIA_OPTIONS, GerenteProfile,
 } from '@/types/project';
+import {
+  ALL_METHODOLOGIES, CATEGORY_LABELS, getAllCategories,
+  getMethodologiesByCategory, CategoryType,
+} from '@/types/methodologies';
 
 interface ProjectFormData {
   nome: string;
   cliente_empresa: string;
   objetivo: string;
   metodologia: string[];
+  metodologias_analise: SpecificMetodologia[];
   pilar: ProjectPilar | '';
   status: ProjectStatus;
   data_inicio: string;
@@ -38,6 +43,7 @@ const emptyForm = (): ProjectFormData => ({
   cliente_empresa: '',
   objetivo: '',
   metodologia: [],
+  metodologias_analise: [],
   pilar: '',
   status: 'Briefing',
   data_inicio: '',
@@ -72,6 +78,7 @@ export function ProjectForm({ open, onClose, project, gerentes, onSuccess }: Pro
           cliente_empresa: project.cliente_empresa ?? '',
           objetivo: project.objetivo ?? '',
           metodologia: project.metodologia ?? [],
+          metodologias_analise: project.metodologias_analise ?? [],
           pilar: project.pilar ?? '',
           status: project.status,
           data_inicio: project.data_inicio ?? '',
@@ -94,6 +101,15 @@ export function ProjectForm({ open, onClose, project, gerentes, onSuccess }: Pro
     }));
   };
 
+  const toggleMetodologiaAnalise = (value: SpecificMetodologia) => {
+    setForm(prev => ({
+      ...prev,
+      metodologias_analise: prev.metodologias_analise.includes(value)
+        ? prev.metodologias_analise.filter(m => m !== value)
+        : [...prev.metodologias_analise, value],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome.trim()) {
@@ -108,6 +124,7 @@ export function ProjectForm({ open, onClose, project, gerentes, onSuccess }: Pro
         cliente_empresa: form.cliente_empresa.trim() || null,
         objetivo: form.objetivo.trim() || null,
         metodologia: form.metodologia,
+        metodologias_analise: form.metodologias_analise,
         pilar: form.pilar || null,
         status: form.status,
         data_inicio: form.data_inicio || null,
@@ -220,7 +237,7 @@ export function ProjectForm({ open, onClose, project, gerentes, onSuccess }: Pro
             />
           </div>
 
-          {/* Metodologia */}
+          {/* Metodologia Principal */}
           <div className="space-y-2">
             <Label>Metodologia Principal</Label>
             <div className="space-y-2">
@@ -236,6 +253,51 @@ export function ProjectForm({ open, onClose, project, gerentes, onSuccess }: Pro
                   </label>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Metodologias de Análise Específicas */}
+          <div className="space-y-2 pt-2 border-t">
+            <Label className="text-sm font-semibold">Metodologias de Análise</Label>
+            <p className="text-xs text-gray-500 mb-3">Selecione as metodologias de análise específicas que serão aplicadas</p>
+            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+              {getAllCategories().map(category => {
+                const methodologiesInCategory = getMethodologiesByCategory(category);
+                const selectedCount = form.metodologias_analise.filter(m => {
+                  const info = ALL_METHODOLOGIES[m as keyof typeof ALL_METHODOLOGIES];
+                  return info && info.category === category;
+                }).length;
+
+                return (
+                  <div key={category} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
+                      <span>{CATEGORY_LABELS[category]}</span>
+                      {selectedCount > 0 && <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">{selectedCount}</span>}
+                    </div>
+                    <div className="space-y-1 ml-2">
+                      {methodologiesInCategory.map(method => {
+                        const methodKey = Object.entries(ALL_METHODOLOGIES).find(([_, v]) => v === method)?.[0] as SpecificMetodologia | undefined;
+                        if (!methodKey) return null;
+
+                        return (
+                          <div key={methodKey} className="flex items-start gap-2">
+                            <Checkbox
+                              id={`meth-${methodKey}`}
+                              checked={form.metodologias_analise.includes(methodKey)}
+                              onCheckedChange={() => toggleMetodologiaAnalise(methodKey)}
+                              className="mt-0.5"
+                            />
+                            <label htmlFor={`meth-${methodKey}`} className="text-xs cursor-pointer select-none flex-1">
+                              <div className="font-medium text-gray-800">{methodKey}</div>
+                              <div className="text-gray-500 text-xs">{method.description}</div>
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

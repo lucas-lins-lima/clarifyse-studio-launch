@@ -6,7 +6,16 @@ import {
   PieChart, Activity, Zap, FileJson, FileSpreadsheet, ArrowRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { generateInsights, AnalysisResult } from '@/lib/analyticsEngine';
+import { generateInsights, AnalysisResult, AnalysisResponse, Question } from '@/lib/analyticsEngine';
+import {
+  analyzeNPS,
+  analyzeImportanceSatisfactionMatrix,
+  analyzePenaltyAttributes,
+  analyzeExpectationGap,
+  analyzeFunnel,
+  analyzeSentiment,
+  calculateCronbachAlpha,
+} from '@/lib/methodologyAnalytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell } from 'recharts';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
