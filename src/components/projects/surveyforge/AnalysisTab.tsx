@@ -21,7 +21,7 @@ interface AnalysisTabProps {
 
 export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabProps) {
   const navigate = useNavigate();
-  const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('json');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'xlsx'>('xlsx');
 
   // Gerar análises
   const analysis = useMemo(() => {
