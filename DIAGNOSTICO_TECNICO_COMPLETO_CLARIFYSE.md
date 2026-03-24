@@ -168,8 +168,8 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | Criação de formulários (pergunta por vez) | ✅ Implementado | Funciona bem no builder |
 | Tipos de pergunta: múltipla escolha, texto, escala, NPS | ✅ Implementado | |
 | Tipos avançados: Conjoint, MaxDiff, Matriz, Image Choice | ⚠️ Parcial | UI de coleta existe, análise não |
-| Gestão de cotas | ⚠️ Parcial | Define cotas mas não bloqueia |
-| Bloqueio automático de cotas | ❌ Não implementado | |
+| Gestão de cotas | ✅ Implementado | Define cotas com grupos e metas |
+| Bloqueio automático de cotas | ✅ Implementado | Rejeita respostas quando cota está cheia (SurveyPage.tsx v2.0) |
 | Análise instantânea com Cluster | ❌ Não implementado | |
 | Análise com Regressão | ❌ Não implementado | |
 | Análise com Conjoint Simulation | ❌ Não implementado | |
