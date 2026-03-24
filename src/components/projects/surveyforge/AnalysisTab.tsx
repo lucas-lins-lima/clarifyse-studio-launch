@@ -10,6 +10,7 @@ import { generateInsights, AnalysisResult } from '@/lib/analyticsEngine';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell } from 'recharts';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 const COLORS = ['#2D1E6B', '#1D9E75', '#7F77DD', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
 
