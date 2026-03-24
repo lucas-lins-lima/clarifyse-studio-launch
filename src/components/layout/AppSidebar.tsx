@@ -71,8 +71,8 @@ export function AppSidebar() {
                       className={({ isActive }) => cn(
                         'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                         isActive
-                          ? 'bg-[#1D9E75] text-white font-semibold shadow-lg shadow-[#1D9E75]/20'
-                          : 'text-white/70 hover:bg-white/10 hover:text-white'
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-lg shadow-sidebar-primary/20'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground'
                       )}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
