@@ -3,7 +3,7 @@
 // Once migrations are applied and types are regenerated, revert these
 // imports back to '@/integrations/supabase/client'.
 
-import { googleDriveAdapter } from '@/integrations/supabase/google-adapter';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const supabase = googleDriveAdapter as any;
+export const supabase = supabaseClient as any;

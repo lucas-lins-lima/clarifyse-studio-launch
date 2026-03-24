@@ -34,6 +34,74 @@ export interface Quota {
   questionId: string;
 }
 
+// ============================================================================
+// ADVANCED ANALYSIS TYPES
+// ============================================================================
+
+export interface ClusterAnalysis {
+  clusterCount: number;
+  clusters: Cluster[];
+  silhouetteScore: number;
+  insight: string;
+}
+
+export interface Cluster {
+  id: number;
+  size: number;
+  centroid: Record<string, number>;
+  members: string[];
+  characteristics: string[];
+}
+
+export interface RegressionAnalysis {
+  dependentVariable: string;
+  independentVariables: string[];
+  rSquared: number;
+  coefficients: Record<string, number>;
+  pValues: Record<string, number>;
+  predictions: RegressionPrediction[];
+  insight: string;
+}
+
+export interface RegressionPrediction {
+  actual: number;
+  predicted: number;
+  residual: number;
+}
+
+export interface ConjointAnalysis {
+  attributes: ConjointAttribute[];
+  utilities: Record<string, number>;
+  relativeImportance: Record<string, number>;
+  scenarios: ConjointScenario[];
+  insight: string;
+}
+
+export interface ConjointAttribute {
+  name: string;
+  levels: string[];
+}
+
+export interface ConjointScenario {
+  name: string;
+  attributes: Record<string, string>;
+  predictedUtility: number;
+}
+
+export interface PenaltyAnalysis {
+  question: string;
+  penalties: PenaltyItem[];
+  recommendedActions: string[];
+  insight: string;
+}
+
+export interface PenaltyItem {
+  level: string;
+  currentPercentage: number;
+  penaltyPoints: number;
+  impact: 'baixo' | 'médio' | 'alto';
+}
+
 export interface AnalysisResult {
   summary: SummaryStats;
   questionAnalysis: QuestionAnalysis[];
@@ -41,6 +109,10 @@ export interface AnalysisResult {
   qualityScore: number;
   keyInsights: string[];
   quotaComparison: QuotaComparison[];
+  clusterAnalysis?: ClusterAnalysis;
+  regressionAnalysis?: RegressionAnalysis;
+  conjointAnalysis?: ConjointAnalysis;
+  penaltyAnalysis?: PenaltyAnalysis;
 }
 
 export interface SummaryStats {

@@ -428,21 +428,69 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
 
 /**
  * Serializa valor complexo para string legível (corrige bug A8)
+ * FIX: Melhor tratamento de tipos complexos (Matriz, Conjoint, MaxDiff)
  */
 function serializeAnswer(value: any): string {
   if (value === null || value === undefined) return '';
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+
+  // Tipos primitivos
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  // Arrays: múltiplas respostas (ex: multiple choice)
   if (Array.isArray(value)) {
-    return value.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join('; ');
+    return value
+      .map(v => {
+        if (typeof v === 'object' && v !== null) {
+          return formatComplexValue(v);
+        }
+        return String(v);
+      })
+      .join('; ');
   }
-  if (typeof value === 'object') {
-    // Matrix: { row1: 'col2', row2: 'col3' }
-    // Conjoint/MaxDiff: structured data
-    const entries = Object.entries(value);
-    if (entries.length === 0) return '';
-    return entries.map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' | ');
+
+  // Objetos: tipos complexos
+  if (typeof value === 'object' && value !== null) {
+    return formatComplexValue(value);
   }
+
   return String(value);
+}
+
+/**
+ * Formata valores complexos de forma legível para Excel
+ */
+function formatComplexValue(obj: any): string {
+  if (typeof obj !== 'object' || obj === null) {
+    return String(obj);
+  }
+
+  const entries = Object.entries(obj);
+  if (entries.length === 0) {
+    return '';
+  }
+
+  // Tipo: Matrix (ex: { row1: 'value', row2: 'value' })
+  const isMatrix = entries.every(([k, v]) => typeof v === 'string' || typeof v === 'number');
+  if (isMatrix && entries.length > 0) {
+    return entries.map(([k, v]) => `${k}: ${v}`).join(' | ');
+  }
+
+  // Tipo: Conjoint/MaxDiff ranking (ex: { items: [...], ranking: [...] })
+  if (obj.ranking && Array.isArray(obj.ranking)) {
+    return `Ranking: ${obj.ranking.join(', ')}${obj.items ? ` (de: ${obj.items.join(', ')})` : ''}`;
+  }
+
+  // Tipo: Resposta com profundidade aninhada
+  return entries
+    .map(([k, v]) => {
+      const formattedValue = typeof v === 'object' && v !== null
+        ? JSON.stringify(v)
+        : String(v);
+      return `${k}: ${formattedValue}`;
+    })
+    .join(' | ');
 }
 
 /**
