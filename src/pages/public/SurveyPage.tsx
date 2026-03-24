@@ -345,35 +345,35 @@ export default function SurveyPage() {
   // Renderização normal do formulário
   if (currentQuestionIndex === -1) {
     return (
-      <div className="min-h-screen bg-[#F1EFE8] flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <main className="max-w-2xl w-full bg-card rounded-2xl shadow-sm border border-border p-8 space-y-8" role="main" aria-label="Início da pesquisa">
           <div className="text-center space-y-4">
             <img src={logo} alt="Clarifyse" className="h-12 mx-auto" />
-            <h1 className="font-display text-3xl font-bold text-[#2D1E6B]">{project.name}</h1>
-            <p className="text-[#64748B]">{project.objective}</p>
+            <h1 className="font-display text-3xl font-bold text-foreground">{project.name}</h1>
+            <p className="text-muted-foreground">{project.objective}</p>
           </div>
 
-          <div className="bg-gradient-to-r from-[#2D1E6B]/5 to-[#1D9E75]/5 rounded-xl p-6 space-y-2">
-            <p className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-widest">Informações da Pesquisa</p>
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-6 space-y-2">
+            <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Informações da Pesquisa</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-[#64748B]">Perguntas</p>
-                <p className="text-lg font-bold text-[#2D1E6B]">{project.formQuestions?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">Perguntas</p>
+                <p className="text-lg font-bold text-foreground">{project.formQuestions?.length || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-[#64748B]">Tempo estimado</p>
-                <p className="text-lg font-bold text-[#2D1E6B]">~5 min</p>
+                <p className="text-xs text-muted-foreground">Tempo estimado</p>
+                <p className="text-lg font-bold text-foreground">~5 min</p>
               </div>
             </div>
           </div>
 
           <Button
             onClick={() => setCurrentQuestionIndex(0)}
-            className="w-full bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white h-12 rounded-xl font-bold text-lg"
+            className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground h-12 rounded-xl font-bold text-lg"
           >
             Começar Pesquisa
           </Button>
-        </div>
+        </main>
       </div>
     );
   }
