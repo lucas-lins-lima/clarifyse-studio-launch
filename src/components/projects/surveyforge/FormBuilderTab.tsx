@@ -4,6 +4,7 @@ import { FileUploadQuestionBuilder } from '@/components/questions/builder/FileUp
 import { ConjointQuestionBuilder } from '@/components/questions/builder/ConjointQuestionBuilder';
 import { MaxDiffQuestionBuilder } from '@/components/questions/builder/MaxDiffQuestionBuilder';
 import { ImageChoiceQuestionBuilder } from '@/components/questions/builder/ImageChoiceQuestionBuilder';
+import { getApplicableMethodologies } from '@/types/methodologies';
 import { Button } from '@/components/ui/button';
 import { 
   Plus, 
@@ -249,8 +250,8 @@ export default function FormBuilderTab({ project, onSave, isLocked }: { project:
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold text-[#64748B]">TIPO DE PERGUNTA</Label>
-                    <Select 
-                      value={activeQuestion.type} 
+                    <Select
+                      value={activeQuestion.type}
                       onValueChange={(v) => handleUpdateQuestion({ type: v })}
                       disabled={isLocked}
                     >
@@ -263,6 +264,23 @@ export default function FormBuilderTab({ project, onSave, isLocked }: { project:
                         ))}
                       </SelectContent>
                     </Select>
+
+                    {/* Applicable Methodologies Badge */}
+                    {activeQuestion.type && (
+                      <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <p className="text-[10px] font-bold text-blue-600 mb-2 uppercase tracking-wider">Metodologias Aplicáveis</p>
+                        <div className="flex flex-wrap gap-1">
+                          {getApplicableMethodologies(activeQuestion.type).map(method => (
+                            <span key={method.code} className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap">
+                              {method.code}
+                            </span>
+                          ))}
+                          {getApplicableMethodologies(activeQuestion.type).length === 0 && (
+                            <span className="text-[10px] text-blue-500 italic">Nenhuma metodologia aplicável para este tipo de pergunta</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

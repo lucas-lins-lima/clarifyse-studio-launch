@@ -36,6 +36,7 @@ export const PROJECT_PILAR_LIST: ProjectPilar[] = [
   'ANALYTICS',
 ];
 
+// Legacy methodology options (for backwards compatibility)
 export const METODOLOGIA_OPTIONS = [
   'Pesquisa Qualitativa',
   'Pesquisa Quantitativa',
@@ -43,12 +44,171 @@ export const METODOLOGIA_OPTIONS = [
   'Ciência de Dados / Analytics',
 ];
 
+// New: Specific analysis methodologies
+export type SpecificMetodologia =
+  // Descritivas
+  | 'Distribuição Percentual e Média'
+  | 'Cruzamento de Perfil'
+  | 'Análise de Quintis e Percentis'
+  | 'Análise de Outliers'
+  | 'Análise de Assimetria e Curtose'
+  | 'Missing Data Analysis'
+  // Comparativas
+  | 'Teste Qui-Quadrado'
+  | 'T-test'
+  | 'ANOVA'
+  | 'Testes Post-Hoc'
+  | 'Mann-Whitney'
+  | 'Kruskal-Wallis'
+  | 'Effect Size'
+  | 'Teste de Proporções'
+  | 'Análise de Variação Temporal'
+  // Preditivas
+  | 'Regressão Linear Múltipla'
+  | 'Regressão Logística'
+  | 'Árvores de Decisão'
+  | 'Random Forest'
+  | 'Gradient Boosting'
+  | 'Ridge, Lasso e Elastic Net'
+  | 'Regressão Quantílica'
+  | 'SVM'
+  | 'KNN'
+  | 'Naïve Bayes'
+  | 'AutoML'
+  // Fatorial
+  | 'PCA'
+  | 'Análise Fatorial Exploratória'
+  | 'Análise de Correspondência'
+  | 'Análise Fatorial Confirmatória'
+  | 'Análise de Bifactor'
+  | 'EFA com Rotação Oblíqua'
+  // Penalty
+  | 'Penalty de Atributos'
+  | 'Análise de Kano'
+  | 'Matriz Importância x Satisfação'
+  | 'Análise de Gap'
+  // Cluster
+  | 'K-means'
+  | 'Clusterização Hierárquica'
+  | 'DBSCAN'
+  | 'Análise de Silhueta'
+  | 'Bootstrap Clustering'
+  // Text
+  | 'Extração de Termos'
+  | 'Análise de Sentimento'
+  | 'Modelagem de Tópicos'
+  | 'Named Entity Recognition'
+  | 'Embeddings Semânticos'
+  | 'Co-ocorrência de Termos'
+  | 'Categorização Automática'
+  // Intenção
+  | 'Cruzamento Intenção x Atributos'
+  | 'Funil de Conversão'
+  | 'Análise de Barreiras'
+  | 'Job-to-be-Done'
+  // Importância
+  | 'Shapley Values'
+  | 'SHAP'
+  | 'LIME'
+  // Conjoint
+  | 'Conjoint Simulation'
+  | 'Choice-Based Conjoint'
+  | 'Adaptive Conjoint'
+  | 'Menu-Based Conjoint'
+  | 'Willingness to Pay'
+  // NPS
+  | 'NPS Aprofundado'
+  | 'NPS Transacional vs. Relacional'
+  | 'Verbatim Mining'
+  | 'NPS por Segmento'
+  // Preço
+  | 'Price Sensitivity Meter'
+  | 'Newton-Miller-Smith'
+  | 'Elasticidade-Preço'
+  | 'Gabor-Granger'
+  // Rede
+  | 'Mapeamento de Conexões'
+  | 'Centralidade de Rede'
+  | 'Detecção de Comunidades'
+  // Sobrevivência
+  | 'Modelagem de Churn'
+  | 'Kaplan-Meier'
+  | 'Cox Proportional Hazards'
+  // MaxDiff
+  | 'MaxDiff Clássico'
+  | 'MaxDiff com Segmentação'
+  | 'Anchored MaxDiff'
+  // Mediação
+  | 'Mediação Simples'
+  | 'Mediação em Série'
+  | 'Moderação'
+  | 'Moderated Mediation'
+  | 'Floodlight Analysis'
+  // SEM
+  | 'SEM Clássico'
+  | 'PLS-SEM'
+  | 'SEM Multigrupo'
+  | 'SEM com Dados de Painel'
+  // Avançada
+  | 'Análise Discriminante'
+  | 'Escalonamento Multidimensional'
+  | 'Análise de Séries Temporais'
+  | 'MANOVA'
+  | 'GEE'
+  | 'Kappa de Cohen'
+  | 'Simulação Monte Carlo'
+  | 'Análise Bayesiana'
+  | 'Logit / Probit Multinomial'
+  | 'Alpha de Cronbach'
+  | 'IRT'
+  | 'Análise de Classes Latentes'
+  | 'Modelos de Mistura Gaussiana'
+  | 'Regressão de Poisson'
+  | 'ICA'
+  | 'Bootstrap e Reamostragem'
+  | 'Análise de Sensibilidade'
+  | 'Modelos Hierárquicos'
+  | 'ROC e AUC'
+  // Causalidade
+  | 'Propensity Score Matching'
+  | 'Difference-in-Differences'
+  | 'Regressão Descontínua'
+  | 'Variáveis Instrumentais'
+  | 'Contrafactual Analysis'
+  // Experiência
+  | 'Customer Effort Score'
+  | 'Customer Satisfaction Score'
+  | 'Momentos da Verdade'
+  | 'Journey Mapping Quantitativo'
+  | 'Análise de Ponto de Inflexão'
+  // Marca
+  | 'Brand Equity Tracking'
+  | 'Brand Personality Mapping'
+  | 'Brand Funnel Analytics'
+  | 'Análise de Atribuição'
+  | 'Self-Congruity'
+  | 'Copy Testing'
+  // Mercado
+  | 'Share of Preference'
+  | 'Análise de Switching'
+  | 'Rivalidade Perceptual'
+  | 'White Space Analysis'
+  | 'Análise de Concentração'
+  // Comportamental
+  | 'A/B Testing'
+  | 'Multi-Armed Bandit'
+  | 'Preferência Revelada vs. Declarada'
+  | 'Behavioral Economics'
+  | 'Eye Tracking'
+  | 'Reaction Time Analysis';
+
 export interface Project {
   id: string;
   nome: string;
   cliente_empresa: string | null;
   objetivo: string | null;
-  metodologia: string[];
+  metodologia: string[]; // Legacy: 'Pesquisa Qualitativa', 'Pesquisa Quantitativa', etc.
+  metodologias_analise?: SpecificMetodologia[]; // New: Specific analysis methodologies
   pilar: ProjectPilar | null;
   status: ProjectStatus;
   data_inicio: string | null;

@@ -666,12 +666,27 @@ export default function ProjectDetailPage() {
               <InfoRow label="Cliente / Empresa" value={project.cliente_empresa} icon={Building2} />
               <InfoRow label="Objetivo do Estudo" value={project.objetivo} icon={Target} />
               <InfoRow
-                label="Metodologia"
+                label="Metodologia Principal"
                 value={project.metodologia?.length
                   ? project.metodologia.join(', ')
                   : null}
                 icon={Layers}
               />
+              {project.metodologias_analise && project.metodologias_analise.length > 0 && (
+                <InfoRow
+                  label="Metodologias de Análise"
+                  value={
+                    <div className="space-y-1">
+                      {project.metodologias_analise.map(m => (
+                        <div key={m} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded inline-block mr-1">
+                          {m}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                  icon={Layers}
+                />
+              )}
               <InfoRow label="Pilar da Clarifyse" value={project.pilar} icon={Layers} />
             </div>
 
