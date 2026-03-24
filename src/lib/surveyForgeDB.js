@@ -108,19 +108,19 @@ const initialData = {
     {
       id: "gerente-001",
       email: "gerente@clarifyse.com",
-      passwordHash: "ecfba551324356e5bd27b548adf36b728783f60d9b573d142caac7baad62be49",
+      passwordHash: robustHash("gerente123"),
       name: "Gerente de Projetos",
       role: "gerente",
       empresa: "Clarifyse",
       cargo: "Gerente de Operações",
       status: "active",
-      requiresPasswordChange: false,
+      requiresPasswordChange: true,
       createdAt: new Date().toISOString()
     },
     {
       id: "cliente-001",
       email: "cliente@exemplo.com",
-      passwordHash: "09a31a7001e261ab1e056182a71d3cf57f582ca9a29cff5eb83be0f0549730a9",
+      passwordHash: robustHash("cliente123"),
       name: "Cliente Exemplo",
       role: "cliente",
       empresa: "Empresa Exemplo S.A.",

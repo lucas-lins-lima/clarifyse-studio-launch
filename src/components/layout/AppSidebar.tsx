@@ -101,7 +101,7 @@ export function AppSidebar() {
           variant="ghost"
           size={collapsed ? 'icon' : 'sm'}
           onClick={signOut}
-          className="w-full text-white/60 hover:text-white hover:bg-white/10 justify-start gap-3 px-4 h-12 rounded-xl"
+          className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10 justify-start gap-3 px-4 h-12 rounded-xl"
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}
