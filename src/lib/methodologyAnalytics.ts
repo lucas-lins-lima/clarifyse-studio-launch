@@ -18,12 +18,15 @@ export interface PenaltyItemAnalysis {
   recommendation: string;
 }
 
+/**
+ * Avalia o quanto a ausência de determinado atributo penaliza a percepção geral,
+ * identificando atributos básicos (must-have) versus diferenciais.
+ */
 export function analyzePenaltyAttributes(
   responses: AnalysisResponse[],
   question: Question,
   satisfactionQuestion: Question
 ): PenaltyItemAnalysis[] {
-  // Extrai dados de um atributo (sim/não ou presente/ausente) e relaciona com satisfação
   const answerKey = question.variableCode || question.id;
   const satKey = satisfactionQuestion.variableCode || satisfactionQuestion.id;
 
@@ -90,6 +93,10 @@ export interface ImportanceSatisfactionItem {
   priority: number;
 }
 
+/**
+ * Quadrante de priorização cruzando importância declarada e avaliação de performance
+ * para identificar gaps críticos que demandam ação imediata versus atributos de manutenção.
+ */
 export function analyzeImportanceSatisfactionMatrix(
   responses: AnalysisResponse[],
   importanceQuestion: Question,
@@ -100,7 +107,6 @@ export function analyzeImportanceSatisfactionMatrix(
 
   const results: ImportanceSatisfactionItem[] = [];
 
-  // Agrupa respostas de importância e satisfação
   const aggregated: Record<string, { importance: number[], satisfaction: number[] }> = {};
 
   responses.forEach(r => {
@@ -124,7 +130,6 @@ export function analyzeImportanceSatisfactionMatrix(
     let quadrant: 'keep' | 'improve' | 'maintain' | 'low_priority' = 'low_priority';
     let priority = 0;
 
-    // Normaliza para escala 0-100
     const normImportance = (importance / 10) * 100;
     const normSatisfaction = (satisfaction / 10) * 100;
 
@@ -133,7 +138,7 @@ export function analyzeImportanceSatisfactionMatrix(
       priority = 1;
     } else if (normImportance > 50 && normSatisfaction <= 50) {
       quadrant = 'improve';
-      priority = 5; // Highest priority
+      priority = 5; 
     } else if (normImportance <= 50 && normSatisfaction > 50) {
       quadrant = 'maintain';
       priority = 2;
@@ -167,6 +172,10 @@ export interface GapAnalysisItem {
   severity: 'critical' | 'high' | 'medium' | 'low' | 'positive';
 }
 
+/**
+ * Comparação entre o que o consumidor espera de uma categoria ou marca e o que efetivamente percebe,
+ * quantificando brechas de entrega que afetam satisfação e fidelização.
+ */
 export function analyzeExpectationGap(
   responses: AnalysisResponse[],
   expectationQuestion: Question,
@@ -236,6 +245,9 @@ export interface FunnelAnalysisResult {
   bottleneck: string;
 }
 
+/**
+ * Mapeamento das etapas de awareness, consideração, intenção e compra para detectar abandonos.
+ */
 export function analyzeFunnel(
   responses: AnalysisResponse[],
   stages: Array<{ name: string; questionId: string; successCode: string | number }>
@@ -275,7 +287,6 @@ export function analyzeFunnel(
 
   result.conversionRate = responses.length > 0 ? (result.totalConverted / responses.length) * 100 : 0;
 
-  // Identifica o estágio com maior abandono
   const bottleneckStage = result.stages.reduce((prev, current) => 
     current.dropoffRate > prev.dropoffRate ? current : prev
   );
@@ -309,6 +320,9 @@ export interface NPSAnalysisResult {
   keyInsights: string[];
 }
 
+/**
+ * Decomposição do NPS por perfil, região, canal e etapa da jornada.
+ */
 export function analyzeNPS(
   responses: AnalysisResponse[],
   npsQuestion: Question,
@@ -341,7 +355,6 @@ export function analyzeNPS(
     keyInsights: [],
   };
 
-  // Segmentação (se disponível)
   if (segmentKey) {
     const segmentMap: Record<string, number[]> = {};
 
@@ -376,7 +389,6 @@ export function analyzeNPS(
     });
   }
 
-  // Insights
   if (overallNPS > 50) {
     result.keyInsights.push('Excelente NPS - Forte lealdade de clientes');
   } else if (overallNPS > 0) {
@@ -420,6 +432,10 @@ const NEGATIVE_WORDS = [
   'insatisfeito', 'reclamação', 'problema', 'lixo', 'nojento'
 ];
 
+/**
+ * Classificação automática do tom emocional de respostas abertas em positivo, neutro ou negativo,
+ * com possibilidade de gradação de intensidade.
+ */
 export function analyzeSentiment(textResponses: string[]): SentimentResult {
   let positiveCount = 0;
   let negativeCount = 0;
@@ -477,6 +493,10 @@ export function analyzeSentiment(textResponses: string[]): SentimentResult {
 // SILHUETA SCORE (Cluster Quality)
 // ============================================================================
 
+/**
+ * Métrica de validação da qualidade e coesão dos clusters formados,
+ * garantindo que o número de segmentos e a solução de agrupamento escolhida são estatisticamente robustos.
+ */
 export function calculateSilhouetteScore(
   data: number[][],
   labels: number[]
@@ -488,13 +508,11 @@ export function calculateSilhouetteScore(
   data.forEach((point, i) => {
     const clusterLabel = labels[i];
     
-    // Calcula distância média para pontos no mesmo cluster (a)
     const sameCluster = data.filter((_, j) => labels[j] === clusterLabel && i !== j);
     const a = sameCluster.length > 0
       ? sameCluster.reduce((sum, other) => sum + euclideanDistance(point, other), 0) / sameCluster.length
       : 0;
 
-    // Calcula distância média para pontos no cluster mais próximo (b)
     const uniqueLabels = Array.from(new Set(labels));
     const otherClusters = uniqueLabels.filter(l => l !== clusterLabel);
     
@@ -528,14 +546,15 @@ function euclideanDistance(point1: number[], point2: number[]): number {
 // CRONBACH'S ALPHA (Internal Consistency)
 // ============================================================================
 
+/**
+ * Medida de consistência interna de escalas e construtos.
+ */
 export function calculateCronbachAlpha(items: number[][]): number {
-  // items: array de respondentes x itens
   if (items.length === 0 || items[0].length < 2) return 0;
 
-  const n = items[0].length; // Número de itens
-  const k = items.length; // Número de respondentes
+  const n = items[0].length; 
+  const k = items.length; 
 
-  // Calcula variância de cada item
   const itemVariances: number[] = [];
   for (let i = 0; i < n; i++) {
     const itemScores = items.map(row => row[i]);
@@ -544,7 +563,6 @@ export function calculateCronbachAlpha(items: number[][]): number {
     itemVariances.push(variance);
   }
 
-  // Calcula variância total
   const totals = items.map(row => row.reduce((a, b) => a + b, 0));
   const meanTotal = totals.reduce((a, b) => a + b, 0) / k;
   const totalVariance = totals.reduce((sum, total) => sum + Math.pow(total - meanTotal, 2), 0) / k;
@@ -553,8 +571,7 @@ export function calculateCronbachAlpha(items: number[][]): number {
 
   if (totalVariance === 0) return 0;
 
-  // Fórmula de Cronbach's Alpha
   const alpha = (n / (n - 1)) * (1 - (sumItemVariances / totalVariance));
 
-  return Math.max(0, Math.min(1, alpha)); // Clamp entre 0 e 1
+  return Math.max(0, Math.min(1, alpha)); 
 }

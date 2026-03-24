@@ -47,160 +47,60 @@ export const METODOLOGIA_OPTIONS = [
 // New: Specific analysis methodologies
 export type SpecificMetodologia =
   // Descritivas
-  | 'Distribuição Percentual e Média'
-  | 'Cruzamento de Perfil'
-  | 'Análise de Quintis e Percentis'
-  | 'Análise de Outliers'
-  | 'Análise de Assimetria e Curtose'
-  | 'Missing Data Analysis'
+  | 'desc_distribuicao_percentual_media'
+  | 'desc_cruzamento_perfil_segmentacao_comportamento'
+  | 'desc_segmentacao_cluster_kmeans'
+  | 'desc_quintis_percentis'
+  | 'desc_outliers_dados_atipicos'
+  | 'desc_assimetria_curtose'
+  | 'desc_missing_data_analysis'
+  | 'desc_vies_resposta_aquiescencia'
   // Comparativas
-  | 'Teste Qui-Quadrado'
-  | 'T-test'
-  | 'ANOVA'
-  | 'Testes Post-Hoc'
-  | 'Mann-Whitney'
-  | 'Kruskal-Wallis'
-  | 'Effect Size'
-  | 'Teste de Proporções'
-  | 'Análise de Variação Temporal'
+  | 'comp_testes_significancia'
+  | 'comp_testes_post_hoc'
+  | 'comp_usuarios_vs_nao_usuarios'
+  | 'comp_mann_whitney_kruskal_wallis'
+  | 'comp_equivalence_tost'
+  | 'comp_effect_size'
+  | 'comp_z_test_proporcoes'
+  | 'comp_variacao_temporal_ondas'
   // Preditivas
-  | 'Regressão Linear Múltipla'
-  | 'Regressão Logística'
-  | 'Árvores de Decisão'
-  | 'Random Forest'
-  | 'Gradient Boosting'
-  | 'Ridge, Lasso e Elastic Net'
-  | 'Regressão Quantílica'
-  | 'SVM'
-  | 'KNN'
-  | 'Naïve Bayes'
-  | 'AutoML'
+  | 'pred_regressao_linear_multipla'
+  | 'pred_regressao_logistica'
+  | 'pred_arvores_decisao_random_forest'
+  | 'pred_gradient_boosting'
+  | 'pred_ridge_lasso_elastic_net'
+  | 'pred_regressao_quantilica'
+  | 'pred_ml_supervisionado'
+  | 'pred_automl'
   // Fatorial
-  | 'PCA'
-  | 'Análise Fatorial Exploratória'
-  | 'Análise de Correspondência'
-  | 'Análise Fatorial Confirmatória'
-  | 'Análise de Bifactor'
-  | 'EFA com Rotação Oblíqua'
+  | 'fact_pca_efa'
+  | 'fact_analise_correspondencia'
+  | 'fact_confirmatory_factor_analysis'
+  | 'fact_bifactor'
+  | 'fact_rotacao_obliqua'
   // Penalty
-  | 'Penalty de Atributos'
-  | 'Análise de Kano'
-  | 'Matriz Importância x Satisfação'
-  | 'Análise de Gap'
+  | 'pen_penalty_atributos'
+  | 'pen_kano'
+  | 'pen_matriz_prioridade'
+  | 'pen_gap_expectativa_realidade'
   // Cluster
-  | 'K-means'
-  | 'Clusterização Hierárquica'
-  | 'DBSCAN'
-  | 'Análise de Silhueta'
-  | 'Bootstrap Clustering'
+  | 'clust_kmeans_hierarquica'
+  | 'clust_dbscan'
+  | 'clust_silhueta_davies_bouldin'
+  | 'clust_bootstrap_stability'
   // Text
-  | 'Extração de Termos'
-  | 'Análise de Sentimento'
-  | 'Modelagem de Tópicos'
-  | 'Named Entity Recognition'
-  | 'Embeddings Semânticos'
-  | 'Co-ocorrência de Termos'
-  | 'Categorização Automática'
+  | 'text_extracao_categorizacao_termos'
+  | 'text_sentiment_analysis'
+  | 'text_topic_modeling'
+  | 'text_named_entity_recognition'
+  | 'text_embeddings_semanticos'
+  | 'text_coocorrencia_termos'
+  | 'text_categorizacao_regras_ml'
   // Intenção
-  | 'Cruzamento Intenção x Atributos'
-  | 'Funil de Conversão'
-  | 'Análise de Barreiras'
-  | 'Job-to-be-Done'
-  // Importância
-  | 'Shapley Values'
-  | 'SHAP'
-  | 'LIME'
-  // Conjoint
-  | 'Conjoint Simulation'
-  | 'Choice-Based Conjoint'
-  | 'Adaptive Conjoint'
-  | 'Menu-Based Conjoint'
-  | 'Willingness to Pay'
-  // NPS
-  | 'NPS Aprofundado'
-  | 'NPS Transacional vs. Relacional'
-  | 'Verbatim Mining'
-  | 'NPS por Segmento'
-  // Preço
-  | 'Price Sensitivity Meter'
-  | 'Newton-Miller-Smith'
-  | 'Elasticidade-Preço'
-  | 'Gabor-Granger'
-  // Rede
-  | 'Mapeamento de Conexões'
-  | 'Centralidade de Rede'
-  | 'Detecção de Comunidades'
-  // Sobrevivência
-  | 'Modelagem de Churn'
-  | 'Kaplan-Meier'
-  | 'Cox Proportional Hazards'
-  // MaxDiff
-  | 'MaxDiff Clássico'
-  | 'MaxDiff com Segmentação'
-  | 'Anchored MaxDiff'
-  // Mediação
-  | 'Mediação Simples'
-  | 'Mediação em Série'
-  | 'Moderação'
-  | 'Moderated Mediation'
-  | 'Floodlight Analysis'
-  // SEM
-  | 'SEM Clássico'
-  | 'PLS-SEM'
-  | 'SEM Multigrupo'
-  | 'SEM com Dados de Painel'
-  // Avançada
-  | 'Análise Discriminante'
-  | 'Escalonamento Multidimensional'
-  | 'Análise de Séries Temporais'
-  | 'MANOVA'
-  | 'GEE'
-  | 'Kappa de Cohen'
-  | 'Simulação Monte Carlo'
-  | 'Análise Bayesiana'
-  | 'Logit / Probit Multinomial'
-  | 'Alpha de Cronbach'
-  | 'IRT'
-  | 'Análise de Classes Latentes'
-  | 'Modelos de Mistura Gaussiana'
-  | 'Regressão de Poisson'
-  | 'ICA'
-  | 'Bootstrap e Reamostragem'
-  | 'Análise de Sensibilidade'
-  | 'Modelos Hierárquicos'
-  | 'ROC e AUC'
-  // Causalidade
-  | 'Propensity Score Matching'
-  | 'Difference-in-Differences'
-  | 'Regressão Descontínua'
-  | 'Variáveis Instrumentais'
-  | 'Contrafactual Analysis'
-  // Experiência
-  | 'Customer Effort Score'
-  | 'Customer Satisfaction Score'
-  | 'Momentos da Verdade'
-  | 'Journey Mapping Quantitativo'
-  | 'Análise de Ponto de Inflexão'
-  // Marca
-  | 'Brand Equity Tracking'
-  | 'Brand Personality Mapping'
-  | 'Brand Funnel Analytics'
-  | 'Análise de Atribuição'
-  | 'Self-Congruity'
-  | 'Copy Testing'
-  // Mercado
-  | 'Share of Preference'
-  | 'Análise de Switching'
-  | 'Rivalidade Perceptual'
-  | 'White Space Analysis'
-  | 'Análise de Concentração'
-  // Comportamental
-  | 'A/B Testing'
-  | 'Multi-Armed Bandit'
-  | 'Preferência Revelada vs. Declarada'
-  | 'Behavioral Economics'
-  | 'Eye Tracking'
-  | 'Reaction Time Analysis';
+  | 'int_intencao_compra_atributos'
+  | 'int_funil_conversao_declarada'
+  | 'int_barreiras_por_tipo';
 
 export interface Project {
   id: string;
@@ -498,23 +398,4 @@ export interface ActivityLog {
   context: string | null;
   ip_address: string | null;
   created_at: string;
-}
-
-export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
-  autenticacao: 'Autenticacao',
-  projetos: 'Projetos',
-  clientes: 'Clientes',
-  gerentes: 'Gerentes',
-  campo: 'Campo',
-  financeiro: 'Financeiro',
-  documentos: 'Documentos',
-  configuracoes: 'Configuracoes',
-  acessos: 'Acessos',
-  nps: 'NPS',
-};
-
-export function getNPSClassification(score: number): { label: string; color: string } {
-  if (score >= 9) return { label: 'Promotor', color: 'bg-green-500' };
-  if (score >= 7) return { label: 'Neutro', color: 'bg-gray-500' };
-  return { label: 'Detrator', color: 'bg-red-500' };
 }
