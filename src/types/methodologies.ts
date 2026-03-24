@@ -7,22 +7,10 @@ export type CategoryType =
   | 'cluster'
   | 'text'
   | 'intencao'
-  | 'importancia'
-  | 'conjoint'
-  | 'nps'
-  | 'preco'
-  | 'rede'
-  | 'sobrevivencia'
-  | 'maxdiff'
-  | 'mediacao'
-  | 'sem'
-  | 'avancada'
   | 'causalidade'
-  | 'experiencia'
-  | 'marca'
-  | 'mercado'
   | 'comportamental'
-  | 'validacao';
+  | 'mercado'
+  | 'valor_cliente';
 
 export interface MethodologyInfo {
   code: string;
@@ -209,6 +197,18 @@ export const METODOLOGIA_PREDITIVA = {
     'Pipeline automatizado de treinamento, validação e comparação de modelos preditivos, garantindo que o modelo de maior performance seja selecionado de forma sistemática e reproduzível.',
     ['single', 'multiple', 'rating', 'likert', 'number']
   ),
+  'Modelos de Redes Neurais e Deep Learning': createMethodology(
+    'pred_redes_neurais_deep_learning',
+    'preditiva',
+    'Modelagem preditiva com arquiteturas profundas (MLP, CNN, Transformers) para capturar interações não lineares e padrões complexos em dados multimodais (texto + imagem + variáveis numéricas), especialmente em previsão de intenção de compra e preferência em alta dimensionalidade.',
+    ['single', 'multiple', 'rating', 'likert', 'number', 'text']
+  ),
+  'Modelos Hierárquicos Bayesianos': createMethodology(
+    'pred_modelos_hierarquicos_bayesianos',
+    'preditiva',
+    'Estimação bayesiana de modelos com estrutura hierárquica, ideal para Conjoint individualizado e segmentação personalizada, incorporando incerteza e priors informativos para maior robustez em amostras médias.',
+    ['single', 'multiple', 'rating', 'likert', 'number']
+  ),
 } as const;
 
 export const METODOLOGIA_FATORIAL = {
@@ -345,7 +345,20 @@ export const METODOLOGIA_TEXT = {
   'Categorização Automática por Regras e ML': createMethodology(
     'text_categorizacao_regras_ml',
     'text',
-    'Classificação de respostas abertas em categorias analíticas predefinidas por meio de modelos supervisionados ou dicionários de regras, permitindo quantificar temas qualitativos em escala.',
+    'Classificação de respostas abertas em categorias predefinidas por meio de modelos supervisionados ou dicionários de regras, permitindo quantificar temas qualitativos em escala.',
+    ['text']
+  ),
+  'Análise de Sentimento Aspect-Based (ABSA)': createMethodology(
+    'text_absa_aspect_based_sentiment',
+    'text',
+    'Identificação automática de sentimentos associados a atributos ou aspectos específicos mencionados em respostas abertas, permitindo análise granular de drivers de satisfação e insatisfação por elemento do produto/serviço.',
+    ['text'],
+    true
+  ),
+  'Análise Assistida por Large Language Models (LLM-assisted Insights)': createMethodology(
+    'text_llm_assisted_insights',
+    'text',
+    'Uso de modelos de linguagem de grande escala para sumarização inteligente, extração de insights temáticos e síntese qualitativa de grandes volumes de verbatims, complementando e acelerando análises tradicionais de NLP.',
     ['text']
   ),
 } as const;
@@ -374,6 +387,169 @@ export const METODOLOGIA_INTENCAO = {
   ),
 } as const;
 
+export const METODOLOGIA_CAUSALIDADE = {
+  'Propensity Score Matching (PSM)': createMethodology(
+    'caus_psm',
+    'causalidade',
+    'Estimativa da probabilidade de adoção e controle de viés de seleção em estudos observacionais.',
+    ['single', 'multiple', 'rating', 'likert', 'number']
+  ),
+  'Difference-in-Differences (DiD)': createMethodology(
+    'caus_did',
+    'causalidade',
+    'Estimação de efeitos causais comparando grupo exposto e controle antes e depois da intervenção.',
+    ['rating', 'likert', 'number']
+  ),
+  'Regressão Descontínua (RDD)': createMethodology(
+    'caus_rdd',
+    'causalidade',
+    'Identificação de efeitos causais em torno de um limiar de corte.',
+    ['number', 'rating']
+  ),
+  'Variáveis Instrumentais (IV)': createMethodology(
+    'caus_iv',
+    'causalidade',
+    'Estimação de relações causais na presença de endogeneidade por meio de instrumentos exógenos.',
+    ['rating', 'likert', 'number']
+  ),
+  'Análise de Contrafactual (Causal Inference / Potential Outcomes)': createMethodology(
+    'caus_contrafactual',
+    'causalidade',
+    'Framework formal de inferência causal baseado em contrafactuais e resultados potenciais.',
+    ['rating', 'likert', 'number']
+  ),
+  'Double Machine Learning (DML)': createMethodology(
+    'caus_double_machine_learning',
+    'causalidade',
+    'Framework de inferência causal que combina machine learning com estimação paramétrica para obter efeitos causais robustos em ambientes de alta dimensionalidade e com muitos confounders não observados.',
+    ['single', 'multiple', 'rating', 'likert', 'number']
+  ),
+  'Synthetic Control Method (SCM)': createMethodology(
+    'caus_synthetic_control_method',
+    'causalidade',
+    'Construção de um grupo controle sintético a partir de combinação ponderada de unidades não tratadas, permitindo avaliação de impacto causal em estudos de caso único ou com poucos períodos (ex.: lançamento regional ou campanha específica).',
+    ['number', 'rating']
+  ),
+} as const;
+
+export const METODOLOGIA_COMPORTAMENTAL = {
+  'A/B Testing e Experimentação Controlada': createMethodology(
+    'behav_ab_testing_experimentacao_controlada',
+    'comportamental',
+    'Desenho e análise de experimentos controlados para testar produto, preço, comunicação ou experiência.',
+    ['single', 'multiple', 'rating', 'likert'],
+    true
+  ),
+  'Multi-Armed Bandit': createMethodology(
+    'behav_multi_armed_bandit',
+    'comportamental',
+    'Otimização dinâmica de variantes em experimentos contínuos com alocação adaptativa.',
+    ['rating', 'likert']
+  ),
+  'Análise de Preferência Revelada vs. Declarada': createMethodology(
+    'behav_preferencia_revelada_vs_declarada',
+    'comportamental',
+    'Comparação entre o que o consumidor declara e o que efetivamente faz.',
+    ['single', 'multiple', 'rating', 'likert'],
+    true
+  ),
+  'Behavioral Economics Analytics': createMethodology(
+    'behav_behavioral_economics_analytics',
+    'comportamental',
+    'Análise de heurísticas e vieses cognitivos que influenciam decisões de compra.',
+    ['rating', 'likert', 'text']
+  ),
+  'Eye Tracking Analytics': createMethodology(
+    'behav_eye_tracking_analytics',
+    'comportamental',
+    'Mensuração quantitativa da atenção visual em embalagem, comunicação ou interface.',
+    ['image_choice']
+  ),
+  'Análise de Tempo de Resposta (Reaction Time Analysis)': createMethodology(
+    'behav_reaction_time_analysis',
+    'comportamental',
+    'Mensuração da latência de resposta em tarefas de associação implícita.',
+    ['single', 'multiple']
+  ),
+  'Teste de Associação Implícita (IAT – Implicit Association Test)': createMethodology(
+    'behav_iat_implicit_association_test',
+    'comportamental',
+    'Mensuração de atitudes e associações automáticas subconscientes por meio de tempos de resposta em tarefas de pareamento, revelando preferências implícitas de marca ou categoria não capturadas por medidas declarativas.',
+    ['single', 'multiple']
+  ),
+  'Mouse Tracking Analytics': createMethodology(
+    'behav_mouse_tracking_analytics',
+    'comportamental',
+    'Análise quantitativa dos movimentos do cursor em questionários online ou protótipos digitais para inferir hesitação, atenção seletiva e processo decisório, complementando eye-tracking com dados comportamentais de baixa intrusividade.',
+    ['single', 'multiple', 'rating', 'likert']
+  ),
+} as const;
+
+export const METODOLOGIA_MERCADO = {
+  'Share of Preference (Simulador de Mercado)': createMethodology(
+    'market_share_of_preference',
+    'mercado',
+    'Estimativa da participação de mercado potencial de diferentes marcas ou ofertas.',
+    ['single', 'multiple', 'rating', 'likert'],
+    true
+  ),
+  'Análise de Switching e Fidelidade': createMethodology(
+    'market_switching_fidelidade',
+    'mercado',
+    'Modelagem da probabilidade de migração entre marcas e identificação de fontes de ganho e perda de clientes.',
+    ['single', 'multiple'],
+    true
+  ),
+  'Análise de Rivalidade Perceptual': createMethodology(
+    'market_rivalidade_perceptual',
+    'mercado',
+    'Mapeamento de quais marcas são percebidas como mais próximas ou distantes na mente do consumidor.',
+    ['single', 'multiple'],
+    true
+  ),
+  'Análise de Brechas de Mercado (White Space Analysis)': createMethodology(
+    'market_white_space_analysis',
+    'mercado',
+    'Identificação de combinações de atributos valorizadas que nenhuma marca atual entrega de forma satisfatória.',
+    ['single', 'multiple', 'rating', 'likert'],
+    true
+  ),
+  'Análise de Concentração de Mercado (HHI e CR)': createMethodology(
+    'market_concentracao_hhi_cr',
+    'mercado',
+    'Mensuração do grau de concentração do mercado por meio de HHI e razões de concentração.',
+    ['single', 'multiple']
+  ),
+  'Análise TURF (Total Unduplicated Reach and Frequency)': createMethodology(
+    'market_turf_analysis',
+    'mercado',
+    'Otimização de portfólio de produtos, atributos ou mensagens para maximizar alcance único e frequência de preferência, identificando as combinações que cobrem o maior número de consumidores sem redundância.',
+    ['single', 'multiple', 'rating', 'likert']
+  ),
+  'Modelagem de Cadeia de Markov para Switching de Marca': createMethodology(
+    'market_markov_chain_switching',
+    'mercado',
+    'Previsão probabilística de transições entre marcas ao longo do tempo com base em matrizes de transição, permitindo simular retenção, churn e equilíbrio de longo prazo do mercado.',
+    ['single', 'multiple', 'number']
+  ),
+} as const;
+
+export const METODOLOGIA_VALOR_CLIENTE = {
+  'Customer Lifetime Value (CLV) Modeling': createMethodology(
+    'clv_customer_lifetime_value',
+    'valor_cliente',
+    'Estimação do valor monetário esperado de cada cliente ou segmento ao longo do tempo, integrando padrões de retenção, frequência de compra e margem para priorização estratégica de aquisição e retenção.',
+    ['number', 'rating', 'single', 'multiple']
+  ),
+  'Análise de Coortes (Cohort Analysis)': createMethodology(
+    'clv_cohort_analysis',
+    'valor_cliente',
+    'Acompanhamento de grupos de clientes formados pela data de aquisição ou primeiro contato para identificar padrões de retenção, evolução de comportamento e impacto de ações específicas ao longo do ciclo de vida.',
+    ['number', 'rating', 'single', 'multiple'],
+    true
+  ),
+} as const;
+
 export const ALL_METHODOLOGIES = {
   ...METODOLOGIA_DESCRITIVA,
   ...METODOLOGIA_COMPARATIVA,
@@ -383,6 +559,10 @@ export const ALL_METHODOLOGIES = {
   ...METODOLOGIA_CLUSTER,
   ...METODOLOGIA_TEXT,
   ...METODOLOGIA_INTENCAO,
+  ...METODOLOGIA_CAUSALIDADE,
+  ...METODOLOGIA_COMPORTAMENTAL,
+  ...METODOLOGIA_MERCADO,
+  ...METODOLOGIA_VALOR_CLIENTE,
 } as const;
 
 export type SpecificMethodologyKey = keyof typeof ALL_METHODOLOGIES;
@@ -396,22 +576,10 @@ export const CATEGORY_LABELS: Record<CategoryType, string> = {
   cluster: 'Análises de Clusterização e Tipologias',
   text: 'Análise de Texto (Text Mining e NLP)',
   intencao: 'Análises de Intenção e Barreiras',
-  importancia: 'Análise de Importância Relativa',
-  conjoint: 'Análise Conjoint',
-  nps: 'Análise de NPS',
-  preco: 'Análise de Preço',
-  rede: 'Análise de Redes',
-  sobrevivencia: 'Análise de Sobrevivência',
-  maxdiff: 'Análise MaxDiff',
-  mediacao: 'Análise de Mediação e Moderação',
-  sem: 'Modelagem de Equações Estruturais (SEM)',
-  avancada: 'Análises Estatísticas Avançadas',
-  causalidade: 'Inferência Causal',
-  experiencia: 'Análise de Experiência do Cliente (CX)',
-  marca: 'Análise de Marca (Branding)',
-  mercado: 'Análise de Mercado e Competitividade',
-  comportamental: 'Análise Comportamental e Experimental',
-  validacao: 'Validação e Qualidade de Dados',
+  causalidade: 'Análises de Propensão e Causalidade',
+  comportamental: 'Análises Comportamentais e Experimentais',
+  mercado: 'Análises de Mercado e Competição',
+  valor_cliente: 'Análises de Valor do Cliente e Retenção',
 };
 
 export const getAllCategories = (): CategoryType[] => {

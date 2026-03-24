@@ -100,7 +100,41 @@ export type SpecificMetodologia =
   // Intenção
   | 'int_intencao_compra_atributos'
   | 'int_funil_conversao_declarada'
-  | 'int_barreiras_por_tipo';
+  | 'int_barreiras_por_tipo'
+  // Causalidade
+  | 'caus_psm'
+  | 'caus_did'
+  | 'caus_rdd'
+  | 'caus_iv'
+  | 'caus_contrafactual'
+  | 'caus_double_machine_learning'
+  | 'caus_synthetic_control_method'
+  // Comportamental
+  | 'behav_ab_testing_experimentacao_controlada'
+  | 'behav_multi_armed_bandit'
+  | 'behav_preferencia_revelada_vs_declarada'
+  | 'behav_behavioral_economics_analytics'
+  | 'behav_eye_tracking_analytics'
+  | 'behav_reaction_time_analysis'
+  | 'behav_iat_implicit_association_test'
+  | 'behav_mouse_tracking_analytics'
+  // Mercado
+  | 'market_share_of_preference'
+  | 'market_switching_fidelidade'
+  | 'market_rivalidade_perceptual'
+  | 'market_white_space_analysis'
+  | 'market_concentracao_hhi_cr'
+  | 'market_turf_analysis'
+  | 'market_markov_chain_switching'
+  // Valor do Cliente
+  | 'clv_customer_lifetime_value'
+  | 'clv_cohort_analysis'
+  // Preditivas (novas)
+  | 'pred_redes_neurais_deep_learning'
+  | 'pred_modelos_hierarquicos_bayesianos'
+  // Text (novas)
+  | 'text_absa_aspect_based_sentiment'
+  | 'text_llm_assisted_insights';
 
 export interface Project {
   id: string;

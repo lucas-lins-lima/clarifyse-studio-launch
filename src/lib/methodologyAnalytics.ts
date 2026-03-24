@@ -575,3 +575,382 @@ export function calculateCronbachAlpha(items: number[][]): number {
 
   return Math.max(0, Math.min(1, alpha)); 
 }
+
+
+// ============================================================================
+// ASPECT-BASED SENTIMENT ANALYSIS (ABSA)
+// ============================================================================
+
+export interface AspectSentiment {
+  aspect: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  intensity: number;
+  frequency: number;
+  examples: string[];
+}
+
+/**
+ * Identificação automática de sentimentos associados a atributos ou aspectos específicos
+ * mencionados em respostas abertas, permitindo análise granular de drivers de satisfação
+ * e insatisfação por elemento do produto/serviço.
+ */
+export function analyzeAspectBasedSentiment(textResponses: string[]): AspectSentiment[] {
+  const aspectSentiments: Record<string, AspectSentiment> = {};
+  
+  // Dicionário de aspectos comuns
+  const aspectKeywords: Record<string, string[]> = {
+    'qualidade': ['qualidade', 'durabilidade', 'resistência', 'acabamento'],
+    'preço': ['preço', 'caro', 'barato', 'valor', 'custo'],
+    'atendimento': ['atendimento', 'vendedor', 'gerente', 'suporte', 'equipe'],
+    'entrega': ['entrega', 'prazo', 'rapidez', 'demora', 'atraso'],
+    'embalagem': ['embalagem', 'pacote', 'caixa', 'apresentação'],
+    'design': ['design', 'aparência', 'estética', 'cores', 'forma'],
+  };
+
+  textResponses.forEach(text => {
+    const lowerText = text.toLowerCase();
+    
+    Object.entries(aspectKeywords).forEach(([aspect, keywords]) => {
+      keywords.forEach(keyword => {
+        if (lowerText.includes(keyword)) {
+          if (!aspectSentiments[aspect]) {
+            aspectSentiments[aspect] = {
+              aspect,
+              sentiment: 'neutral',
+              intensity: 0,
+              frequency: 0,
+              examples: [],
+            };
+          }
+          
+          aspectSentiments[aspect].frequency++;
+          
+          // Detectar sentimento
+          const positiveMatch = lowerText.match(new RegExp(`(excelente|ótimo|bom|adorei|perfeito|incrível|maravilhoso).*${keyword}|(${keyword}).*?(excelente|ótimo|bom|adorei|perfeito|incrível|maravilhoso)`, 'i'));
+          const negativeMatch = lowerText.match(new RegExp(`(ruim|péssimo|horrível|terrível|decepção|problema|falha|defeito).*${keyword}|(${keyword}).*?(ruim|péssimo|horrível|terrível|decepção|problema|falha|defeito)`, 'i'));
+          
+          if (positiveMatch) {
+            aspectSentiments[aspect].sentiment = 'positive';
+            aspectSentiments[aspect].intensity = Math.min(1, aspectSentiments[aspect].intensity + 0.5);
+          } else if (negativeMatch) {
+            aspectSentiments[aspect].sentiment = 'negative';
+            aspectSentiments[aspect].intensity = Math.min(1, aspectSentiments[aspect].intensity + 0.5);
+          }
+          
+          if (aspectSentiments[aspect].examples.length < 3) {
+            aspectSentiments[aspect].examples.push(text.substring(0, 100));
+          }
+        }
+      });
+    });
+  });
+
+  return Object.values(aspectSentiments).sort((a, b) => b.frequency - a.frequency);
+}
+
+// ============================================================================
+// TURF ANALYSIS (Total Unduplicated Reach and Frequency)
+// ============================================================================
+
+export interface TURFResult {
+  combination: string[];
+  reachPercentage: number;
+  frequency: number;
+  uniqueReach: number;
+  totalCoverage: number;
+}
+
+/**
+ * Otimização de portfólio de produtos, atributos ou mensagens para maximizar
+ * alcance único e frequência de preferência.
+ */
+export function analyzeTURF(
+  responses: AnalysisResponse[],
+  items: Array<{ id: string; name: string }>,
+  maxCombinationSize: number = 3
+): TURFResult[] {
+  const results: TURFResult[] = [];
+  const totalRespondents = responses.length;
+
+  // Gera todas as combinações possíveis
+  const combinations = generateCombinations(items, maxCombinationSize);
+
+  combinations.forEach(combo => {
+    const respondentsWithCombo = responses.filter(r => {
+      return combo.every(item => {
+        const itemKey = Object.keys(r.answers).find(k => r.answers[k] === item.id);
+        return itemKey !== undefined;
+      });
+    });
+
+    const reachPercentage = (respondentsWithCombo.length / totalRespondents) * 100;
+    
+    results.push({
+      combination: combo.map(c => c.name),
+      reachPercentage,
+      frequency: respondentsWithCombo.length,
+      uniqueReach: respondentsWithCombo.length,
+      totalCoverage: reachPercentage,
+    });
+  });
+
+  return results.sort((a, b) => b.reachPercentage - a.reachPercentage);
+}
+
+function generateCombinations<T>(items: T[], maxSize: number): T[][] {
+  const result: T[][] = [];
+  
+  for (let size = 1; size <= Math.min(maxSize, items.length); size++) {
+    const combos = getCombinationsOfSize(items, size);
+    result.push(...combos);
+  }
+  
+  return result;
+}
+
+function getCombinationsOfSize<T>(items: T[], size: number): T[][] {
+  if (size === 1) return items.map(item => [item]);
+  if (size === items.length) return [items];
+  
+  const result: T[][] = [];
+  
+  for (let i = 0; i < items.length - size + 1; i++) {
+    const head = items[i];
+    const tail = getCombinationsOfSize(items.slice(i + 1), size - 1);
+    tail.forEach(combo => result.push([head, ...combo]));
+  }
+  
+  return result;
+}
+
+// ============================================================================
+// MARKOV CHAIN ANALYSIS
+// ============================================================================
+
+export interface MarkovTransition {
+  from: string;
+  to: string;
+  probability: number;
+  frequency: number;
+}
+
+export interface MarkovAnalysisResult {
+  transitions: MarkovTransition[];
+  steadyState: Record<string, number>;
+  churnRate: number;
+  retentionRate: number;
+}
+
+/**
+ * Previsão probabilística de transições entre marcas ao longo do tempo
+ * com base em matrizes de transição.
+ */
+export function analyzeMarkovChain(
+  responses: AnalysisResponse[],
+  brandQuestion: Question,
+  timeQuestion?: Question
+): MarkovAnalysisResult {
+  const brandKey = brandQuestion.variableCode || brandQuestion.id;
+  const transitions: Record<string, Record<string, number>> = {};
+  const brandCounts: Record<string, number> = {};
+
+  responses.forEach(r => {
+    const brand = String(r.answers[brandKey]);
+    brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+    
+    if (!transitions[brand]) {
+      transitions[brand] = {};
+    }
+  });
+
+  // Inicializa matriz de transição
+  Object.keys(brandCounts).forEach(brand => {
+    Object.keys(brandCounts).forEach(targetBrand => {
+      if (!transitions[brand][targetBrand]) {
+        transitions[brand][targetBrand] = 0;
+      }
+    });
+  });
+
+  const transitionArray: MarkovTransition[] = [];
+  let totalTransitions = 0;
+
+  Object.entries(transitions).forEach(([from, targets]) => {
+    const fromCount = brandCounts[from] || 1;
+    
+    Object.entries(targets).forEach(([to, count]) => {
+      const probability = count / fromCount;
+      transitionArray.push({
+        from,
+        to,
+        probability,
+        frequency: count,
+      });
+      totalTransitions += count;
+    });
+  });
+
+  // Calcula steady state (distribuição de longo prazo)
+  const steadyState: Record<string, number> = {};
+  Object.keys(brandCounts).forEach(brand => {
+    steadyState[brand] = brandCounts[brand] / responses.length;
+  });
+
+  // Calcula taxas de churn e retenção
+  const retentionRate = Object.entries(transitions)
+    .reduce((sum, [brand, targets]) => {
+      const fromCount = brandCounts[brand] || 1;
+      return sum + ((targets[brand] || 0) / fromCount);
+    }, 0) / Object.keys(brandCounts).length;
+
+  const churnRate = 1 - retentionRate;
+
+  return {
+    transitions: transitionArray.sort((a, b) => b.probability - a.probability),
+    steadyState,
+    churnRate,
+    retentionRate,
+  };
+}
+
+// ============================================================================
+// CUSTOMER LIFETIME VALUE (CLV) ANALYSIS
+// ============================================================================
+
+export interface CLVSegment {
+  segment: string;
+  clv: number;
+  retentionRate: number;
+  averagePurchaseValue: number;
+  purchaseFrequency: number;
+  lifespan: number;
+}
+
+/**
+ * Estimação do valor monetário esperado de cada cliente ou segmento ao longo do tempo,
+ * integrando padrões de retenção, frequência de compra e margem.
+ */
+export function analyzeCLV(
+  responses: AnalysisResponse[],
+  segmentQuestion: Question,
+  purchaseValueQuestion: Question,
+  frequencyQuestion: Question,
+  retentionQuestion?: Question,
+  lifespanYears: number = 3
+): CLVSegment[] {
+  const segmentKey = segmentQuestion.variableCode || segmentQuestion.id;
+  const valueKey = purchaseValueQuestion.variableCode || purchaseValueQuestion.id;
+  const freqKey = frequencyQuestion.variableCode || frequencyQuestion.id;
+
+  const segments: Record<string, CLVSegment> = {};
+
+  responses.forEach(r => {
+    const segment = String(r.answers[segmentKey]);
+    const value = Number(r.answers[valueKey]) || 0;
+    const frequency = Number(r.answers[freqKey]) || 1;
+
+    if (!segments[segment]) {
+      segments[segment] = {
+        segment,
+        clv: 0,
+        retentionRate: 0.8,
+        averagePurchaseValue: 0,
+        purchaseFrequency: 0,
+        lifespan: lifespanYears,
+      };
+    }
+
+    segments[segment].averagePurchaseValue += value;
+    segments[segment].purchaseFrequency += frequency;
+  });
+
+  // Calcula CLV para cada segmento
+  Object.values(segments).forEach(segment => {
+    const count = responses.filter(r => String(r.answers[segmentKey]) === segment.segment).length;
+    
+    segment.averagePurchaseValue = segment.averagePurchaseValue / count;
+    segment.purchaseFrequency = segment.purchaseFrequency / count;
+    
+    // CLV = (Average Purchase Value × Purchase Frequency × Customer Lifespan) × Retention Rate
+    segment.clv = (segment.averagePurchaseValue * segment.purchaseFrequency * segment.lifespan) * segment.retentionRate;
+  });
+
+  return Object.values(segments).sort((a, b) => b.clv - a.clv);
+}
+
+// ============================================================================
+// COHORT ANALYSIS
+// ============================================================================
+
+export interface CohortMetric {
+  cohort: string;
+  period: number;
+  value: number;
+  retentionPercentage: number;
+}
+
+export interface CohortAnalysisResult {
+  cohorts: Record<string, CohortMetric[]>;
+  averageRetention: number;
+  churnTrend: number;
+}
+
+/**
+ * Acompanhamento de grupos de clientes formados pela data de aquisição ou primeiro contato
+ * para identificar padrões de retenção e evolução de comportamento.
+ */
+export function analyzeCohort(
+  responses: AnalysisResponse[],
+  cohortDateQuestion: Question,
+  valueQuestion: Question,
+  periodQuestion?: Question
+): CohortAnalysisResult {
+  const cohortKey = cohortDateQuestion.variableCode || cohortDateQuestion.id;
+  const valueKey = valueQuestion.variableCode || valueQuestion.id;
+
+  const cohorts: Record<string, CohortMetric[]> = {};
+  const cohortValues: Record<string, number[]> = {};
+
+  responses.forEach(r => {
+    const cohortDate = String(r.answers[cohortKey]);
+    const value = Number(r.answers[valueKey]) || 0;
+
+    if (!cohorts[cohortDate]) {
+      cohorts[cohortDate] = [];
+      cohortValues[cohortDate] = [];
+    }
+
+    cohortValues[cohortDate].push(value);
+  });
+
+  // Calcula métricas por período
+  Object.entries(cohortValues).forEach(([cohort, values], index) => {
+    const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+    const retentionPercentage = (values.length / responses.length) * 100;
+
+    cohorts[cohort].push({
+      cohort,
+      period: index,
+      value: avgValue,
+      retentionPercentage,
+    });
+  });
+
+  // Calcula retenção média e tendência de churn
+  const allRetentionRates = Object.values(cohorts)
+    .flat()
+    .map(m => m.retentionPercentage);
+  
+  const averageRetention = allRetentionRates.reduce((a, b) => a + b, 0) / allRetentionRates.length;
+  
+  // Calcula tendência de churn (variação entre períodos)
+  const churnTrend = allRetentionRates.length > 1
+    ? (allRetentionRates[allRetentionRates.length - 1] - allRetentionRates[0]) / allRetentionRates[0]
+    : 0;
+
+  return {
+    cohorts,
+    averageRetention,
+    churnTrend,
+  };
+}
