@@ -261,82 +261,83 @@ export default function SurveyPage() {
   // ============================================================================
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F1EFE8]">
-      <Loader2 className="h-8 w-8 animate-spin text-[#2D1E6B]" />
+    <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Carregando pesquisa">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <span className="sr-only">Carregando pesquisa...</span>
     </div>
   );
 
   if (!project && !loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-4 text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-        <X className="h-16 w-16 text-red-500 mx-auto mb-6" />
-        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Projeto não encontrado</h1>
-        <p className="text-[#64748B] mb-8">O link que você acessou parece estar incorreto ou a pesquisa não está mais disponível.</p>
-        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar ao início</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center" role="alert">
+      <div className="bg-card p-8 rounded-2xl shadow-sm border border-border max-w-md w-full">
+        <X className="h-16 w-16 text-destructive mx-auto mb-6" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Projeto não encontrado</h1>
+        <p className="text-muted-foreground mb-8">O link que você acessou parece estar incorreto ou a pesquisa não está mais disponível.</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-primary text-primary-foreground h-12 rounded-xl">Voltar ao início</Button>
       </div>
     </div>
   );
 
   if (submitted) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="status">
       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
-        <CheckCircle2 className="h-20 w-20 text-[#1D9E75] mx-auto" />
+        <CheckCircle2 className="h-20 w-20 text-secondary mx-auto" aria-hidden="true" />
       </motion.div>
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4 mt-6">Obrigado!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-2">Suas respostas foram registradas com sucesso.</p>
-      <p className="text-[#64748B] max-w-md">Sua participação ajuda a Clarifyse a entregar insights ainda mais precisos.</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Voltar ao início</Button>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4 mt-6">Obrigado!</h1>
+      <p className="text-xl text-foreground/80 mb-2">Suas respostas foram registradas com sucesso.</p>
+      <p className="text-muted-foreground max-w-md">Sua participação ajuda a Clarifyse a entregar insights ainda mais precisos.</p>
+      <Button onClick={() => navigate('/')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Voltar ao início</Button>
     </div>
   );
 
   if (blocked === 'quota') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Obrigado pela participação!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4">Obrigado pela participação!</h1>
+      <p className="text-xl text-foreground/80 mb-4">
         A cota para o perfil <strong>"{quotaCheckResult?.quotaGroup || 'seu perfil'}"</strong> já foi completada.
       </p>
-      <p className="text-[#64748B] max-w-md">Sua opinião é muito importante para nós. Outras cotas ainda estão abertas para novos respondentes.</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+      <p className="text-muted-foreground max-w-md">Sua opinião é muito importante para nós. Outras cotas ainda estão abertas para novos respondentes.</p>
+      <Button onClick={() => navigate('/')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Fechar</Button>
     </div>
   );
 
   if (blocked === 'sample') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Pesquisa encerrada!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-4">Atingimos o número exato de entrevistas necessárias.</p>
-      <p className="text-[#64748B] max-w-md">Muito obrigado por ajudar a Clarifyse!</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4">Pesquisa encerrada!</h1>
+      <p className="text-xl text-foreground/80 mb-4">Atingimos o número exato de entrevistas necessárias.</p>
+      <p className="text-muted-foreground max-w-md">Muito obrigado por ajudar a Clarifyse!</p>
+      <Button onClick={() => navigate('/')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Fechar</Button>
     </div>
   );
 
   if (blocked === 'already_submitted') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <CheckCircle2 className="h-16 w-16 text-[#1D9E75] mb-6" />
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Participação registrada!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-4">Você já respondeu a esta pesquisa.</p>
-      <p className="text-[#64748B] max-w-md">Agradecemos o seu interesse e colaboração.</p>
-      <Button onClick={() => navigate('/login')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="status">
+      <CheckCircle2 className="h-16 w-16 text-secondary mb-6" aria-hidden="true" />
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4">Participação registrada!</h1>
+      <p className="text-xl text-foreground/80 mb-4">Você já respondeu a esta pesquisa.</p>
+      <p className="text-muted-foreground max-w-md">Agradecemos o seu interesse e colaboração.</p>
+      <Button onClick={() => navigate('/login')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Fechar</Button>
     </div>
   );
 
   if (blocked === 'not_published') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-        <Loader2 className="h-16 w-16 text-[#7F77DD] mx-auto mb-6 animate-pulse" />
-        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Formulário em preparação</h1>
-        <p className="text-[#64748B] mb-8">Este formulário ainda não foi publicado. Por favor, tente novamente em alguns instantes.</p>
-        <Button onClick={() => window.location.reload()} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Recarregar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <div className="bg-card p-8 rounded-2xl shadow-sm border border-border max-w-md w-full">
+        <Loader2 className="h-16 w-16 text-accent mx-auto mb-6 animate-pulse" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Formulário em preparação</h1>
+        <p className="text-muted-foreground mb-8">Este formulário ainda não foi publicado. Por favor, tente novamente em alguns instantes.</p>
+        <Button onClick={() => window.location.reload()} className="w-full bg-primary text-primary-foreground h-12 rounded-xl">Recarregar</Button>
       </div>
     </div>
   );
 
   if (blocked === 'closed') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-        <X className="h-16 w-16 text-red-500 mx-auto mb-6" />
-        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Pesquisa encerrada</h1>
-        <p className="text-[#64748B] mb-8">Esta pesquisa já foi encerrada e não está mais aceitando respostas.</p>
-        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <div className="bg-card p-8 rounded-2xl shadow-sm border border-border max-w-md w-full">
+        <X className="h-16 w-16 text-destructive mx-auto mb-6" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Pesquisa encerrada</h1>
+        <p className="text-muted-foreground mb-8">Esta pesquisa já foi encerrada e não está mais aceitando respostas.</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-primary text-primary-foreground h-12 rounded-xl">Voltar</Button>
       </div>
     </div>
   );
@@ -344,35 +345,35 @@ export default function SurveyPage() {
   // Renderização normal do formulário
   if (currentQuestionIndex === -1) {
     return (
-      <div className="min-h-screen bg-[#F1EFE8] flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <main className="max-w-2xl w-full bg-card rounded-2xl shadow-sm border border-border p-8 space-y-8" role="main" aria-label="Início da pesquisa">
           <div className="text-center space-y-4">
             <img src={logo} alt="Clarifyse" className="h-12 mx-auto" />
-            <h1 className="font-display text-3xl font-bold text-[#2D1E6B]">{project.name}</h1>
-            <p className="text-[#64748B]">{project.objective}</p>
+            <h1 className="font-display text-3xl font-bold text-foreground">{project.name}</h1>
+            <p className="text-muted-foreground">{project.objective}</p>
           </div>
 
-          <div className="bg-gradient-to-r from-[#2D1E6B]/5 to-[#1D9E75]/5 rounded-xl p-6 space-y-2">
-            <p className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-widest">Informações da Pesquisa</p>
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-6 space-y-2">
+            <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Informações da Pesquisa</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-[#64748B]">Perguntas</p>
-                <p className="text-lg font-bold text-[#2D1E6B]">{project.formQuestions?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">Perguntas</p>
+                <p className="text-lg font-bold text-foreground">{project.formQuestions?.length || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-[#64748B]">Tempo estimado</p>
-                <p className="text-lg font-bold text-[#2D1E6B]">~5 min</p>
+                <p className="text-xs text-muted-foreground">Tempo estimado</p>
+                <p className="text-lg font-bold text-foreground">~5 min</p>
               </div>
             </div>
           </div>
 
           <Button
             onClick={() => setCurrentQuestionIndex(0)}
-            className="w-full bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white h-12 rounded-xl font-bold text-lg"
+            className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground h-12 rounded-xl font-bold text-lg"
           >
             Começar Pesquisa
           </Button>
-        </div>
+        </main>
       </div>
     );
   }
@@ -381,46 +382,49 @@ export default function SurveyPage() {
   const progress = Math.round(((currentQuestionIndex + 1) / project.formQuestions.length) * 100);
 
   return (
-    <div className="min-h-screen bg-[#F1EFE8] flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <main className="max-w-2xl w-full bg-card rounded-2xl shadow-sm border border-border p-8 space-y-8" role="form" aria-label={`Pergunta ${currentQuestionIndex + 1} de ${project.formQuestions.length}`}>
         {/* Header */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-[#64748B]">Pergunta {currentQuestionIndex + 1} de {project.formQuestions.length}</span>
-            <span className="text-sm font-bold text-[#1D9E75]">{progress}%</span>
+            <span className="text-sm font-bold text-muted-foreground">Pergunta {currentQuestionIndex + 1} de {project.formQuestions.length}</span>
+            <span className="text-sm font-bold text-secondary" aria-live="polite">{progress}%</span>
           </div>
-          <Progress value={progress} className="h-2 bg-gray-100" indicatorClassName="bg-gradient-to-r from-[#2D1E6B] to-[#1D9E75]" />
+          <Progress value={progress} className="h-2 bg-muted" indicatorClassName="bg-gradient-to-r from-primary to-secondary" />
         </div>
 
         {/* Pergunta */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-[#2D1E6B]">{currentQuestion.question}</h2>
-          {currentQuestion.helpText && <p className="text-sm text-[#64748B]">{currentQuestion.helpText}</p>}
-        </div>
+        <fieldset className="space-y-4 border-0 p-0 m-0">
+          <legend className="sr-only">{currentQuestion.question}</legend>
+          <h2 className="text-xl font-bold text-foreground" id={`question-${currentQuestionIndex}`}>{currentQuestion.question}</h2>
+          {currentQuestion.helpText && <p className="text-sm text-muted-foreground" id={`help-${currentQuestionIndex}`}>{currentQuestion.helpText}</p>}
+        </fieldset>
 
         {/* Renderizar componentes de pergunta conforme o tipo */}
         {/* (Aqui você manteria os componentes de renderização de perguntas existentes) */}
 
         {/* Botões de navegação */}
-        <div className="flex gap-4 pt-4">
+        <nav className="flex gap-4 pt-4" aria-label="Navegação do formulário">
           <Button
             onClick={handleBack}
             variant="outline"
             disabled={currentQuestionIndex === 0}
-            className="flex-1 rounded-xl border-gray-200 text-[#64748B] font-bold"
+            className="flex-1 rounded-xl border-border text-muted-foreground font-bold"
+            aria-label="Voltar para pergunta anterior"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
+            <ChevronLeft className="h-4 w-4 mr-2" aria-hidden="true" /> Voltar
           </Button>
           <Button
             onClick={handleNext}
             disabled={submitting}
-            className="flex-1 bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white rounded-xl font-bold"
+            className="flex-1 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-xl font-bold"
+            aria-label={currentQuestionIndex === project.formQuestions.length - 1 ? 'Enviar respostas' : 'Próxima pergunta'}
           >
-            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ChevronRight className="h-4 w-4 mr-2" />}
+            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 mr-2" aria-hidden="true" />}
             {currentQuestionIndex === project.formQuestions.length - 1 ? 'Enviar' : 'Próximo'}
           </Button>
-        </div>
-      </div>
+        </nav>
+      </main>
     </div>
   );
 }

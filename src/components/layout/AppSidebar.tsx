@@ -48,7 +48,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0 bg-[#2D1E6B]">
+    <Sidebar collapsible="icon" className="border-r-0 bg-sidebar-background">
       <div className="flex items-center gap-3 px-6 py-8">
         <img src={logo} alt="Clarifyse" className="h-8 object-contain flex-shrink-0" style={{ filter: 'brightness(0) invert(1)' }} />
         {!collapsed && (
@@ -71,8 +71,8 @@ export function AppSidebar() {
                       className={({ isActive }) => cn(
                         'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                         isActive
-                          ? 'bg-[#1D9E75] text-white font-semibold shadow-lg shadow-[#1D9E75]/20'
-                          : 'text-white/70 hover:bg-white/10 hover:text-white'
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-lg shadow-sidebar-primary/20'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground'
                       )}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -88,9 +88,9 @@ export function AppSidebar() {
 
       <SidebarFooter className="px-4 py-6 mt-auto">
         {!collapsed && profile && (
-          <div className="mb-4 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
-            <p className="text-xs font-bold text-white truncate">{profile.name}</p>
-            <p className="text-[10px] text-white/50 truncate uppercase tracking-wider mt-0.5">
+          <div className="mb-4 px-4 py-3 bg-sidebar-foreground/5 rounded-xl border border-sidebar-foreground/10">
+            <p className="text-xs font-bold text-sidebar-foreground truncate">{profile.name}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate uppercase tracking-wider mt-0.5">
               {profile.role === 'admin' ? 'Administrador' : 
                profile.role === 'pesquisador' ? 'Pesquisador' :
                profile.role === 'gerente' ? 'Gerente' : 'Cliente'}
@@ -101,7 +101,7 @@ export function AppSidebar() {
           variant="ghost"
           size={collapsed ? 'icon' : 'sm'}
           onClick={signOut}
-          className="w-full text-white/60 hover:text-white hover:bg-white/10 justify-start gap-3 px-4 h-12 rounded-xl"
+          className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-foreground/10 justify-start gap-3 px-4 h-12 rounded-xl"
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}

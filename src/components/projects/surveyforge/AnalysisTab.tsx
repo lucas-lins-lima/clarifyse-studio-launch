@@ -10,6 +10,7 @@ import { generateInsights, AnalysisResult } from '@/lib/analyticsEngine';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell } from 'recharts';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 const COLORS = ['#2D1E6B', '#1D9E75', '#7F77DD', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
 
@@ -20,7 +21,7 @@ interface AnalysisTabProps {
 
 export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabProps) {
   const navigate = useNavigate();
-  const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('json');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'xlsx'>('xlsx');
 
   // Gerar análises
   const analysis = useMemo(() => {
@@ -53,6 +54,12 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
     }
 
     try {
+      if (exportFormat === 'xlsx') {
+        exportToExcel(analysis, project);
+        toast.success('Análise exportada em Excel!');
+        return;
+      }
+
       let content: string;
       let filename: string;
       let mimeType: string;
@@ -62,7 +69,6 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
         filename = `analise_${project.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
         mimeType = 'application/json';
       } else {
-        // CSV export
         content = generateCSV(analysis, project);
         filename = `analise_${project.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
         mimeType = 'text/csv;charset=utf-8;';
@@ -122,9 +128,10 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
           )}
           <select
             value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json')}
-            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium"
+            onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'xlsx')}
+            className="px-4 py-2 rounded-xl border border-border text-sm font-medium"
           >
+            <option value="xlsx">Excel (.xlsx)</option>
             <option value="json">JSON</option>
             <option value="csv">CSV</option>
           </select>
@@ -417,6 +424,97 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
       )}
     </div>
   );
+}
+
+/**
+ * Serializa valor complexo para string legível (corrige bug A8)
+ */
+function serializeAnswer(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    return value.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join('; ');
+  }
+  if (typeof value === 'object') {
+    // Matrix: { row1: 'col2', row2: 'col3' }
+    // Conjoint/MaxDiff: structured data
+    const entries = Object.entries(value);
+    if (entries.length === 0) return '';
+    return entries.map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' | ');
+  }
+  return String(value);
+}
+
+/**
+ * Exporta respostas brutas para Excel com serialização correta de tipos complexos (bug A8)
+ */
+function exportToExcel(analysis: AnalysisResult, project: any) {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Resumo
+  const resumoData = [
+    ['ANÁLISE AUTOMÁTICA DE DADOS'],
+    ['Projeto', project.name],
+    ['Data', new Date().toLocaleDateString('pt-BR')],
+    [''],
+    ['Total de Respostas', analysis.summary.totalResponses],
+    ['Tempo Médio', analysis.summary.averageTimeSpent],
+    ['Taxa de Qualidade', `${analysis.summary.qualityRate}%`],
+    ['Cotas Completas', `${analysis.summary.quotasCompletePercentage}%`],
+    ['Score de Qualidade', `${analysis.qualityScore}/100`],
+  ];
+  const wsResumo = XLSX.utils.aoa_to_sheet(resumoData);
+  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+
+  // Sheet 2: Distribuições por pergunta
+  const distRows: any[] = [];
+  analysis.questionAnalysis.forEach((qa) => {
+    distRows.push({ Pergunta: qa.question, Opção: '', Contagem: '', Percentual: '' });
+    qa.distribution.forEach((item) => {
+      distRows.push({
+        Pergunta: '',
+        Opção: item.label,
+        Contagem: item.count,
+        Percentual: `${Math.round(item.percentage)}%`,
+      });
+    });
+  });
+  const wsDist = XLSX.utils.json_to_sheet(distRows);
+  XLSX.utils.book_append_sheet(wb, wsDist, 'Distribuições');
+
+  // Sheet 3: Respostas brutas (com serialização correta)
+  if (project.responses && project.responses.length > 0) {
+    const questions = project.formQuestions || [];
+    const headers = ['ID', 'Data', 'Tempo (s)', 'Grupo de Cota', ...questions.map((q: any) => q.question || q.variableCode || q.id)];
+    const rawRows = project.responses.map((r: any) => {
+      const row: any = {
+        'ID': r.id || '',
+        'Data': r.submittedAt || r.timestamp || '',
+        'Tempo (s)': r.timeSpentSeconds || r.timeSpent || '',
+        'Grupo de Cota': r.quotaGroup || '',
+      };
+      questions.forEach((q: any) => {
+        const key = q.question || q.variableCode || q.id;
+        const val = r.answers?.[q.id] ?? r.answers?.[q.variableCode] ?? '';
+        row[key] = serializeAnswer(val);
+      });
+      return row;
+    });
+    const wsRaw = XLSX.utils.json_to_sheet(rawRows);
+    XLSX.utils.book_append_sheet(wb, wsRaw, 'Respostas Brutas');
+  }
+
+  // Sheet 4: Insights
+  const insightRows = analysis.keyInsights.map((insight, idx) => ({
+    '#': idx + 1,
+    'Insight': insight,
+  }));
+  if (insightRows.length > 0) {
+    const wsInsights = XLSX.utils.json_to_sheet(insightRows);
+    XLSX.utils.book_append_sheet(wb, wsInsights, 'Insights');
+  }
+
+  XLSX.writeFile(wb, `Analise_${project.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 /**

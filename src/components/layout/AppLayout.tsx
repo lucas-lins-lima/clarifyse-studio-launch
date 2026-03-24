@@ -15,37 +15,43 @@ export function AppLayout({ allowedRoles }: AppLayoutProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F1EFE8]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#2D1E6B]" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!session) return <Navigate to="/login" replace />;
   if (!profile) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F1EFE8]">
-      <Loader2 className="h-8 w-8 animate-spin text-[#2D1E6B]" />
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
 
   if (!allowedRoles.includes(profile.role)) {
-    return <Navigate to="/admin" replace />;
+    const routes: Record<string, string> = {
+      admin: '/admin',
+      pesquisador: '/admin',
+      gerente: '/gerente',
+      cliente: '/cliente',
+    };
+    return <Navigate to={routes[profile.role] || '/admin'} replace />;
   }
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-[#F1EFE8]">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="h-16 flex items-center justify-between border-b border-gray-200 bg-white/50 backdrop-blur-md px-6 sticky top-0 z-30">
-            <SidebarTrigger className="text-[#2D1E6B]" />
+          <header className="h-16 flex items-center justify-between border-b border-border bg-card/50 backdrop-blur-md px-6 sticky top-0 z-30">
+            <SidebarTrigger className="text-primary" />
             <div className="flex items-center gap-3">
               <SurveyForgeNotificationsBell />
-              <div className="w-px h-6 bg-gray-200" />
+              <div className="w-px h-6 bg-border" />
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-[#2D1E6B]">{profile.name}</p>
-                <p className="text-[10px] text-[#1D9E75] font-bold uppercase tracking-wider">{profile.role}</p>
+                <p className="text-xs font-bold text-foreground">{profile.name}</p>
+                <p className="text-[10px] text-secondary font-bold uppercase tracking-wider">{profile.role}</p>
               </div>
             </div>
           </header>

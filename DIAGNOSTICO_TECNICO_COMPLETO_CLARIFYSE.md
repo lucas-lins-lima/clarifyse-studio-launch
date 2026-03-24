@@ -137,7 +137,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | A5 | **Matrix** | A pergunta do tipo Matriz é coletada mas o motor de análise não a processa adequadamente. | Dados perdidos |
 | A6 | **Upload de arquivos** | `FileUploadQuestion.tsx` aceita uploads mas armazena em **memória/base64** — sem Supabase Storage, os arquivos são perdidos ao recarregar. | Arquivos perdidos |
 | A7 | **Duplicação de projeto** | Ao duplicar, o `publicLink` é setado como `null` mas as respostas são zeradas. Cotas não são recalculadas. | Inconsistência |
-| A8 | **Exportação Excel** | A exportação funciona para dados simples, mas para tipos complexos (matriz, conjoint, maxdiff) os dados são serializados como `[object Object]`. | Exportação ilegível |
+| A8 | **Exportação Excel** | ✅ Corrigido — exportação agora serializa tipos complexos (matriz, conjoint, maxdiff) corretamente com `serializeAnswer()` e exporta em formato Excel (.xlsx) com múltiplas abas. | Corrigido |
 | A9 | **Notificações** | Armazenadas em localStorage separado. Sem push notifications, sem e-mail, sem real-time. Notificações são perdidas ao limpar cache. | Notificações voláteis |
 | A10 | **NPS** | O formulário de NPS público existe (`AvaliacaoPage.tsx`) mas depende de tokens que são gerados em localStorage — **links de NPS gerados não funcionam após limpar cache**. | NPS não funcional |
 | A11 | **Financeiro** | Módulo financeiro completo existe no UI mas calcula sobre dados mock/localStorage. Sem persistência real, os dados financeiros não são confiáveis. | Dados financeiros voláteis |
@@ -147,15 +147,15 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 
 | # | Módulo | Bug |
 |---|---|---|
-| M1 | **Login** | A senha padrão do admin é `admin123` com `requiresPasswordChange: false`. Não força troca. |
-| M2 | **Pesquisador** | Senha padrão `pesq123`, também sem troca obrigatória no código de seed. |
+| M1 | **Login** | ✅ Corrigido — Admin agora usa credenciais seguras com `requiresPasswordChange: true`. Força troca no primeiro acesso. |
+| M2 | **Pesquisador** | ✅ Corrigido — Pesquisador agora tem `requiresPasswordChange: true`. |
 | M3 | **Performance** | `loadDB()` faz `JSON.parse()` do localStorage inteiro a cada operação (sem cache). Com muitos projetos, isso causa lag. |
 | M4 | **Timezone** | Nenhuma lógica de timezone `America/Sao_Paulo` implementada. Datas usam `new Date().toISOString()` (UTC). |
 | M5 | **Paginação** | ProjetosPage não implementa paginação real — carrega tudo do localStorage. |
 | M6 | **Lixeira** | A limpeza automática de 15 dias existe no `google-adapter.ts` mas roda apenas quando o navegador do admin abre a página. Não é um cron real. |
 | M7 | **React Query** | Configurado mas poucos componentes usam. A maioria faz `loadDB()` direto em `useEffect`. |
-| M8 | **Cores hardcoded** | Vários componentes usam cores fixas (`text-[#2D1E6B]`, `bg-[#F1EFE8]`) em vez de tokens semânticos do design system. |
-| M9 | **Acessibilidade** | Formulários públicos não têm labels adequados, skip navigation, ou suporte a screen readers. |
+| M8 | **Cores hardcoded** | ✅ Corrigido parcialmente — AppLayout, AppSidebar, SurveyPage e App.tsx agora usam tokens semânticos (`bg-background`, `text-primary`, etc.). Login.tsx ainda usa cores fixas por intenção de design. |
+| M9 | **Acessibilidade** | ✅ Corrigido — SurveyPage agora tem `role`, `aria-label`, `aria-live`, `fieldset/legend`, `sr-only` e `aria-hidden` em ícones decorativos. |
 
 ---
 

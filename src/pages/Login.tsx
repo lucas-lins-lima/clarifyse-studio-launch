@@ -29,9 +29,15 @@ export default function Login() {
     return <Navigate to="/force-change-password" replace />;
   }
 
-  // Se o usuário está logado normalmente, redirecionar para o dashboard
+  // Se o usuário está logado normalmente, redirecionar para o dashboard correto
   if (session && profile) {
-    return <Navigate to="/admin" replace />;
+    const routes: Record<string, string> = {
+      admin: '/admin',
+      pesquisador: '/admin',
+      gerente: '/gerente',
+      cliente: '/cliente',
+    };
+    return <Navigate to={routes[profile.role] || '/admin'} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
