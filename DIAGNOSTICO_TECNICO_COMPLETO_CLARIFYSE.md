@@ -349,5 +349,5 @@ O **Clarifyse SurveyForge** e o **Portal Insights** representam um projeto ambic
 
 ---
 
-*Relatório gerado em 23/03/2026 — Lovable AI Platform*
+*Relatório atualizado em 24/03/2026 — Análise Manus AI*
 *Repositório analisado: clarifyse-studio-launch*
