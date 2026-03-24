@@ -137,7 +137,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | A5 | **Matrix** | A pergunta do tipo Matriz é coletada mas o motor de análise não a processa adequadamente. | Dados perdidos |
 | A6 | **Upload de arquivos** | `FileUploadQuestion.tsx` aceita uploads mas armazena em **memória/base64** — sem Supabase Storage, os arquivos são perdidos ao recarregar. | Arquivos perdidos |
 | A7 | **Duplicação de projeto** | Ao duplicar, o `publicLink` é setado como `null` mas as respostas são zeradas. Cotas não são recalculadas. | Inconsistência |
-| A8 | **Exportação Excel** | A exportação funciona para dados simples, mas para tipos complexos (matriz, conjoint, maxdiff) os dados são serializados como `[object Object]`. | Exportação ilegível |
+| A8 | **Exportação Excel** | ✅ Corrigido — exportação agora serializa tipos complexos (matriz, conjoint, maxdiff) corretamente com `serializeAnswer()` e exporta em formato Excel (.xlsx) com múltiplas abas. | Corrigido |
 | A9 | **Notificações** | Armazenadas em localStorage separado. Sem push notifications, sem e-mail, sem real-time. Notificações são perdidas ao limpar cache. | Notificações voláteis |
 | A10 | **NPS** | O formulário de NPS público existe (`AvaliacaoPage.tsx`) mas depende de tokens que são gerados em localStorage — **links de NPS gerados não funcionam após limpar cache**. | NPS não funcional |
 | A11 | **Financeiro** | Módulo financeiro completo existe no UI mas calcula sobre dados mock/localStorage. Sem persistência real, os dados financeiros não são confiáveis. | Dados financeiros voláteis |
