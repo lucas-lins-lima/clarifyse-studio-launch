@@ -48,7 +48,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0 bg-[#2D1E6B]">
+    <Sidebar collapsible="icon" className="border-r-0 bg-sidebar-background">
       <div className="flex items-center gap-3 px-6 py-8">
         <img src={logo} alt="Clarifyse" className="h-8 object-contain flex-shrink-0" style={{ filter: 'brightness(0) invert(1)' }} />
         {!collapsed && (
