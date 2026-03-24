@@ -128,9 +128,10 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
           )}
           <select
             value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json')}
-            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium"
+            onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'xlsx')}
+            className="px-4 py-2 rounded-xl border border-border text-sm font-medium"
           >
+            <option value="xlsx">Excel (.xlsx)</option>
             <option value="json">JSON</option>
             <option value="csv">CSV</option>
           </select>
