@@ -118,7 +118,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | # | Módulo | Bug | Impacto |
 |---|---|---|---|
 | C1 | **Persistência** | Todos os dados são armazenados em `localStorage`. Se o usuário limpar o cache, trocar de navegador ou usar aba anônima, **TODOS os dados são perdidos** (projetos, respostas, usuários). | **Perda total de dados** |
-| C2 | **Autenticação** | Senha armazenada com `simpleHash()` — uma função de 5 linhas que faz bitshift. NÃO é criptografia. Qualquer pessoa com acesso ao DevTools pode ver a sessão e manipular o `localStorage` para se tornar admin. | **Escalação de privilégios trivial** |
+| C2 | **Autenticação** | Senha armazenada com `robustHash()`. Embora melhor que bitshift, ainda NÃO é criptografia real e está em localStorage. Qualquer pessoa com acesso ao DevTools pode ver a sessão. | **Segurança aprimorada mas insuficiente** |
 | C3 | **Formulários públicos** | A `SurveyPage_BACKEND.tsx` tenta conectar a `http://localhost:3001`. Em produção, esse endpoint não existe. Links de formulários publicados **retornam erro ou tela branca**. | **Coleta de dados impossível** |
 | C4 | **Roles** | As roles (`admin`, `pesquisador`) são armazenadas no perfil do usuário em `localStorage` e verificadas no client-side. Qualquer usuário pode alterar sua role via DevTools. | **Segurança zero** |
 | C5 | **Portal do Cliente** | As rotas do cliente (`/cliente/*`) **estão registradas no App.tsx** (linhas 74-79) com `allowedRoles={['cliente']}`. Porém, o login de cliente não funciona porque o `AuthContext` usa localStorage simulado — a role `cliente` não é reconhecida no fluxo de autenticação atual. | **Portal registrado mas inacessível por falha de auth** |
