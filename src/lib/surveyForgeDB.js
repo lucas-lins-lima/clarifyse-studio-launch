@@ -83,14 +83,14 @@ const initialData = {
   users: [
     {
       id: "admin-001",
-      email: "admin@clarifyse.com",
-      passwordHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      email: "clarifysestrategyresearch@gmail.com",
+      passwordHash: robustHash("A29c26l03!"),
       name: "Administrador Clarifyse",
       role: "admin",
       empresa: "Clarifyse",
       cargo: "Diretor de Pesquisa",
       status: "active",
-      requiresPasswordChange: false,
+      requiresPasswordChange: true,
       createdAt: new Date().toISOString()
     },
     {
