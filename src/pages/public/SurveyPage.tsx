@@ -291,22 +291,22 @@ export default function SurveyPage() {
   );
 
   if (blocked === 'quota') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Obrigado pela participação!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4">Obrigado pela participação!</h1>
+      <p className="text-xl text-foreground/80 mb-4">
         A cota para o perfil <strong>"{quotaCheckResult?.quotaGroup || 'seu perfil'}"</strong> já foi completada.
       </p>
-      <p className="text-[#64748B] max-w-md">Sua opinião é muito importante para nós. Outras cotas ainda estão abertas para novos respondentes.</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+      <p className="text-muted-foreground max-w-md">Sua opinião é muito importante para nós. Outras cotas ainda estão abertas para novos respondentes.</p>
+      <Button onClick={() => navigate('/')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Fechar</Button>
     </div>
   );
 
   if (blocked === 'sample') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Pesquisa encerrada!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-4">Atingimos o número exato de entrevistas necessárias.</p>
-      <p className="text-[#64748B] max-w-md">Muito obrigado por ajudar a Clarifyse!</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4">Pesquisa encerrada!</h1>
+      <p className="text-xl text-foreground/80 mb-4">Atingimos o número exato de entrevistas necessárias.</p>
+      <p className="text-muted-foreground max-w-md">Muito obrigado por ajudar a Clarifyse!</p>
+      <Button onClick={() => navigate('/')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Fechar</Button>
     </div>
   );
 
