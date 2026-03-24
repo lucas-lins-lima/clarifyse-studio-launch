@@ -382,46 +382,49 @@ export default function SurveyPage() {
   const progress = Math.round(((currentQuestionIndex + 1) / project.formQuestions.length) * 100);
 
   return (
-    <div className="min-h-screen bg-[#F1EFE8] flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-8">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <main className="max-w-2xl w-full bg-card rounded-2xl shadow-sm border border-border p-8 space-y-8" role="form" aria-label={`Pergunta ${currentQuestionIndex + 1} de ${project.formQuestions.length}`}>
         {/* Header */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-[#64748B]">Pergunta {currentQuestionIndex + 1} de {project.formQuestions.length}</span>
-            <span className="text-sm font-bold text-[#1D9E75]">{progress}%</span>
+            <span className="text-sm font-bold text-muted-foreground">Pergunta {currentQuestionIndex + 1} de {project.formQuestions.length}</span>
+            <span className="text-sm font-bold text-secondary" aria-live="polite">{progress}%</span>
           </div>
-          <Progress value={progress} className="h-2 bg-gray-100" indicatorClassName="bg-gradient-to-r from-[#2D1E6B] to-[#1D9E75]" />
+          <Progress value={progress} className="h-2 bg-muted" indicatorClassName="bg-gradient-to-r from-primary to-secondary" />
         </div>
 
         {/* Pergunta */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-[#2D1E6B]">{currentQuestion.question}</h2>
-          {currentQuestion.helpText && <p className="text-sm text-[#64748B]">{currentQuestion.helpText}</p>}
-        </div>
+        <fieldset className="space-y-4 border-0 p-0 m-0">
+          <legend className="sr-only">{currentQuestion.question}</legend>
+          <h2 className="text-xl font-bold text-foreground" id={`question-${currentQuestionIndex}`}>{currentQuestion.question}</h2>
+          {currentQuestion.helpText && <p className="text-sm text-muted-foreground" id={`help-${currentQuestionIndex}`}>{currentQuestion.helpText}</p>}
+        </fieldset>
 
         {/* Renderizar componentes de pergunta conforme o tipo */}
         {/* (Aqui você manteria os componentes de renderização de perguntas existentes) */}
 
         {/* Botões de navegação */}
-        <div className="flex gap-4 pt-4">
+        <nav className="flex gap-4 pt-4" aria-label="Navegação do formulário">
           <Button
             onClick={handleBack}
             variant="outline"
             disabled={currentQuestionIndex === 0}
-            className="flex-1 rounded-xl border-gray-200 text-[#64748B] font-bold"
+            className="flex-1 rounded-xl border-border text-muted-foreground font-bold"
+            aria-label="Voltar para pergunta anterior"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
+            <ChevronLeft className="h-4 w-4 mr-2" aria-hidden="true" /> Voltar
           </Button>
           <Button
             onClick={handleNext}
             disabled={submitting}
-            className="flex-1 bg-gradient-to-r from-[#2D1E6B] to-[#7F77DD] text-white rounded-xl font-bold"
+            className="flex-1 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-xl font-bold"
+            aria-label={currentQuestionIndex === project.formQuestions.length - 1 ? 'Enviar respostas' : 'Próxima pergunta'}
           >
-            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ChevronRight className="h-4 w-4 mr-2" />}
+            {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 mr-2" aria-hidden="true" />}
             {currentQuestionIndex === project.formQuestions.length - 1 ? 'Enviar' : 'Próximo'}
           </Button>
-        </div>
-      </div>
+        </nav>
+      </main>
     </div>
   );
 }
