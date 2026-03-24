@@ -96,13 +96,13 @@ const initialData = {
     {
       id: "pesq-001",
       email: "pesquisador@clarifyse.com",
-      passwordHash: "67671092f364614643411d3a0394b20de049ef436c2585f696cca4f02fe96374",
+      passwordHash: robustHash("pesq123"),
       name: "Pesquisador Sênior",
       role: "pesquisador",
       empresa: "Clarifyse",
       cargo: "Analista de Mercado",
       status: "active",
-      requiresPasswordChange: false,
+      requiresPasswordChange: true,
       createdAt: new Date().toISOString()
     },
     {
