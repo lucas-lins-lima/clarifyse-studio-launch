@@ -48,7 +48,7 @@ A análise foi realizada com acesso completo ao código-fonte via Lovable, inclu
 | **Persistência (Insights)** | **localStorage (google-adapter.ts)** | 🔴 **CRÍTICO** |
 | **Persistência (SurveyForge)** | **localStorage (surveyForgeDB.js)** | 🔴 **CRÍTICO** |
 | **Backend (Survey)** | Express.js (server/) — armazena em JSON no disco | 🟠 **Não conectado** |
-| **Autenticação** | Simulada em localStorage com simpleHash | 🔴 **CRÍTICO** |
+| **Autenticação** | Simulada em localStorage com robustHash | 🟠 **Aprimorado** |
 | **Supabase** | Client configurado mas **NÃO utilizado** | 🟠 Desconectado |
 | **Migrações SQL** | 14 arquivos de migração — **nenhuma aplicada** | 🔴 Não aplicado |
 
