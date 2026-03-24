@@ -11,8 +11,8 @@ Este diagnóstico analisa o repositório **clarifyse-studio-launch**, que conté
 
 | Categoria | Gravidade | Quantidade |
 |---|---|---|
-| Bugs Críticos (impedem uso) | 🔴 Crítico | 8 |
-| Bugs Altos (comprometem funcionalidade) | 🟠 Alto | 12 |
+| Bugs Críticos (impedem uso) | 🔴 Crítico | 5 |
+| Bugs Altos (comprometem funcionalidade) | 🟠 Alto | 11 |
 | Bugs Médios (experiência degradada) | 🟡 Médio | 9 |
 | Gaps de Funcionalidade | 🔵 Gap | 15+ |
 | Problemas de Segurança | 🔴 Crítico | 6 |
