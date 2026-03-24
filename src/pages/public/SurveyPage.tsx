@@ -311,33 +311,33 @@ export default function SurveyPage() {
   );
 
   if (blocked === 'already_submitted') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <CheckCircle2 className="h-16 w-16 text-[#1D9E75] mb-6" />
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4">Participação registrada!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-4">Você já respondeu a esta pesquisa.</p>
-      <p className="text-[#64748B] max-w-md">Agradecemos o seu interesse e colaboração.</p>
-      <Button onClick={() => navigate('/login')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Fechar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="status">
+      <CheckCircle2 className="h-16 w-16 text-secondary mb-6" aria-hidden="true" />
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4">Participação registrada!</h1>
+      <p className="text-xl text-foreground/80 mb-4">Você já respondeu a esta pesquisa.</p>
+      <p className="text-muted-foreground max-w-md">Agradecemos o seu interesse e colaboração.</p>
+      <Button onClick={() => navigate('/login')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Fechar</Button>
     </div>
   );
 
   if (blocked === 'not_published') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-        <Loader2 className="h-16 w-16 text-[#7F77DD] mx-auto mb-6 animate-pulse" />
-        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Formulário em preparação</h1>
-        <p className="text-[#64748B] mb-8">Este formulário ainda não foi publicado. Por favor, tente novamente em alguns instantes.</p>
-        <Button onClick={() => window.location.reload()} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Recarregar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <div className="bg-card p-8 rounded-2xl shadow-sm border border-border max-w-md w-full">
+        <Loader2 className="h-16 w-16 text-accent mx-auto mb-6 animate-pulse" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Formulário em preparação</h1>
+        <p className="text-muted-foreground mb-8">Este formulário ainda não foi publicado. Por favor, tente novamente em alguns instantes.</p>
+        <Button onClick={() => window.location.reload()} className="w-full bg-primary text-primary-foreground h-12 rounded-xl">Recarregar</Button>
       </div>
     </div>
   );
 
   if (blocked === 'closed') return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
-        <X className="h-16 w-16 text-red-500 mx-auto mb-6" />
-        <h1 className="font-display text-2xl font-bold text-[#2D1E6B] mb-4">Pesquisa encerrada</h1>
-        <p className="text-[#64748B] mb-8">Esta pesquisa já foi encerrada e não está mais aceitando respostas.</p>
-        <Button onClick={() => navigate('/login')} className="w-full bg-[#2D1E6B] text-white h-12 rounded-xl">Voltar</Button>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="alert">
+      <div className="bg-card p-8 rounded-2xl shadow-sm border border-border max-w-md w-full">
+        <X className="h-16 w-16 text-destructive mx-auto mb-6" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Pesquisa encerrada</h1>
+        <p className="text-muted-foreground mb-8">Esta pesquisa já foi encerrada e não está mais aceitando respostas.</p>
+        <Button onClick={() => navigate('/login')} className="w-full bg-primary text-primary-foreground h-12 rounded-xl">Voltar</Button>
       </div>
     </div>
   );
