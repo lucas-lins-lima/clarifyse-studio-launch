@@ -23,8 +23,8 @@ export function AppLayout({ allowedRoles }: AppLayoutProps) {
 
   if (!session) return <Navigate to="/login" replace />;
   if (!profile) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F1EFE8]">
-      <Loader2 className="h-8 w-8 animate-spin text-[#2D1E6B]" />
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
 
