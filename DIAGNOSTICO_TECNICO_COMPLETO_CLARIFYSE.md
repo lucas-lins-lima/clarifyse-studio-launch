@@ -340,7 +340,7 @@ O **Clarifyse SurveyForge** e o **Portal Insights** representam um projeto ambic
 | C6 | Bug | 🟠 | Portal Gerente | Rotas registradas, auth parcial | Conectar dados reais |
 | C7 | Bug | 🔴 | Supabase | Configurado mas não usado | Conectar componentes |
 | C8 | Bug | 🔴 | Edge Functions | Não deployadas | Deploy via Lovable Cloud |
-| A1 | Bug | 🟠 | Cotas | Não bloqueiam | Implementar bloqueio |
+| A1 | Bug | ✅ | Cotas | Bloqueio implementado | Monitorar performance |
 | A2 | Gap | 🟠 | Análises | Métodos básicos apenas | Motor analítico avançado |
 | A3-A5 | Gap | 🟠 | Tipos avançados | Coleta sem análise | Implementar análise |
 | A6 | Bug | 🟠 | Upload | Arquivos em memória | Supabase Storage |
