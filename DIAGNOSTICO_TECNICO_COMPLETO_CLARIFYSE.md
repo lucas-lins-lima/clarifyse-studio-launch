@@ -280,8 +280,7 @@ O módulo financeiro implementa a UI completa (calculadora de precificação, di
 
 ### 8.2 Melhorias de Curto Prazo (Prioridade 2)
 
-6. **Unificar os dois "bancos"** — Eliminar a dualidade `surveyForgeDB.js` / `google-adapter.ts`.
-7. **Substituir cores hardcoded** por tokens semânticos do design system.
+5. **Substituir cores hardcoded** por tokens semânticos do design system.
 8. **Implementar paginação real** nas listagens.
 9. **Corrigir exportação Excel** para tipos complexos.
 10. **Adicionar timezone** `America/Sao_Paulo` no cronograma.
