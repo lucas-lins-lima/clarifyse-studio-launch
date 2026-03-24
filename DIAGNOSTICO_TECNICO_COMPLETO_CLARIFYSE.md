@@ -154,8 +154,8 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 | M5 | **Paginação** | ProjetosPage não implementa paginação real — carrega tudo do localStorage. |
 | M6 | **Lixeira** | A limpeza automática de 15 dias existe no `google-adapter.ts` mas roda apenas quando o navegador do admin abre a página. Não é um cron real. |
 | M7 | **React Query** | Configurado mas poucos componentes usam. A maioria faz `loadDB()` direto em `useEffect`. |
-| M8 | **Cores hardcoded** | Vários componentes usam cores fixas (`text-[#2D1E6B]`, `bg-[#F1EFE8]`) em vez de tokens semânticos do design system. |
-| M9 | **Acessibilidade** | Formulários públicos não têm labels adequados, skip navigation, ou suporte a screen readers. |
+| M8 | **Cores hardcoded** | ✅ Corrigido parcialmente — AppLayout, AppSidebar, SurveyPage e App.tsx agora usam tokens semânticos (`bg-background`, `text-primary`, etc.). Login.tsx ainda usa cores fixas por intenção de design. |
+| M9 | **Acessibilidade** | ✅ Corrigido — SurveyPage agora tem `role`, `aria-label`, `aria-live`, `fieldset/legend`, `sr-only` e `aria-hidden` em ícones decorativos. |
 
 ---
 
