@@ -241,7 +241,7 @@ O sistema agora apresenta rigor metodológico na gestão de cotas:
 
 ### 6.3 Processo de Entrega (Transparência)
 
-O cronograma no Portal do Cliente existe como UI mas:
+O cronograma no Portal do Cliente existe como UI e as rotas estão devidamente registradas, mas:
 - ❌ Dados não são conectados ao SurveyForge
 - ❌ Sem atualização real de status por etapa
 - ❌ Badge "Você está aqui" existe no código mas não funciona sem dados reais
