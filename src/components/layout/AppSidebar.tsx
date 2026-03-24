@@ -88,9 +88,9 @@ export function AppSidebar() {
 
       <SidebarFooter className="px-4 py-6 mt-auto">
         {!collapsed && profile && (
-          <div className="mb-4 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
-            <p className="text-xs font-bold text-white truncate">{profile.name}</p>
-            <p className="text-[10px] text-white/50 truncate uppercase tracking-wider mt-0.5">
+          <div className="mb-4 px-4 py-3 bg-sidebar-foreground/5 rounded-xl border border-sidebar-foreground/10">
+            <p className="text-xs font-bold text-sidebar-foreground truncate">{profile.name}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 truncate uppercase tracking-wider mt-0.5">
               {profile.role === 'admin' ? 'Administrador' : 
                profile.role === 'pesquisador' ? 'Pesquisador' :
                profile.role === 'gerente' ? 'Gerente' : 'Cliente'}
