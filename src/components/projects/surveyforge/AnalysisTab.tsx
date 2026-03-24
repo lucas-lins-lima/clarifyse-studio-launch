@@ -54,6 +54,12 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
     }
 
     try {
+      if (exportFormat === 'xlsx') {
+        exportToExcel(analysis, project);
+        toast.success('Análise exportada em Excel!');
+        return;
+      }
+
       let content: string;
       let filename: string;
       let mimeType: string;
@@ -63,7 +69,6 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
         filename = `analise_${project.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
         mimeType = 'application/json';
       } else {
-        // CSV export
         content = generateCSV(analysis, project);
         filename = `analise_${project.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
         mimeType = 'text/csv;charset=utf-8;';
