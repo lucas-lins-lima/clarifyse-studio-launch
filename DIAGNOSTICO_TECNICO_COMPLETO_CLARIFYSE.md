@@ -336,8 +336,8 @@ O **Clarifyse SurveyForge** e o **Portal Insights** representam um projeto ambic
 | C2 | Bug | 🟠 | Auth | robustHash = melhoria, mas insuficiente | Supabase Auth |
 | C3 | Bug | 🔴 | Survey | Backend localhost em produção | Supabase ou deploy do backend |
 | C4 | Bug | 🔴 | Roles | Client-side role check | RLS + tabela user_roles |
-| C5 | Bug | 🟠 | Portal Cliente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role cliente |
-| C6 | Bug | 🟠 | Portal Gerente | Rotas registradas, auth não funciona | Corrigir AuthContext para suportar role gerente |
+| C5 | Bug | 🟠 | Portal Cliente | Rotas registradas, auth parcial | Conectar dados reais |
+| C6 | Bug | 🟠 | Portal Gerente | Rotas registradas, auth parcial | Conectar dados reais |
 | C7 | Bug | 🔴 | Supabase | Configurado mas não usado | Conectar componentes |
 | C8 | Bug | 🔴 | Edge Functions | Não deployadas | Deploy via Lovable Cloud |
 | A1 | Bug | 🟠 | Cotas | Não bloqueiam | Implementar bloqueio |
