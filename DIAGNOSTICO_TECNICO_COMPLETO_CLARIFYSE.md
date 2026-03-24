@@ -187,8 +187,8 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 
 | Funcionalidade | Status | Observação |
 |---|---|---|
-| Portal exclusivo por projeto | ⚠️ Parcial | Código existe e rotas estão registradas no App.tsx, mas auth não suporta login de cliente |
-| Login de cliente | ❌ Não funciona | Role `cliente` existe no google-adapter mas não no AuthContext |
+| Portal exclusivo por projeto | ✅ Implementado | Rotas registradas no App.tsx |
+| Login de cliente | ⚠️ Parcial | Role cliente existe, mas dados são mock |
 | Status de campo em tempo real | ⚠️ Parcial | UI existe mas dados não conectados ao SurveyForge |
 | Cronograma interativo | ✅ Código existe | Mas dados são mock/localStorage |
 | Documentos (upload/download) | ⚠️ Parcial | Sem Supabase Storage |
