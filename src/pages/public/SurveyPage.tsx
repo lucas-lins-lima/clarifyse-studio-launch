@@ -279,14 +279,14 @@ export default function SurveyPage() {
   );
 
   if (submitted) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F1EFE8] p-8 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-8 text-center" role="status">
       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
-        <CheckCircle2 className="h-20 w-20 text-[#1D9E75] mx-auto" />
+        <CheckCircle2 className="h-20 w-20 text-secondary mx-auto" aria-hidden="true" />
       </motion.div>
-      <h1 className="font-display text-3xl font-bold text-[#2D1E6B] mb-4 mt-6">Obrigado!</h1>
-      <p className="text-xl text-[#2D1E6B]/80 mb-2">Suas respostas foram registradas com sucesso.</p>
-      <p className="text-[#64748B] max-w-md">Sua participação ajuda a Clarifyse a entregar insights ainda mais precisos.</p>
-      <Button onClick={() => navigate('/')} className="mt-8 bg-[#2D1E6B] text-white px-8 h-12 rounded-xl">Voltar ao início</Button>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-4 mt-6">Obrigado!</h1>
+      <p className="text-xl text-foreground/80 mb-2">Suas respostas foram registradas com sucesso.</p>
+      <p className="text-muted-foreground max-w-md">Sua participação ajuda a Clarifyse a entregar insights ainda mais precisos.</p>
+      <Button onClick={() => navigate('/')} className="mt-8 bg-primary text-primary-foreground px-8 h-12 rounded-xl">Voltar ao início</Button>
     </div>
   );
 
