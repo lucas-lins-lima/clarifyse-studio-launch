@@ -29,7 +29,13 @@ export function AppLayout({ allowedRoles }: AppLayoutProps) {
   );
 
   if (!allowedRoles.includes(profile.role)) {
-    return <Navigate to="/admin" replace />;
+    const routes: Record<string, string> = {
+      admin: '/admin',
+      pesquisador: '/admin',
+      gerente: '/gerente',
+      cliente: '/cliente',
+    };
+    return <Navigate to={routes[profile.role] || '/admin'} replace />;
   }
 
   return (
