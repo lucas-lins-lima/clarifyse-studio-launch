@@ -130,7 +130,7 @@ O diretório `server/` contém um backend Express que armazena formulários e re
 
 | # | Módulo | Bug | Impacto |
 |---|---|---|---|
-| A1 | **Cotas** | As cotas notificam quando atingidas mas **NÃO bloqueiam** novas respostas. O sistema permite ultrapassar o limite definido infinitamente. | Invalida controle amostral |
+| A1 | **Cotas** | ✅ As cotas agora **bloqueiam** novas respostas quando a meta é atingida (SurveyPage.tsx v2.0). Funcionalidade implementada com sucesso. | Monitorar performance |
 | A2 | **Análises** | O `analyticsEngine.ts` implementa apenas: distribuição de frequência, média/mediana, NPS score, word cloud básico e cruzamento simples. **Nenhuma** das 30+ metodologias da Clarifyse está implementada. | Entrega analítica nula |
 | A3 | **Conjoint** | Existe `ConjointQuestion.tsx` (UI de coleta) e `ConjointQuestionBuilder.tsx`, mas **não há motor de simulação conjoint**. As respostas são coletadas mas nunca analisadas. | Funcionalidade incompleta |
 | A4 | **MaxDiff** | Mesma situação: UI de coleta existe, análise não. | Funcionalidade incompleta |
