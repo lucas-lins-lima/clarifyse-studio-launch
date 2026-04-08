@@ -422,6 +422,25 @@ export type ActivityCategory =
   | 'acessos'
   | 'nps';
 
+export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
+  autenticacao: 'Autenticação',
+  projetos: 'Projetos',
+  clientes: 'Clientes',
+  gerentes: 'Gerentes',
+  campo: 'Campo',
+  financeiro: 'Financeiro',
+  documentos: 'Documentos',
+  configuracoes: 'Configurações',
+  acessos: 'Acessos',
+  nps: 'NPS',
+};
+
+export function getNPSClassification(score: number): { label: string; color: string } {
+  if (score >= 9) return { label: 'Promotor', color: 'text-green-600' };
+  if (score >= 7) return { label: 'Neutro', color: 'text-yellow-600' };
+  return { label: 'Detrator', color: 'text-red-600' };
+}
+
 export interface ActivityLog {
   id: string;
   user_id: string | null;
