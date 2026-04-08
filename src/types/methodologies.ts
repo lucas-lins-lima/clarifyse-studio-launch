@@ -560,6 +560,376 @@ export const METODOLOGIA_VALOR_CLIENTE = {
   ),
 } as const;
 
+// ============================================================================
+// NEW: PRICING METHODOLOGIES
+// ============================================================================
+
+export const METODOLOGIA_PRICING = {
+  'Price Sensitivity Meter (Van Westendorp)': createMethodology(
+    'price_van_westendorp',
+    'pricing',
+    'Mapeamento das faixas de preço aceitável, caro demais e barato demais na percepção do consumidor, com identificação do ponto de preço ótimo e faixa aceitável.',
+    ['vanwestendorp'],
+    true
+  ),
+  'Newton-Miller-Smith Extension (NMS)': createMethodology(
+    'price_nms',
+    'pricing',
+    'Extensão do PSM de Van Westendorp que adiciona intenção de compra às curvas de preço.',
+    ['vanwestendorp']
+  ),
+  'Análise de Elasticidade-Preço da Demanda': createMethodology(
+    'price_elasticidade',
+    'pricing',
+    'Modelagem da sensibilidade da intenção de compra a variações de preço por meio de simulações conjoint ou curvas de resposta.',
+    ['cbc', 'gabor_granger', 'number'],
+    true
+  ),
+  'Gabor-Granger Pricing': createMethodology(
+    'price_gabor_granger',
+    'pricing',
+    'Técnica de escalonamento de preços em que o respondente avalia sua intenção de compra a diferentes níveis de preço apresentados sequencialmente.',
+    ['gabor_granger'],
+    true
+  ),
+  'Willingness to Pay (WTP) via Conjoint': createMethodology(
+    'price_wtp_conjoint',
+    'pricing',
+    'Estimativa da disposição máxima a pagar por atributos específicos derivada das utilidades conjoint.',
+    ['cbc']
+  ),
+} as const;
+
+// ============================================================================
+// NEW: NPS ANALYTICS METHODOLOGIES
+// ============================================================================
+
+export const METODOLOGIA_NPS = {
+  'NPS Aprofundado com Drivers': createMethodology(
+    'nps_aprofundado_drivers',
+    'nps_analytics',
+    'Análise além do índice agregado para identificar os drivers que diferenciam promotores de detratores.',
+    ['nps', 'rating', 'likert'],
+    true
+  ),
+  'NPS Transacional vs. Relacional': createMethodology(
+    'nps_transacional_relacional',
+    'nps_analytics',
+    'Diferenciação entre NPS medido após interação específica e NPS de relacionamento geral com a marca.',
+    ['nps'],
+    true
+  ),
+  'Análise de Verbatim de Promotores e Detratores': createMethodology(
+    'nps_verbatim',
+    'nps_analytics',
+    'Text mining aplicado às justificativas de score para extrair temas que motivam recomendação ou detração.',
+    ['nps', 'text'],
+    true
+  ),
+  'NPS por Segmento e Jornada': createMethodology(
+    'nps_segmento_jornada',
+    'nps_analytics',
+    'Decomposição do NPS por perfil de cliente, região, canal e etapa da jornada.',
+    ['nps', 'single', 'multiple'],
+    true
+  ),
+} as const;
+
+// ============================================================================
+// NEW: EXPERIÊNCIA E JORNADA
+// ============================================================================
+
+export const METODOLOGIA_EXPERIENCIA = {
+  'Customer Effort Score (CES) Analytics': createMethodology(
+    'exp_ces',
+    'experiencia',
+    'Análise do esforço percebido em cada ponto de contato da jornada, identificando fricções que impactam a satisfação e retenção.',
+    ['ces', 'rating', 'likert'],
+    true
+  ),
+  'Customer Satisfaction Score (CSAT) Aprofundado': createMethodology(
+    'exp_csat',
+    'experiencia',
+    'Análise granular do CSAT por etapa da jornada, canal e perfil de cliente.',
+    ['csat', 'rating', 'likert'],
+    true
+  ),
+  'Análise de Momentos da Verdade': createMethodology(
+    'exp_momentos_verdade',
+    'experiencia',
+    'Mapeamento e priorização dos pontos de contato com maior impacto emocional e decisório na jornada.',
+    ['rating', 'likert', 'single']
+  ),
+  'Jornada do Cliente Baseada em Dados': createMethodology(
+    'exp_data_driven_journey',
+    'experiencia',
+    'Construção de mapas de jornada quantitativos a partir de dados de pesquisa.',
+    ['rating', 'likert', 'single', 'multiple']
+  ),
+  'Job-to-be-Done Analytics': createMethodology(
+    'exp_jtbd',
+    'experiencia',
+    'Análise quantitativa baseada no framework JTBD para identificar trabalhos funcionais, emocionais e sociais.',
+    ['rating', 'likert', 'single', 'multiple']
+  ),
+} as const;
+
+// ============================================================================
+// NEW: MARCA E COMUNICAÇÃO
+// ============================================================================
+
+export const METODOLOGIA_MARCA = {
+  'Brand Equity Tracking Quantitativo': createMethodology(
+    'marca_brand_equity',
+    'marca',
+    'Mensuração longitudinal dos pilares de brand equity (awareness, associações, qualidade percebida, lealdade).',
+    ['rating', 'likert', 'single', 'multiple', 'brand_funnel'],
+    true
+  ),
+  'Brand Funnel Analytics': createMethodology(
+    'marca_brand_funnel',
+    'marca',
+    'Análise de conversão ao longo do funil de brand (awareness → consideração → preferência → uso → recomendação).',
+    ['brand_funnel', 'single', 'multiple'],
+    true
+  ),
+  'Análise de Personalidade de Marca': createMethodology(
+    'marca_personalidade',
+    'marca',
+    'Mensuração das dimensões de personalidade atribuídas a marcas e comparação entre competidores.',
+    ['rating', 'likert', 'single', 'multiple']
+  ),
+  'Copy Testing Analytics': createMethodology(
+    'marca_copy_testing',
+    'marca',
+    'Análise estruturada de peças criativas com métricas de atenção, compreensão, relevância e intenção.',
+    ['rating', 'likert', 'single']
+  ),
+  'Análise de Congruência Marca-Consumidor': createMethodology(
+    'marca_self_congruity',
+    'marca',
+    'Mensuração da correspondência entre imagem percebida da marca e autoimagem do consumidor.',
+    ['rating', 'likert']
+  ),
+} as const;
+
+// ============================================================================
+// NEW: ANÁLISE DE KANO
+// ============================================================================
+
+export const METODOLOGIA_KANO = {
+  'Análise de Kano Completa': createMethodology(
+    'kano_full',
+    'penalty',
+    'Classificação de atributos em categorias funcionais (básicos, lineares, atrativos, indiferentes e reversos) com base em questionário funcional/disfuncional.',
+    ['kano'],
+    true
+  ),
+} as const;
+
+// ============================================================================
+// NEW: MEDIAÇÃO / MODERAÇÃO / SEM
+// ============================================================================
+
+export const METODOLOGIA_MEDIACAO = {
+  'Mediação e Moderação': createMethodology(
+    'med_mediacao_moderacao',
+    'mediacao',
+    'Mediação identifica o mecanismo causal; moderação identifica as condições em que a relação vale.',
+    ['rating', 'likert', 'number']
+  ),
+  'Mediação em Série (Serial Mediation)': createMethodology(
+    'med_serial_mediation',
+    'mediacao',
+    'Extensão da mediação simples para cadeias causais com múltiplos mediadores sequenciais.',
+    ['rating', 'likert', 'number']
+  ),
+  'Moderação por Variáveis Contínuas (Floodlight Analysis)': createMethodology(
+    'med_floodlight',
+    'mediacao',
+    'Identificação dos pontos exatos da escala onde o efeito muda de direção ou significância.',
+    ['rating', 'likert', 'number']
+  ),
+} as const;
+
+export const METODOLOGIA_SEM = {
+  'SEM Clássico (LISREL / AMOS)': createMethodology(
+    'sem_classico',
+    'sem',
+    'Teste simultâneo de relações causais entre variáveis latentes e observadas.',
+    ['rating', 'likert', 'number']
+  ),
+  'PLS-SEM': createMethodology(
+    'sem_pls',
+    'sem',
+    'Alternativa ao SEM para amostras menores ou normalidade não atendida.',
+    ['rating', 'likert', 'number']
+  ),
+  'SEM Multigrupo (MSEM)': createMethodology(
+    'sem_multigrupo',
+    'sem',
+    'Comparação de parâmetros estruturais entre grupos distintos.',
+    ['rating', 'likert', 'number']
+  ),
+} as const;
+
+// ============================================================================
+// NEW: SOBREVIVÊNCIA / REDE / VALIDAÇÃO / ESTATÍSTICA AVANÇADA
+// ============================================================================
+
+export const METODOLOGIA_SOBREVIVENCIA = {
+  'Modelagem de Tempo até Abandono / Churn': createMethodology(
+    'surv_tempo_churn',
+    'sobrevivencia',
+    'Modelagem do tempo até abandono de marca ou descontinuidade de uso.',
+    ['number', 'date', 'single']
+  ),
+  'Curvas de Kaplan-Meier': createMethodology(
+    'surv_kaplan_meier',
+    'sobrevivencia',
+    'Estimativa não paramétrica da função de sobrevivência ao longo do tempo.',
+    ['number', 'date', 'single']
+  ),
+  'Modelo de Cox (Cox Proportional Hazards)': createMethodology(
+    'surv_cox',
+    'sobrevivencia',
+    'Regressão de sobrevivência que identifica variáveis que aumentam ou reduzem o risco de churn.',
+    ['number', 'date', 'single', 'rating']
+  ),
+} as const;
+
+export const METODOLOGIA_REDE = {
+  'Mapeamento de Conexões entre Atributos e Marcas': createMethodology(
+    'rede_conexoes',
+    'rede',
+    'Estruturas relacionais para entender quais atributos se associam e reforçam mutuamente.',
+    ['single', 'multiple', 'rating']
+  ),
+  'Análise de Centralidade de Rede': createMethodology(
+    'rede_centralidade',
+    'rede',
+    'Identificação dos atributos ou conceitos mais influentes na rede de percepções.',
+    ['single', 'multiple', 'rating']
+  ),
+} as const;
+
+export const METODOLOGIA_ESTATISTICA_AVANCADA = {
+  'Análise Discriminante': createMethodology(
+    'stat_discriminante',
+    'estatistica_avancada',
+    'Classificação de respondentes em grupos predefinidos com base em variáveis preditoras.',
+    ['single', 'multiple', 'rating', 'likert', 'number']
+  ),
+  'Escalonamento Multidimensional (MDS)': createMethodology(
+    'stat_mds',
+    'estatistica_avancada',
+    'Representação visual da percepção de similaridade e diferença entre marcas em mapa perceptual.',
+    ['single', 'multiple', 'rating']
+  ),
+  'Análise de Séries Temporais (ARIMA / SARIMA)': createMethodology(
+    'stat_arima',
+    'estatistica_avancada',
+    'Modelagem de tendências e sazonalidades para previsão de indicadores de brand tracking.',
+    ['number', 'rating']
+  ),
+  'MANOVA': createMethodology(
+    'stat_manova',
+    'estatistica_avancada',
+    'Comparação simultânea de múltiplas variáveis dependentes entre grupos.',
+    ['rating', 'likert', 'number']
+  ),
+  'Alpha de Cronbach': createMethodology(
+    'stat_cronbach_alpha',
+    'estatistica_avancada',
+    'Medida de consistência interna de escalas, avaliando coerência dos itens.',
+    ['rating', 'likert'],
+    true
+  ),
+  'Análise de Classes Latentes (LCA)': createMethodology(
+    'stat_lca',
+    'estatistica_avancada',
+    'Identificação de subgrupos ocultos na população com base em padrões de resposta.',
+    ['single', 'multiple', 'rating', 'likert']
+  ),
+  'Bootstrap e Reamostragem': createMethodology(
+    'stat_bootstrap',
+    'estatistica_avancada',
+    'Estimativa de intervalos de confiança quando premissas paramétricas não são atendidas.',
+    ['number', 'rating', 'likert'],
+    true
+  ),
+  'Simulação de Monte Carlo': createMethodology(
+    'stat_monte_carlo',
+    'estatistica_avancada',
+    'Geração de múltiplos cenários por amostragem de distribuições de probabilidade.',
+    ['number', 'rating']
+  ),
+  'Análise Bayesiana': createMethodology(
+    'stat_bayesiana',
+    'estatistica_avancada',
+    'Estimação de parâmetros incorporando conhecimento prévio.',
+    ['number', 'rating', 'likert', 'cbc']
+  ),
+  'Logit / Probit Multinomial': createMethodology(
+    'stat_logit_probit_multinomial',
+    'estatistica_avancada',
+    'Modelagem de escolha entre múltiplas alternativas mutuamente exclusivas.',
+    ['single', 'multiple', 'cbc']
+  ),
+  'TRI / IRT (Teoria de Resposta ao Item)': createMethodology(
+    'stat_irt',
+    'estatistica_avancada',
+    'Modelagem da relação entre traço latente e probabilidade de resposta a cada item.',
+    ['rating', 'likert']
+  ),
+  'Shapley Values e Relative Importance Analysis': createMethodology(
+    'stat_shapley',
+    'estatistica_avancada',
+    'Quantificação da contribuição relativa de cada variável preditora sobre a variável dependente, com base em teoria dos jogos cooperativos.',
+    ['rating', 'likert', 'number'],
+    true
+  ),
+  'SHAP (SHapley Additive exPlanations)': createMethodology(
+    'stat_shap',
+    'estatistica_avancada',
+    'Interpretação granular de modelos de ML por meio de valores SHAP.',
+    ['single', 'multiple', 'rating', 'likert', 'number']
+  ),
+} as const;
+
+export const METODOLOGIA_VALIDACAO = {
+  'Validação Cruzada (Cross-Validation k-fold)': createMethodology(
+    'val_cross_validation',
+    'validacao',
+    'Avaliação da capacidade de generalização de modelos preditivos.',
+    ['number', 'rating', 'likert']
+  ),
+  'Análise de Multicolinearidade (VIF)': createMethodology(
+    'val_vif',
+    'validacao',
+    'Diagnóstico da colinearidade entre variáveis preditoras em modelos de regressão.',
+    ['number', 'rating', 'likert']
+  ),
+  'Análise de Invariância de Medida': createMethodology(
+    'val_invariancia',
+    'validacao',
+    'Teste de se uma escala mede o mesmo construto de forma equivalente em diferentes grupos.',
+    ['rating', 'likert']
+  ),
+  'Análise de Curva ROC e AUC': createMethodology(
+    'val_roc_auc',
+    'validacao',
+    'Avaliação da capacidade discriminante de modelos de classificação.',
+    ['single', 'multiple', 'boolean']
+  ),
+  'Análise de Precisão e Recall (F1-Score)': createMethodology(
+    'val_f1_score',
+    'validacao',
+    'Avaliação balanceada de modelos de classificação com classes desequilibradas.',
+    ['single', 'multiple', 'boolean']
+  ),
+} as const;
+
 export const ALL_METHODOLOGIES = {
   ...METODOLOGIA_DESCRITIVA,
   ...METODOLOGIA_COMPARATIVA,
@@ -573,6 +943,17 @@ export const ALL_METHODOLOGIES = {
   ...METODOLOGIA_COMPORTAMENTAL,
   ...METODOLOGIA_MERCADO,
   ...METODOLOGIA_VALOR_CLIENTE,
+  ...METODOLOGIA_PRICING,
+  ...METODOLOGIA_NPS,
+  ...METODOLOGIA_EXPERIENCIA,
+  ...METODOLOGIA_MARCA,
+  ...METODOLOGIA_KANO,
+  ...METODOLOGIA_MEDIACAO,
+  ...METODOLOGIA_SEM,
+  ...METODOLOGIA_SOBREVIVENCIA,
+  ...METODOLOGIA_REDE,
+  ...METODOLOGIA_ESTATISTICA_AVANCADA,
+  ...METODOLOGIA_VALIDACAO,
 } as const;
 
 export type SpecificMethodologyKey = keyof typeof ALL_METHODOLOGIES;
@@ -590,6 +971,16 @@ export const CATEGORY_LABELS: Record<CategoryType, string> = {
   comportamental: 'Análises Comportamentais e Experimentais',
   mercado: 'Análises de Mercado e Competição',
   valor_cliente: 'Análises de Valor do Cliente e Retenção',
+  pricing: 'Análise de Sensibilidade de Preço',
+  nps_analytics: 'NPS Analytics',
+  experiencia: 'Análises de Experiência e Jornada do Consumidor',
+  marca: 'Análises de Marca e Comunicação',
+  mediacao: 'Análise de Mediação e Moderação',
+  sem: 'Modelagem de Equações Estruturais (SEM)',
+  sobrevivencia: 'Análise de Sobrevivência',
+  rede: 'Análise de Redes',
+  estatistica_avancada: 'Análises Estatísticas Avançadas',
+  validacao: 'Métricas e Validação de Modelos',
 };
 
 export const getAllCategories = (): CategoryType[] => {
