@@ -376,6 +376,73 @@ export default function FormBuilderTab({ project, onSave, isLocked }: { project:
                       </div>
                     </div>
                   )}
+
+                  {/* Advanced Question Type Builders */}
+                  {activeQuestion.type === 'matrix' && (
+                    <MatrixQuestionBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'upload' && (
+                    <FileUploadQuestionBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'cbc' && (
+                    <ConjointQuestionBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'maxdiff' && (
+                    <MaxDiffQuestionBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'image_choice' && (
+                    <ImageChoiceQuestionBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'vanwestendorp' && (
+                    <VanWestendorpBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'kano' && (
+                    <KanoBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+                  {activeQuestion.type === 'gabor_granger' && (
+                    <GaborGrangerBuilder question={activeQuestion} onUpdate={handleUpdateQuestion} isLocked={isLocked} />
+                  )}
+
+                  {/* CES / CSAT / Brand Funnel config */}
+                  {activeQuestion.type === 'ces' && (
+                    <div className="space-y-2 pt-4">
+                      <Label className="text-[10px] font-bold text-[#64748B]">CUSTOMER EFFORT SCORE (CES)</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Escala de 1 (Muito Difícil) a 7 (Muito Fácil). Mede o esforço do cliente na interação.
+                      </p>
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-700">
+                        Análises automáticas: média CES, distribuição por faixa, comparação entre segmentos.
+                      </div>
+                    </div>
+                  )}
+                  {activeQuestion.type === 'csat' && (
+                    <div className="space-y-2 pt-4">
+                      <Label className="text-[10px] font-bold text-[#64748B]">CUSTOMER SATISFACTION (CSAT)</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Escala de 1 a 5 estrelas. Mede a satisfação pontual do cliente.
+                      </p>
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-blue-700">
+                        Análises automáticas: % satisfeitos (4-5), média, drivers por segmento.
+                      </div>
+                    </div>
+                  )}
+                  {activeQuestion.type === 'brand_funnel' && (
+                    <div className="space-y-2 pt-4">
+                      <Label className="text-[10px] font-bold text-[#64748B]">BRAND FUNNEL</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Mede as etapas do funil de marca: Awareness → Consideração → Preferência → Uso → Recomendação.
+                        O respondente seleciona todas as etapas que se aplicam.
+                      </p>
+                      <div className="space-y-1">
+                        {['Conhece (Awareness)', 'Considera', 'Prefere', 'Usa', 'Recomenda'].map((stage, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-[#F1EFE8] rounded text-xs text-[#2D1E6B] font-medium">
+                            <span className="w-5 h-5 rounded-full bg-[#2D1E6B] text-white text-[10px] flex items-center justify-center">{i+1}</span>
+                            {stage}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
