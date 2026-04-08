@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Download, TrendingUp, AlertCircle, CheckCircle2, BarChart3, 
-  PieChart, Activity, Zap, FileJson, FileSpreadsheet, ArrowRight
+  PieChart, Activity, Zap, FileJson, FileSpreadsheet, ArrowRight,
+  DollarSign, Target, Gauge, Smile, BarChart3 as FunnelIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { generateInsights, AnalysisResult, AnalysisResponse, Question } from '@/lib/analyticsEngine';
@@ -15,8 +16,15 @@ import {
   analyzeFunnel,
   analyzeSentiment,
   calculateCronbachAlpha,
+  analyzeVanWestendorp,
+  analyzeKano,
+  analyzeCES,
+  analyzeCSAT,
+  analyzeGaborGranger,
+  analyzeBrandFunnel,
+  analyzeShapleyImportance,
 } from '@/lib/methodologyAnalytics';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
