@@ -1,1000 +1,1138 @@
-export type CategoryType =
-  | 'descritiva'
-  | 'comparativa'
-  | 'preditiva'
-  | 'fatorial'
-  | 'penalty'
-  | 'cluster'
-  | 'text'
-  | 'intencao'
-  | 'causalidade'
-  | 'comportamental'
-  | 'mercado'
-  | 'valor_cliente'
-  | 'pricing'
-  | 'nps_analytics'
-  | 'experiencia'
-  | 'marca'
-  | 'estatistica_avancada'
-  | 'mediacao'
-  | 'sem'
-  | 'sobrevivencia'
-  | 'rede'
-  | 'validacao';
+/**
+ * Tipos e Utilitários para Metodologias de Pesquisa
+ * Integração completa de todas as 142+ metodologias Clarifyse
+ */
 
-export interface MethodologyInfo {
-  code: string;
-  category: CategoryType;
+export type MethodologyType =
+  // Descritivas
+  | 'frequency_distribution'
+  | 'descriptive_stats'
+  | 'clustering'
+  | 'outlier_detection'
+  | 'quintiles'
+  | 'skewness_kurtosis'
+  // Comparativas
+  | 't_test'
+  | 'anova'
+  | 'chi_square'
+  | 'mann_whitney'
+  | 'kruskal_wallis'
+  | 'effect_size'
+  // Regressão
+  | 'linear_regression'
+  | 'logistic_regression'
+  | 'ridge_regression'
+  | 'lasso_regression'
+  | 'random_forest'
+  // Fatores
+  | 'pca'
+  | 'factor_analysis'
+  | 'correspondence_analysis'
+  // Penalty & Priorização
+  | 'penalty_analysis'
+  | 'importance_satisfaction'
+  | 'gap_analysis'
+  | 'kano_analysis'
+  | 'importance_matrix'
+  // Preços
+  | 'van_westendorp'
+  | 'gabor_granger'
+  | 'price_elasticity'
+  | 'wtp_analysis'
+  // Clusterização
+  | 'kmeans'
+  | 'hierarchical_clustering'
+  | 'dbscan'
+  | 'silhouette_analysis'
+  | 'davies_bouldin'
+  // Texto
+  | 'sentiment_analysis'
+  | 'aspect_based_sentiment'
+  | 'word_frequency'
+  | 'topic_modeling'
+  | 'ner'
+  | 'word_embedding'
+  // Intenção
+  | 'conversion_funnel'
+  | 'barrier_analysis'
+  | 'job_to_be_done'
+  // Importância
+  | 'shapley_values'
+  | 'shap_analysis'
+  | 'lime_analysis'
+  // Conjoint & Simulação
+  | 'conjoint_simulation'
+  | 'choice_based_conjoint'
+  | 'adaptive_conjoint'
+  | 'menu_based_conjoint'
+  // NPS & Satisfação
+  | 'nps_analysis'
+  | 'ces_analysis'
+  | 'csat_analysis'
+  | 'brand_funnel'
+  | 'brand_equity'
+  // Rede
+  | 'network_analysis'
+  | 'network_centrality'
+  | 'community_detection'
+  // Sobrevivência
+  | 'survival_analysis'
+  | 'kaplan_meier'
+  | 'cox_model'
+  // MaxDiff
+  | 'maxdiff_analysis'
+  | 'maxdiff_latent'
+  // Mediação
+  | 'mediation_analysis'
+  | 'moderation_analysis'
+  | 'mediated_moderation'
+  // SEM
+  | 'sem_analysis'
+  | 'pls_sem'
+  | 'multigroup_sem'
+  | 'dynamic_sem'
+  // Causalidade
+  | 'propensity_score'
+  | 'difference_in_differences'
+  | 'regression_discontinuity'
+  | 'instrumental_variables'
+  | 'causal_inference'
+  // Experiência
+  | 'journey_mapping'
+  | 'touchpoint_analysis'
+  | 'inflection_point'
+  // Marca
+  | 'copy_testing'
+  | 'brand_personality'
+  | 'self_congruity'
+  | 'positioning_map'
+  // Mercado
+  | 'market_share'
+  | 'switching_analysis'
+  | 'perceptual_rivalry'
+  | 'white_space'
+  | 'concentration_hhi'
+  | 'turf_analysis'
+  // Comportamental
+  | 'ab_testing'
+  | 'multi_armed_bandit'
+  | 'behavioral_economics'
+  | 'eye_tracking'
+  | 'reaction_time'
+  | 'implicit_association'
+  // Validação
+  | 'cross_validation'
+  | 'multicollinearity'
+  | 'measurement_invariance'
+  | 'precision_recall'
+  | 'model_calibration'
+  // Avançadas
+  | 'deep_learning'
+  | 'hierarchical_bayesian'
+  | 'double_machine_learning'
+  | 'synthetic_control'
+  | 'causal_forest'
+  | 'uplift_modeling'
+  | 'llm_assisted'
+  | 'synthetic_respondents'
+  | 'scenario_modeling'
+  // Valor
+  | 'clv_analysis'
+  | 'cohort_analysis'
+  // Adicionais
+  | 'cronbach_alpha'
+  | 'bootstrap_ci'
+  | 'monte_carlo';
+
+export interface MethodologyConfig {
+  type: MethodologyType;
+  name: string;
   description: string;
+  category: 'descriptive' | 'comparative' | 'explanatory' | 'text' | 'pricing' | 'causal' | 'advanced';
   applicableQuestionTypes: string[];
-  hasAutomaticAnalysis: boolean;
+  enabled: boolean;
+  parameters?: Record<string, any>;
+  requires?: string[]; // Outras metodologias necessárias
 }
 
-const createMethodology = (
-  code: string,
-  category: CategoryType,
-  description: string,
-  applicableQuestionTypes: string[],
-  hasAutomaticAnalysis = false
-) => ({
-  code,
-  category,
-  description,
-  applicableQuestionTypes,
-  hasAutomaticAnalysis,
-}) as const;
+export interface QuestionMethodologies {
+  [questionId: string]: MethodologyConfig[];
+}
 
-export const METODOLOGIA_DESCRITIVA = {
-  'Distribuição Percentual e Média por Variável': createMethodology(
-    'desc_distribuicao_percentual_media',
-    'descritiva',
-    'Análise básica de frequências, médias, medianas e desvios para descrever o perfil da amostra e os padrões de resposta em cada variável.',
-    ['single', 'multiple', 'rating', 'likert', 'number'],
-    true
-  ),
-  'Cruzamento de Perfil entre Variáveis de Segmentação e Comportamento': createMethodology(
-    'desc_cruzamento_perfil_segmentacao_comportamento',
-    'descritiva',
-    'Tabelas de contingência e cruzamentos entre variáveis categóricas para revelar padrões de comportamento por perfil demográfico ou psicográfico.',
-    ['single', 'multiple', 'boolean'],
-    true
-  ),
-  'Segmentação por Cluster / K-means': createMethodology(
-    'desc_segmentacao_cluster_kmeans',
-    'descritiva',
-    'Agrupamento de respondentes com base em critérios de interesse, conhecimento e percepções, formando segmentos homogêneos internamente e heterogêneos entre si.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Análise de Quintis e Percentis': createMethodology(
-    'desc_quintis_percentis',
-    'descritiva',
-    'Estratificação da amostra em faixas de distribuição para identificar grupos extremos (top box / bottom box) e analisar comportamentos em cada estrato da curva de resposta.',
-    ['rating', 'likert', 'number'],
-    true
-  ),
-  'Análise de Outliers e Dados Atípicos': createMethodology(
-    'desc_outliers_dados_atipicos',
-    'descritiva',
-    'Identificação e tratamento de respostas atípicas por meio de boxplots, Z-score e distância de Mahalanobis, garantindo que os resultados não sejam distorcidos por observações extremas.',
-    ['number', 'rating', 'likert'],
-    true
-  ),
-  'Análise de Assimetria e Curtose': createMethodology(
-    'desc_assimetria_curtose',
-    'descritiva',
-    'Avaliação da forma das distribuições de resposta para identificar vieses de aquiescência, efeito teto/piso e outras distorções que afetam a interpretação de escalas.',
-    ['rating', 'likert', 'number'],
-    true
-  ),
-  'Análise de Padrão de Não-Resposta (Missing Data Analysis)': createMethodology(
-    'desc_missing_data_analysis',
-    'descritiva',
-    'Diagnóstico dos padrões de dados ausentes (MCAR, MAR, MNAR) e aplicação de técnicas de imputação como Imputação Múltipla (MICE) ou imputação por média/moda para preservar a integridade da amostra.',
-    ['single', 'multiple', 'rating', 'likert', 'text', 'number'],
-    true
-  ),
-  'Análise de Viés de Resposta e Aquiescência': createMethodology(
-    'desc_vies_resposta_aquiescencia',
-    'descritiva',
-    'Identificação de respondentes com padrão de resposta extremo ou concordância sistemática (yea-saying), com ajuste ou ponderação para garantir qualidade dos dados.',
-    ['single', 'multiple', 'rating', 'likert', 'boolean'],
-    true
-  ),
-} as const;
+export const METHODOLOGIES_CATALOG: Record<MethodologyType, MethodologyConfig> = {
+  // Análises Descritivas
+  frequency_distribution: {
+    type: 'frequency_distribution',
+    name: 'Distribuição de Frequências',
+    description: 'Análise básica de frequências, médias, medianas para descrever padrões de resposta',
+    category: 'descriptive',
+    applicableQuestionTypes: ['single', 'multiple', 'likert', 'nps', 'rating', 'ranking'],
+    enabled: true,
+  },
+  descriptive_stats: {
+    type: 'descriptive_stats',
+    name: 'Estatísticas Descritivas',
+    description: 'Média, mediana, desvio padrão, variância, min/max',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  clustering: {
+    type: 'clustering',
+    name: 'Segmentação por Cluster',
+    description: 'Agrupamento de respondentes em segmentos homogêneos (K-Means)',
+    category: 'descriptive',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
+  outlier_detection: {
+    type: 'outlier_detection',
+    name: 'Detecção de Outliers',
+    description: 'Identificação de respostas atípicas por Z-score ou IQR',
+    category: 'descriptive',
+    applicableQuestionTypes: ['number', 'likert', 'rating'],
+    enabled: true,
+  },
+  quintiles: {
+    type: 'quintiles',
+    name: 'Análise de Quintis',
+    description: 'Estratificação em faixas de distribuição (top/bottom box)',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  skewness_kurtosis: {
+    type: 'skewness_kurtosis',
+    name: 'Assimetria e Curtose',
+    description: 'Avaliação da forma das distribuições (assimetria, curtose)',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_COMPARATIVA = {
-  'Testes de Significância: Qui-quadrado, T-test e ANOVA': createMethodology(
-    'comp_testes_significancia',
-    'comparativa',
-    'Testes paramétricos e não paramétricos para comparar distribuições e médias entre grupos distintos de respondentes.',
-    ['single', 'multiple', 'boolean', 'rating', 'likert', 'number'],
-    true
-  ),
-  'Testes Post-Hoc (Newman-Keuls / Tukey HSD)': createMethodology(
-    'comp_testes_post_hoc',
-    'comparativa',
-    'Identificação de quais pares de subgrupos diferem significativamente após ANOVA, controlando o erro tipo I acumulado.',
-    ['rating', 'likert', 'number']
-  ),
-  'Comparações entre grupos de usuários e não usuários': createMethodology(
-    'comp_usuarios_vs_nao_usuarios',
-    'comparativa',
-    'Análise diferencial entre perfis de relacionamento com a marca ou categoria para mapear brechas de percepção e comportamento.',
-    ['single', 'multiple', 'boolean', 'rating', 'likert'],
-    true
-  ),
-  'Teste de Mann-Whitney e Kruskal-Wallis': createMethodology(
-    'comp_mann_whitney_kruskal_wallis',
-    'comparativa',
-    'Alternativas não paramétricas ao T-test e ANOVA para comparação de grupos quando as premissas de normalidade não são atendidas, amplamente utilizados em escalas ordinais.',
-    ['rating', 'likert', 'number'],
-    true
-  ),
-  'Análise de Equivalência (Equivalence Testing / TOST)': createMethodology(
-    'comp_equivalence_tost',
-    'comparativa',
-    'Testa se dois grupos são suficientemente similares dentro de uma margem prática, complementando o teste de diferença tradicional — útil para validação de instrumentos e comparação de versões de produto.',
-    ['rating', 'likert', 'number']
-  ),
-  "Análise de Efeito Prático (Effect Size: Cohen's d, eta²)": createMethodology(
-    'comp_effect_size',
-    'comparativa',
-    'Mensuração da magnitude das diferenças entre grupos, indo além da significância estatística para avaliar a relevância prática das diferenças encontradas.',
-    ['rating', 'likert', 'number'],
-    true
-  ),
-  'Teste de Proporções (Z-test para Proporções)': createMethodology(
-    'comp_z_test_proporcoes',
-    'comparativa',
-    'Comparação de frequências percentuais entre grupos independentes para verificar se diferenças em distribuições categóricas são estatisticamente significativas.',
-    ['single', 'multiple', 'boolean'],
-    true
-  ),
-  'Análise de Variação Temporal (Comparação de Ondas)': createMethodology(
-    'comp_variacao_temporal_ondas',
-    'comparativa',
-    'Comparação de indicadores entre diferentes momentos de coleta (ondas de tracking) para identificar evolução, deterioração ou estabilidade de percepções e comportamentos ao longo do tempo.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-} as const;
+  // Análises Comparativas
+  t_test: {
+    type: 't_test',
+    name: 'Teste T',
+    description: 'Comparação de médias entre dois grupos',
+    category: 'comparative',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  anova: {
+    type: 'anova',
+    name: 'ANOVA',
+    description: 'Comparação de médias entre múltiplos grupos',
+    category: 'comparative',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  chi_square: {
+    type: 'chi_square',
+    name: 'Teste Qui-Quadrado',
+    description: 'Teste de independência entre variáveis categóricas',
+    category: 'comparative',
+    applicableQuestionTypes: ['single', 'multiple', 'boolean'],
+    enabled: true,
+  },
+  mann_whitney: {
+    type: 'mann_whitney',
+    name: 'Mann-Whitney U Test',
+    description: 'Alternativa não-paramétrica ao T-test',
+    category: 'comparative',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  kruskal_wallis: {
+    type: 'kruskal_wallis',
+    name: 'Kruskal-Wallis',
+    description: 'Alternativa não-paramétrica ao ANOVA',
+    category: 'comparative',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  effect_size: {
+    type: 'effect_size',
+    name: 'Effect Size (Cohen\'s d)',
+    description: 'Magnitude prática das diferenças entre grupos',
+    category: 'comparative',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_PREDITIVA = {
-  'Regressão Linear Múltipla': createMethodology(
-    'pred_regressao_linear_multipla',
-    'preditiva',
-    'Identificação de preditores de variáveis contínuas como satisfação geral, propensão de compra e avaliação de marca com controle simultâneo de múltiplas variáveis.',
-    ['number', 'rating', 'likert']
-  ),
-  'Regressão Logística': createMethodology(
-    'pred_regressao_logistica',
-    'preditiva',
-    'Modelagem de variáveis binárias ou categóricas como intenção de compra (sim/não) ou adoção de produto.',
-    ['single', 'multiple', 'boolean']
-  ),
-  'Árvores de Decisão e Random Forest': createMethodology(
-    'pred_arvores_decisao_random_forest',
-    'preditiva',
-    'Identificação dos fatores com maior poder explicativo sobre variáveis-alvo, com interpretação visual da hierarquia de decisão.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Gradient Boosting (XGBoost / LightGBM)': createMethodology(
-    'pred_gradient_boosting',
-    'preditiva',
-    'Modelos preditivos de alta performance baseados em ensemble de árvores de decisão sequenciais, com capacidade de capturar relações não lineares e interações complexas entre variáveis — superiores ao Random Forest em precisão preditiva em contextos de alta dimensionalidade.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Regressão Ridge, Lasso e Elastic Net': createMethodology(
-    'pred_ridge_lasso_elastic_net',
-    'preditiva',
-    'Regressões regularizadas para contextos com muitas variáveis preditoras, penalizando coeficientes irrelevantes e selecionando automaticamente os preditores mais relevantes — essenciais em modelos de drivers de satisfação com baterias extensas de atributos.',
-    ['number', 'rating', 'likert']
-  ),
-  'Regressão Quantílica': createMethodology(
-    'pred_regressao_quantilica',
-    'preditiva',
-    'Modelagem da relação entre preditores e diferentes percentis da variável dependente, permitindo entender se os drivers de satisfação atuam de forma diferente entre consumidores com baixa, média e alta avaliação.',
-    ['number', 'rating', 'likert']
-  ),
-  'Modelos de Aprendizado de Máquina Supervisionado (SVM, KNN, Naïve Bayes)': createMethodology(
-    'pred_ml_supervisionado',
-    'preditiva',
-    'Algoritmos de classificação e predição para segmentação, detecção de perfis e classificação de respondentes em categorias de interesse com base em padrões de resposta.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'AutoML e Seleção Automática de Modelos': createMethodology(
-    'pred_automl',
-    'preditiva',
-    'Pipeline automatizado de treinamento, validação e comparação de modelos preditivos, garantindo que o modelo de maior performance seja selecionado de forma sistemática e reproduzível.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Modelos de Redes Neurais e Deep Learning': createMethodology(
-    'pred_redes_neurais_deep_learning',
-    'preditiva',
-    'Modelagem preditiva com arquiteturas profundas (MLP, CNN, Transformers) para capturar interações não lineares e padrões complexos em dados multimodais (texto + imagem + variáveis numéricas), especialmente em previsão de intenção de compra e preferência em alta dimensionalidade.',
-    ['single', 'multiple', 'rating', 'likert', 'number', 'text']
-  ),
-  'Modelos Hierárquicos Bayesianos': createMethodology(
-    'pred_modelos_hierarquicos_bayesianos',
-    'preditiva',
-    'Estimação bayesiana de modelos com estrutura hierárquica, ideal para Conjoint individualizado e segmentação personalizada, incorporando incerteza e priors informativos para maior robustez em amostras médias.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-} as const;
+  // Regressão
+  linear_regression: {
+    type: 'linear_regression',
+    name: 'Regressão Linear',
+    description: 'Predição de variáveis contínuas com múltiplos preditores',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  logistic_regression: {
+    type: 'logistic_regression',
+    name: 'Regressão Logística',
+    description: 'Predição de variáveis binárias ou categóricas',
+    category: 'explanatory',
+    applicableQuestionTypes: ['boolean', 'single'],
+    enabled: true,
+  },
+  ridge_regression: {
+    type: 'ridge_regression',
+    name: 'Regressão Ridge',
+    description: 'Regressão regularizada para contextos com muitas variáveis',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  lasso_regression: {
+    type: 'lasso_regression',
+    name: 'Regressão Lasso',
+    description: 'Regressão com seleção automática de variáveis',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number'],
+    enabled: true,
+  },
+  random_forest: {
+    type: 'random_forest',
+    name: 'Random Forest',
+    description: 'Árvores de decisão ensembladas para predição',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'nps', 'rating', 'number', 'single'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_FATORIAL = {
-  'PCA e Análise Fatorial Exploratória': createMethodology(
-    'fact_pca_efa',
-    'fatorial',
-    'Redução de dimensionalidade e agrupamento de itens em fatores latentes para simplificar baterias extensas de atributos.',
-    ['rating', 'likert', 'number']
-  ),
-  'Análise de Correspondência': createMethodology(
-    'fact_analise_correspondencia',
-    'fatorial',
-    'Mapa perceptual associando atributos e perfis de respondentes em um espaço bidimensional.',
-    ['single', 'multiple']
-  ),
-  'Análise Fatorial Confirmatória (CFA)': createMethodology(
-    'fact_confirmatory_factor_analysis',
-    'fatorial',
-    'Teste de um modelo fatorial teórico predefinido para verificar se a estrutura de dimensões hipotetizada é suportada pelos dados, com avaliação de índices de ajuste (CFI, RMSEA, SRMR) — essencial na validação de escalas em pesquisas de brand equity e satisfação.',
-    ['rating', 'likert', 'number']
-  ),
-  'Análise de Bifactor': createMethodology(
-    'fact_bifactor',
-    'fatorial',
-    'Modelagem fatorial que separa um fator geral (g) de fatores específicos, útil para distinguir a contribuição de dimensões distintas em construtos multidimensionais como qualidade percebida ou experiência de marca.',
-    ['rating', 'likert', 'number']
-  ),
-  'Análise Fatorial Exploratória com Rotação Oblíqua (Promax / Oblimin)': createMethodology(
-    'fact_rotacao_obliqua',
-    'fatorial',
-    'Extração de fatores admitindo correlação entre as dimensões latentes — mais adequada para construtos psicológicos onde os fatores não são ortogonais, produzindo estruturas mais realistas e interpretáveis.',
-    ['rating', 'likert', 'number']
-  ),
-} as const;
+  // Fatores
+  pca: {
+    type: 'pca',
+    name: 'Análise de Componentes Principais',
+    description: 'Redução de dimensionalidade e agrupamento de itens',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  factor_analysis: {
+    type: 'factor_analysis',
+    name: 'Análise Fatorial',
+    description: 'Agrupamento de itens em fatores latentes',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  correspondence_analysis: {
+    type: 'correspondence_analysis',
+    name: 'Análise de Correspondência',
+    description: 'Mapa perceptual associando atributos e perfis',
+    category: 'explanatory',
+    applicableQuestionTypes: ['single', 'multiple'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_PENALTY = {
-  'Penalty de Atributos': createMethodology(
-    'pen_penalty_atributos',
-    'penalty',
-    'Avaliação do quanto a ausência de determinado atributo penaliza a percepção geral, identificando atributos básicos (must-have) versus diferenciais.',
-    ['single', 'multiple', 'rating', 'likert'],
-    true
-  ),
-  'Análise de Kano': createMethodology(
-    'pen_kano',
-    'penalty',
-    'Classificação de atributos em categorias funcionais (básicos, lineares, atrativos e indiferentes) com base na relação entre presença/ausência do atributo e satisfação declarada — permite priorizar inovações com maior impacto na percepção de valor.',
-    ['rating', 'likert', 'single', 'multiple']
-  ),
-  'Matriz de Prioridade (Importância x Satisfação)': createMethodology(
-    'pen_matriz_prioridade',
-    'penalty',
-    'Quadrante de priorização cruzando importância declarada e avaliação de performance para identificar gaps críticos que demandam ação imediata versus atributos de manutenção.',
-    ['rating', 'likert', 'single', 'multiple'],
-    true
-  ),
-  'Análise de Gap (Expectativa x Realidade)': createMethodology(
-    'pen_gap_expectativa_realidade',
-    'penalty',
-    'Comparação entre o que o consumidor espera de uma categoria ou marca e o que efetivamente percebe, quantificando brechas de entrega que afetam satisfação e fidelização.',
-    ['rating', 'likert', 'number'],
-    true
-  ),
-} as const;
+  // Penalty
+  penalty_analysis: {
+    type: 'penalty_analysis',
+    name: 'Análise de Penalty',
+    description: 'Avalia impacto da ausência de atributos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
+  importance_satisfaction: {
+    type: 'importance_satisfaction',
+    name: 'Matriz Importância × Satisfação',
+    description: 'Quadrante de priorização de atributos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert'],
+    enabled: true,
+  },
+  gap_analysis: {
+    type: 'gap_analysis',
+    name: 'Análise de Gap (Expectativa × Realidade)',
+    description: 'Comparação entre expectativas e percepção',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  kano_analysis: {
+    type: 'kano_analysis',
+    name: 'Análise de Kano',
+    description: 'Classificação de atributos (básicos, lineares, atrativos)',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_CLUSTER = {
-  'K-means e Clusterização Hierárquica': createMethodology(
-    'clust_kmeans_hierarquica',
-    'cluster',
-    'Algoritmos de agrupamento para criação de perfis de consumidores com base em variáveis de percepção e comportamento.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Clusterização por DBSCAN': createMethodology(
-    'clust_dbscan',
-    'cluster',
-    'Algoritmo de densidade para identificação de clusters de formato irregular e detecção de outliers — vantajoso sobre K-means quando os segmentos não têm formato esférico ou quando há respondentes atípicos que não pertencem a nenhum grupo.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Análise de Silhueta e Índice de Davies-Bouldin': createMethodology(
-    'clust_silhueta_davies_bouldin',
-    'cluster',
-    'Métricas de validação da qualidade e coesão dos clusters formados, garantindo que o número de segmentos e a solução de agrupamento escolhida são estatisticamente robustos.',
-    ['single', 'multiple', 'rating', 'likert', 'number'],
-    true
-  ),
-  'Análise de Estabilidade de Clusters (Bootstrap Clustering)': createMethodology(
-    'clust_bootstrap_stability',
-    'cluster',
-    'Avaliação da reprodutibilidade dos segmentos por reamostragem, verificando se os perfis encontrados são estáveis e não artefatos da amostra específica coletada.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-} as const;
+  // Preços
+  van_westendorp: {
+    type: 'van_westendorp',
+    name: 'Van Westendorp (PSM)',
+    description: 'Curvas de preço aceitável e análise PSM',
+    category: 'pricing',
+    applicableQuestionTypes: ['number'],
+    enabled: true,
+  },
+  gabor_granger: {
+    type: 'gabor_granger',
+    name: 'Gabor-Granger Pricing',
+    description: 'Curva de demanda via escalonamento de preços',
+    category: 'pricing',
+    applicableQuestionTypes: ['boolean', 'likert'],
+    enabled: true,
+  },
+  price_elasticity: {
+    type: 'price_elasticity',
+    name: 'Elasticidade-Preço da Demanda',
+    description: 'Sensibilidade da intenção a variações de preço',
+    category: 'pricing',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  wtp_analysis: {
+    type: 'wtp_analysis',
+    name: 'Willingness to Pay (WTP)',
+    description: 'Disposição a pagar por atributos específicos',
+    category: 'pricing',
+    applicableQuestionTypes: ['number', 'likert'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_TEXT = {
-  'Extração e Categorização de Termos': createMethodology(
-    'text_extracao_categorizacao_termos',
-    'text',
-    'Identificação de adjetivos, substantivos e expressões recorrentes em respostas abertas com nuvens de palavras e análise de frequência.',
-    ['text'],
-    true
-  ),
-  'Análise de Sentimento (Sentiment Analysis)': createMethodology(
-    'text_sentiment_analysis',
-    'text',
-    'Classificação automática do tom emocional de respostas abertas em positivo, neutro ou negativo, com possibilidade de gradação de intensidade — aplicada em avaliações de produto, comentários de marca e pesquisas de satisfação qualitativa.',
-    ['text'],
-    true
-  ),
-  'Modelagem de Tópicos (LDA / BERTopic)': createMethodology(
-    'text_topic_modeling',
-    'text',
-    'Identificação automática de temas latentes em grandes volumes de respostas abertas sem categorização prévia, revelando os assuntos dominantes na fala do consumidor de forma não supervisionada.',
-    ['text']
-  ),
-  'Named Entity Recognition (NER)': createMethodology(
-    'text_named_entity_recognition',
-    'text',
-    'Extração automática de entidades como marcas, produtos, locais e pessoas mencionados em respostas abertas, permitindo mapear o ecossistema de referências do consumidor.',
-    ['text']
-  ),
-  'Análise Semântica com Embeddings (Word2Vec / BERT)': createMethodology(
-    'text_embeddings_semanticos',
-    'text',
-    'Representação vetorial de palavras e frases para capturar similaridade semântica entre conceitos, identificando associações implícitas entre atributos de marca e percepções do consumidor.',
-    ['text']
-  ),
-  'Análise de Co-ocorrência de Termos': createMethodology(
-    'text_coocorrencia_termos',
-    'text',
-    'Mapeamento de quais palavras e conceitos aparecem juntos com maior frequência nos discursos dos consumidores, revelando associações mentais e arquiteturas de percepção.',
-    ['text'],
-    true
-  ),
-  'Categorização Automática por Regras e ML': createMethodology(
-    'text_categorizacao_regras_ml',
-    'text',
-    'Classificação de respostas abertas em categorias predefinidas por meio de modelos supervisionados ou dicionários de regras, permitindo quantificar temas qualitativos em escala.',
-    ['text']
-  ),
-  'Análise de Sentimento Aspect-Based (ABSA)': createMethodology(
-    'text_absa_aspect_based_sentiment',
-    'text',
-    'Identificação automática de sentimentos associados a atributos ou aspectos específicos mencionados em respostas abertas, permitindo análise granular de drivers de satisfação e insatisfação por elemento do produto/serviço.',
-    ['text'],
-    true
-  ),
-  'Análise Assistida por Large Language Models (LLM-assisted Insights)': createMethodology(
-    'text_llm_assisted_insights',
-    'text',
-    'Uso de modelos de linguagem de grande escala para sumarização inteligente, extração de insights temáticos e síntese qualitativa de grandes volumes de verbatims, complementando e acelerando análises tradicionais de NLP.',
-    ['text']
-  ),
-} as const;
+  // Clusterização
+  kmeans: {
+    type: 'kmeans',
+    name: 'K-Means Clustering',
+    description: 'Algoritmo de agrupamento padrão',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'rating', 'multiple'],
+    enabled: true,
+  },
+  hierarchical_clustering: {
+    type: 'hierarchical_clustering',
+    name: 'Clusterização Hierárquica',
+    description: 'Agrupamento com dendrograma',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'rating', 'multiple'],
+    enabled: true,
+  },
+  dbscan: {
+    type: 'dbscan',
+    name: 'DBSCAN',
+    description: 'Clusterização baseada em densidade',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'rating', 'multiple'],
+    enabled: true,
+  },
+  silhouette_analysis: {
+    type: 'silhouette_analysis',
+    name: 'Análise de Silhueta',
+    description: 'Validação da qualidade dos clusters',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'rating', 'multiple'],
+    enabled: true,
+  },
+  davies_bouldin: {
+    type: 'davies_bouldin',
+    name: 'Índice de Davies-Bouldin',
+    description: 'Métrica de validação de coesão de clusters',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'rating', 'multiple'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_INTENCAO = {
-  'Cruzamento de Intenção de Compra com Atributos': createMethodology(
-    'int_intencao_compra_atributos',
-    'intencao',
-    'Identificação de drivers e barreiras à intenção declarada por cruzamento com atributos avaliados.',
-    ['single', 'multiple', 'rating', 'likert'],
-    true
-  ),
-  'Análise de Funil de Conversão Declarada': createMethodology(
-    'int_funil_conversao_declarada',
-    'intencao',
-    'Mapeamento das etapas de awareness, consideração, intenção e compra para detectar abandonos.',
-    ['single', 'multiple', 'boolean'],
-    true
-  ),
-  'Análise de Barreiras por Tipo (Racionais, Emocionais, Situacionais)': createMethodology(
-    'int_barreiras_por_tipo',
-    'intencao',
-    'Categorização e quantificação das barreiras à adoção por natureza funcional, emocional ou situacional.',
-    ['single', 'multiple', 'text'],
-    true
-  ),
-} as const;
+  // Texto
+  sentiment_analysis: {
+    type: 'sentiment_analysis',
+    name: 'Análise de Sentimento',
+    description: 'Classificação em positivo, neutro ou negativo',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
+  aspect_based_sentiment: {
+    type: 'aspect_based_sentiment',
+    name: 'ABSA (Aspect-Based Sentiment)',
+    description: 'Sentimentos por aspecto específico mencionado',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
+  word_frequency: {
+    type: 'word_frequency',
+    name: 'Frequência de Palavras',
+    description: 'Palavras mais frequentes e nuvem de palavras',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
+  topic_modeling: {
+    type: 'topic_modeling',
+    name: 'Modelagem de Tópicos (LDA)',
+    description: 'Temas latentes em respostas abertas',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
+  ner: {
+    type: 'ner',
+    name: 'Named Entity Recognition',
+    description: 'Extração de marcas, produtos, locais',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
+  word_embedding: {
+    type: 'word_embedding',
+    name: 'Word Embeddings (Word2Vec)',
+    description: 'Similaridade semântica entre conceitos',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_CAUSALIDADE = {
-  'Propensity Score Matching (PSM)': createMethodology(
-    'caus_psm',
-    'causalidade',
-    'Estimativa da probabilidade de adoção e controle de viés de seleção em estudos observacionais.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Difference-in-Differences (DiD)': createMethodology(
-    'caus_did',
-    'causalidade',
-    'Estimação de efeitos causais comparando grupo exposto e controle antes e depois da intervenção.',
-    ['rating', 'likert', 'number']
-  ),
-  'Regressão Descontínua (RDD)': createMethodology(
-    'caus_rdd',
-    'causalidade',
-    'Identificação de efeitos causais em torno de um limiar de corte.',
-    ['number', 'rating']
-  ),
-  'Variáveis Instrumentais (IV)': createMethodology(
-    'caus_iv',
-    'causalidade',
-    'Estimação de relações causais na presença de endogeneidade por meio de instrumentos exógenos.',
-    ['rating', 'likert', 'number']
-  ),
-  'Análise de Contrafactual (Causal Inference / Potential Outcomes)': createMethodology(
-    'caus_contrafactual',
-    'causalidade',
-    'Framework formal de inferência causal baseado em contrafactuais e resultados potenciais.',
-    ['rating', 'likert', 'number']
-  ),
-  'Double Machine Learning (DML)': createMethodology(
-    'caus_double_machine_learning',
-    'causalidade',
-    'Framework de inferência causal que combina machine learning com estimação paramétrica para obter efeitos causais robustos em ambientes de alta dimensionalidade e com muitos confounders não observados.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Synthetic Control Method (SCM)': createMethodology(
-    'caus_synthetic_control_method',
-    'causalidade',
-    'Construção de um grupo controle sintético a partir de combinação ponderada de unidades não tratadas, permitindo avaliação de impacto causal em estudos de caso único ou com poucos períodos (ex.: lançamento regional ou campanha específica).',
-    ['number', 'rating']
-  ),
-} as const;
+  // Intenção
+  conversion_funnel: {
+    type: 'conversion_funnel',
+    name: 'Funil de Conversão',
+    description: 'Awareness → Consideração → Intenção → Compra',
+    category: 'explanatory',
+    applicableQuestionTypes: ['boolean', 'single'],
+    enabled: true,
+  },
+  barrier_analysis: {
+    type: 'barrier_analysis',
+    name: 'Análise de Barreiras',
+    description: 'Barreiras racionais, emocionais e situacionais',
+    category: 'explanatory',
+    applicableQuestionTypes: ['text', 'multiple'],
+    enabled: true,
+  },
+  job_to_be_done: {
+    type: 'job_to_be_done',
+    name: 'Job-to-be-Done Analytics',
+    description: 'Trabalhos funcionais, emocionais e sociais',
+    category: 'explanatory',
+    applicableQuestionTypes: ['text', 'multiple'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_COMPORTAMENTAL = {
-  'A/B Testing e Experimentação Controlada': createMethodology(
-    'behav_ab_testing_experimentacao_controlada',
-    'comportamental',
-    'Desenho e análise de experimentos controlados para testar produto, preço, comunicação ou experiência.',
-    ['single', 'multiple', 'rating', 'likert'],
-    true
-  ),
-  'Multi-Armed Bandit': createMethodology(
-    'behav_multi_armed_bandit',
-    'comportamental',
-    'Otimização dinâmica de variantes em experimentos contínuos com alocação adaptativa.',
-    ['rating', 'likert']
-  ),
-  'Análise de Preferência Revelada vs. Declarada': createMethodology(
-    'behav_preferencia_revelada_vs_declarada',
-    'comportamental',
-    'Comparação entre o que o consumidor declara e o que efetivamente faz.',
-    ['single', 'multiple', 'rating', 'likert'],
-    true
-  ),
-  'Behavioral Economics Analytics': createMethodology(
-    'behav_behavioral_economics_analytics',
-    'comportamental',
-    'Análise de heurísticas e vieses cognitivos que influenciam decisões de compra.',
-    ['rating', 'likert', 'text']
-  ),
-  'Eye Tracking Analytics': createMethodology(
-    'behav_eye_tracking_analytics',
-    'comportamental',
-    'Mensuração quantitativa da atenção visual em embalagem, comunicação ou interface.',
-    ['image_choice']
-  ),
-  'Análise de Tempo de Resposta (Reaction Time Analysis)': createMethodology(
-    'behav_reaction_time_analysis',
-    'comportamental',
-    'Mensuração da latência de resposta em tarefas de associação implícita.',
-    ['single', 'multiple']
-  ),
-  'Teste de Associação Implícita (IAT – Implicit Association Test)': createMethodology(
-    'behav_iat_implicit_association_test',
-    'comportamental',
-    'Mensuração de atitudes e associações automáticas subconscientes por meio de tempos de resposta em tarefas de pareamento, revelando preferências implícitas de marca ou categoria não capturadas por medidas declarativas.',
-    ['single', 'multiple']
-  ),
-  'Mouse Tracking Analytics': createMethodology(
-    'behav_mouse_tracking_analytics',
-    'comportamental',
-    'Análise quantitativa dos movimentos do cursor em questionários online ou protótipos digitais para inferir hesitação, atenção seletiva e processo decisório, complementando eye-tracking com dados comportamentais de baixa intrusividade.',
-    ['single', 'multiple', 'rating', 'likert']
-  ),
-} as const;
+  // Importância
+  shapley_values: {
+    type: 'shapley_values',
+    name: 'Shapley Values',
+    description: 'Contribuição relativa de variáveis preditoras',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  shap_analysis: {
+    type: 'shap_analysis',
+    name: 'SHAP (SHapley Additive exPlanations)',
+    description: 'Interpretabilidade granular de modelos ML',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  lime_analysis: {
+    type: 'lime_analysis',
+    name: 'LIME (Local Interpretable Model-agnostic)',
+    description: 'Interpretabilidade local de modelos complexos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_MERCADO = {
-  'Share of Preference (Simulador de Mercado)': createMethodology(
-    'market_share_of_preference',
-    'mercado',
-    'Estimativa da participação de mercado potencial de diferentes marcas ou ofertas.',
-    ['single', 'multiple', 'rating', 'likert'],
-    true
-  ),
-  'Análise de Switching e Fidelidade': createMethodology(
-    'market_switching_fidelidade',
-    'mercado',
-    'Modelagem da probabilidade de migração entre marcas e identificação de fontes de ganho e perda de clientes.',
-    ['single', 'multiple'],
-    true
-  ),
-  'Análise de Rivalidade Perceptual': createMethodology(
-    'market_rivalidade_perceptual',
-    'mercado',
-    'Mapeamento de quais marcas são percebidas como mais próximas ou distantes na mente do consumidor.',
-    ['single', 'multiple'],
-    true
-  ),
-  'Análise de Brechas de Mercado (White Space Analysis)': createMethodology(
-    'market_white_space_analysis',
-    'mercado',
-    'Identificação de combinações de atributos valorizadas que nenhuma marca atual entrega de forma satisfatória.',
-    ['single', 'multiple', 'rating', 'likert'],
-    true
-  ),
-  'Análise de Concentração de Mercado (HHI e CR)': createMethodology(
-    'market_concentracao_hhi_cr',
-    'mercado',
-    'Mensuração do grau de concentração do mercado por meio de HHI e razões de concentração.',
-    ['single', 'multiple']
-  ),
-  'Análise TURF (Total Unduplicated Reach and Frequency)': createMethodology(
-    'market_turf_analysis',
-    'mercado',
-    'Otimização de portfólio de produtos, atributos ou mensagens para maximizar alcance único e frequência de preferência, identificando as combinações que cobrem o maior número de consumidores sem redundância.',
-    ['single', 'multiple', 'rating', 'likert']
-  ),
-  'Modelagem de Cadeia de Markov para Switching de Marca': createMethodology(
-    'market_markov_chain_switching',
-    'mercado',
-    'Previsão probabilística de transições entre marcas ao longo do tempo com base em matrizes de transição, permitindo simular retenção, churn e equilíbrio de longo prazo do mercado.',
-    ['single', 'multiple', 'number']
-  ),
-} as const;
+  // Conjoint
+  conjoint_simulation: {
+    type: 'conjoint_simulation',
+    name: 'Simulação de Conjoint',
+    description: 'Combinações ótimas de atributos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['cbc', 'multiple'],
+    enabled: true,
+  },
+  choice_based_conjoint: {
+    type: 'choice_based_conjoint',
+    name: 'Choice-Based Conjoint',
+    description: 'Escolhas entre perfis completos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['cbc'],
+    enabled: true,
+  },
+  adaptive_conjoint: {
+    type: 'adaptive_conjoint',
+    name: 'Adaptive Conjoint (ACA)',
+    description: 'Conjoint adaptativo personalizado',
+    category: 'explanatory',
+    applicableQuestionTypes: ['cbc'],
+    enabled: true,
+  },
+  menu_based_conjoint: {
+    type: 'menu_based_conjoint',
+    name: 'Menu-Based Conjoint',
+    description: 'Seleção de múltiplos itens (à la carte)',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'cbc'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_VALOR_CLIENTE = {
-  'Customer Lifetime Value (CLV) Modeling': createMethodology(
-    'clv_customer_lifetime_value',
-    'valor_cliente',
-    'Estimação do valor monetário esperado de cada cliente ou segmento ao longo do tempo, integrando padrões de retenção, frequência de compra e margem para priorização estratégica de aquisição e retenção.',
-    ['number', 'rating', 'single', 'multiple']
-  ),
-  'Análise de Coortes (Cohort Analysis)': createMethodology(
-    'clv_cohort_analysis',
-    'valor_cliente',
-    'Acompanhamento de grupos de clientes formados pela data de aquisição ou primeiro contato para identificar padrões de retenção, evolução de comportamento e impacto de ações específicas ao longo do ciclo de vida.',
-    ['number', 'rating', 'single', 'multiple'],
-    true
-  ),
-} as const;
+  // NPS
+  nps_analysis: {
+    type: 'nps_analysis',
+    name: 'NPS Analytics',
+    description: 'Análise completa de NPS com drivers',
+    category: 'explanatory',
+    applicableQuestionTypes: ['nps'],
+    enabled: true,
+  },
+  ces_analysis: {
+    type: 'ces_analysis',
+    name: 'CES (Customer Effort Score)',
+    description: 'Análise de esforço percebido',
+    category: 'explanatory',
+    applicableQuestionTypes: ['ces', 'likert'],
+    enabled: true,
+  },
+  csat_analysis: {
+    type: 'csat_analysis',
+    name: 'CSAT (Customer Satisfaction)',
+    description: 'Análise de satisfação transacional',
+    category: 'explanatory',
+    applicableQuestionTypes: ['csat', 'likert', 'rating'],
+    enabled: true,
+  },
+  brand_funnel: {
+    type: 'brand_funnel',
+    name: 'Brand Funnel Analytics',
+    description: 'Funil de marca com conversão',
+    category: 'explanatory',
+    applicableQuestionTypes: ['brand_funnel', 'multiple'],
+    enabled: true,
+  },
+  brand_equity: {
+    type: 'brand_equity',
+    name: 'Brand Equity Tracking',
+    description: 'Mensuração de pilares de brand equity',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: PRICING METHODOLOGIES
-// ============================================================================
+  // Rede
+  network_analysis: {
+    type: 'network_analysis',
+    name: 'Análise de Redes',
+    description: 'Mapeamento de conexões entre atributos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
+  network_centrality: {
+    type: 'network_centrality',
+    name: 'Centralidade de Rede',
+    description: 'Atributos mais influentes na rede',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
+  community_detection: {
+    type: 'community_detection',
+    name: 'Detecção de Comunidades',
+    description: 'Clusters de atributos coesos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_PRICING = {
-  'Price Sensitivity Meter (Van Westendorp)': createMethodology(
-    'price_van_westendorp',
-    'pricing',
-    'Mapeamento das faixas de preço aceitável, caro demais e barato demais na percepção do consumidor, com identificação do ponto de preço ótimo e faixa aceitável.',
-    ['vanwestendorp'],
-    true
-  ),
-  'Newton-Miller-Smith Extension (NMS)': createMethodology(
-    'price_nms',
-    'pricing',
-    'Extensão do PSM de Van Westendorp que adiciona intenção de compra às curvas de preço.',
-    ['vanwestendorp']
-  ),
-  'Análise de Elasticidade-Preço da Demanda': createMethodology(
-    'price_elasticidade',
-    'pricing',
-    'Modelagem da sensibilidade da intenção de compra a variações de preço por meio de simulações conjoint ou curvas de resposta.',
-    ['cbc', 'gabor_granger', 'number'],
-    true
-  ),
-  'Gabor-Granger Pricing': createMethodology(
-    'price_gabor_granger',
-    'pricing',
-    'Técnica de escalonamento de preços em que o respondente avalia sua intenção de compra a diferentes níveis de preço apresentados sequencialmente.',
-    ['gabor_granger'],
-    true
-  ),
-  'Willingness to Pay (WTP) via Conjoint': createMethodology(
-    'price_wtp_conjoint',
-    'pricing',
-    'Estimativa da disposição máxima a pagar por atributos específicos derivada das utilidades conjoint.',
-    ['cbc']
-  ),
-} as const;
+  // Sobrevivência
+  survival_analysis: {
+    type: 'survival_analysis',
+    name: 'Análise de Sobrevivência',
+    description: 'Modelagem de tempo até abandono/churn',
+    category: 'explanatory',
+    applicableQuestionTypes: ['number'],
+    enabled: true,
+  },
+  kaplan_meier: {
+    type: 'kaplan_meier',
+    name: 'Curvas de Kaplan-Meier',
+    description: 'Estimativa não-paramétrica de retenção',
+    category: 'explanatory',
+    applicableQuestionTypes: ['number'],
+    enabled: true,
+  },
+  cox_model: {
+    type: 'cox_model',
+    name: 'Modelo de Cox',
+    description: 'Regressão de sobrevivência',
+    category: 'explanatory',
+    applicableQuestionTypes: ['number'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: NPS ANALYTICS METHODOLOGIES
-// ============================================================================
+  // MaxDiff
+  maxdiff_analysis: {
+    type: 'maxdiff_analysis',
+    name: 'MaxDiff (Maximum Difference)',
+    description: 'Priorização via escolhas best-worst',
+    category: 'explanatory',
+    applicableQuestionTypes: ['maxdiff', 'ranking'],
+    enabled: true,
+  },
+  maxdiff_latent: {
+    type: 'maxdiff_latent',
+    name: 'MaxDiff com Segmentação Latente',
+    description: 'MaxDiff com classes latentes',
+    category: 'explanatory',
+    applicableQuestionTypes: ['maxdiff'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_NPS = {
-  'NPS Aprofundado com Drivers': createMethodology(
-    'nps_aprofundado_drivers',
-    'nps_analytics',
-    'Análise além do índice agregado para identificar os drivers que diferenciam promotores de detratores.',
-    ['nps', 'rating', 'likert'],
-    true
-  ),
-  'NPS Transacional vs. Relacional': createMethodology(
-    'nps_transacional_relacional',
-    'nps_analytics',
-    'Diferenciação entre NPS medido após interação específica e NPS de relacionamento geral com a marca.',
-    ['nps'],
-    true
-  ),
-  'Análise de Verbatim de Promotores e Detratores': createMethodology(
-    'nps_verbatim',
-    'nps_analytics',
-    'Text mining aplicado às justificativas de score para extrair temas que motivam recomendação ou detração.',
-    ['nps', 'text'],
-    true
-  ),
-  'NPS por Segmento e Jornada': createMethodology(
-    'nps_segmento_jornada',
-    'nps_analytics',
-    'Decomposição do NPS por perfil de cliente, região, canal e etapa da jornada.',
-    ['nps', 'single', 'multiple'],
-    true
-  ),
-} as const;
+  // Mediação
+  mediation_analysis: {
+    type: 'mediation_analysis',
+    name: 'Análise de Mediação',
+    description: 'Mecanismo causal: o "como"',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  moderation_analysis: {
+    type: 'moderation_analysis',
+    name: 'Análise de Moderação',
+    description: 'Condições em que a relação vale: o "quando"',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  mediated_moderation: {
+    type: 'mediated_moderation',
+    name: 'Efeito Indireto Condicional',
+    description: 'Combinação de mediação e moderação',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: EXPERIÊNCIA E JORNADA
-// ============================================================================
+  // SEM
+  sem_analysis: {
+    type: 'sem_analysis',
+    name: 'SEM (Structural Equation Modeling)',
+    description: 'Teste de relações causais complexas',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  pls_sem: {
+    type: 'pls_sem',
+    name: 'PLS-SEM',
+    description: 'SEM com mínimos quadrados parciais',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  multigroup_sem: {
+    type: 'multigroup_sem',
+    name: 'SEM Multigrupo',
+    description: 'Comparação de modelos entre segmentos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  dynamic_sem: {
+    type: 'dynamic_sem',
+    name: 'SEM Dinâmico',
+    description: 'SEM com dados de painel longitudinal',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_EXPERIENCIA = {
-  'Customer Effort Score (CES) Analytics': createMethodology(
-    'exp_ces',
-    'experiencia',
-    'Análise do esforço percebido em cada ponto de contato da jornada, identificando fricções que impactam a satisfação e retenção.',
-    ['ces', 'rating', 'likert'],
-    true
-  ),
-  'Customer Satisfaction Score (CSAT) Aprofundado': createMethodology(
-    'exp_csat',
-    'experiencia',
-    'Análise granular do CSAT por etapa da jornada, canal e perfil de cliente.',
-    ['csat', 'rating', 'likert'],
-    true
-  ),
-  'Análise de Momentos da Verdade': createMethodology(
-    'exp_momentos_verdade',
-    'experiencia',
-    'Mapeamento e priorização dos pontos de contato com maior impacto emocional e decisório na jornada.',
-    ['rating', 'likert', 'single']
-  ),
-  'Jornada do Cliente Baseada em Dados': createMethodology(
-    'exp_data_driven_journey',
-    'experiencia',
-    'Construção de mapas de jornada quantitativos a partir de dados de pesquisa.',
-    ['rating', 'likert', 'single', 'multiple']
-  ),
-  'Job-to-be-Done Analytics': createMethodology(
-    'exp_jtbd',
-    'experiencia',
-    'Análise quantitativa baseada no framework JTBD para identificar trabalhos funcionais, emocionais e sociais.',
-    ['rating', 'likert', 'single', 'multiple']
-  ),
-} as const;
+  // Causalidade
+  propensity_score: {
+    type: 'propensity_score',
+    name: 'Propensity Score Matching',
+    description: 'Controle de viés de seleção',
+    category: 'causal',
+    applicableQuestionTypes: ['boolean', 'single'],
+    enabled: true,
+  },
+  difference_in_differences: {
+    type: 'difference_in_differences',
+    name: 'Difference-in-Differences',
+    description: 'Estimação de efeitos causais pré/pós',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  regression_discontinuity: {
+    type: 'regression_discontinuity',
+    name: 'Regressão Descontínua',
+    description: 'Efeitos causais em torno de limiares',
+    category: 'causal',
+    applicableQuestionTypes: ['number'],
+    enabled: true,
+  },
+  instrumental_variables: {
+    type: 'instrumental_variables',
+    name: 'Variáveis Instrumentais',
+    description: 'Isolamento de variação causal',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  causal_inference: {
+    type: 'causal_inference',
+    name: 'Análise de Contrafactual',
+    description: 'Framework formal de inferência causal',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: MARCA E COMUNICAÇÃO
-// ============================================================================
+  // Experiência
+  journey_mapping: {
+    type: 'journey_mapping',
+    name: 'Journey Mapping Quantitativa',
+    description: 'Mapas de jornada baseados em dados',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  touchpoint_analysis: {
+    type: 'touchpoint_analysis',
+    name: 'Análise de Momentos da Verdade',
+    description: 'Priorização de pontos de contato críticos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  inflection_point: {
+    type: 'inflection_point',
+    name: 'Análise de Ponto de Inflexão',
+    description: 'Pontos de maior sensibilidade de experiência',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_MARCA = {
-  'Brand Equity Tracking Quantitativo': createMethodology(
-    'marca_brand_equity',
-    'marca',
-    'Mensuração longitudinal dos pilares de brand equity (awareness, associações, qualidade percebida, lealdade).',
-    ['rating', 'likert', 'single', 'multiple', 'brand_funnel'],
-    true
-  ),
-  'Brand Funnel Analytics': createMethodology(
-    'marca_brand_funnel',
-    'marca',
-    'Análise de conversão ao longo do funil de brand (awareness → consideração → preferência → uso → recomendação).',
-    ['brand_funnel', 'single', 'multiple'],
-    true
-  ),
-  'Análise de Personalidade de Marca': createMethodology(
-    'marca_personalidade',
-    'marca',
-    'Mensuração das dimensões de personalidade atribuídas a marcas e comparação entre competidores.',
-    ['rating', 'likert', 'single', 'multiple']
-  ),
-  'Copy Testing Analytics': createMethodology(
-    'marca_copy_testing',
-    'marca',
-    'Análise estruturada de peças criativas com métricas de atenção, compreensão, relevância e intenção.',
-    ['rating', 'likert', 'single']
-  ),
-  'Análise de Congruência Marca-Consumidor': createMethodology(
-    'marca_self_congruity',
-    'marca',
-    'Mensuração da correspondência entre imagem percebida da marca e autoimagem do consumidor.',
-    ['rating', 'likert']
-  ),
-} as const;
+  // Marca
+  copy_testing: {
+    type: 'copy_testing',
+    name: 'Copy Testing Analytics',
+    description: 'Análise de criativas com métricas de impacto',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'text'],
+    enabled: true,
+  },
+  brand_personality: {
+    type: 'brand_personality',
+    name: 'Brand Personality Mapping',
+    description: 'Mensuração de dimensões de personalidade',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  self_congruity: {
+    type: 'self_congruity',
+    name: 'Self-Congruity (Marca-Consumidor)',
+    description: 'Congruência entre imagem de marca e autoimagem',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: ANÁLISE DE KANO
-// ============================================================================
+  // Mercado
+  market_share: {
+    type: 'market_share',
+    name: 'Share of Preference',
+    description: 'Simulador de participação de mercado',
+    category: 'explanatory',
+    applicableQuestionTypes: ['rating', 'ranking'],
+    enabled: true,
+  },
+  switching_analysis: {
+    type: 'switching_analysis',
+    name: 'Switching & Fidelidade',
+    description: 'Probabilidade de migração entre marcas',
+    category: 'explanatory',
+    applicableQuestionTypes: ['single', 'boolean'],
+    enabled: true,
+  },
+  perceptual_rivalry: {
+    type: 'perceptual_rivalry',
+    name: 'Rivalidade Perceptual',
+    description: 'Mapeamento de marcas concorrentes',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
+  white_space: {
+    type: 'white_space',
+    name: 'White Space Analysis',
+    description: 'Brechas de mercado não exploradas',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'likert'],
+    enabled: true,
+  },
+  concentration_hhi: {
+    type: 'concentration_hhi',
+    name: 'HHI (Herfindahl-Hirschman)',
+    description: 'Concentração de mercado',
+    category: 'explanatory',
+    applicableQuestionTypes: ['single', 'multiple'],
+    enabled: true,
+  },
+  turf_analysis: {
+    type: 'turf_analysis',
+    name: 'TURF Analysis',
+    description: 'Otimização de portfólio de produtos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['multiple', 'single'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_KANO = {
-  'Análise de Kano Completa': createMethodology(
-    'kano_full',
-    'penalty',
-    'Classificação de atributos em categorias funcionais (básicos, lineares, atrativos, indiferentes e reversos) com base em questionário funcional/disfuncional.',
-    ['kano'],
-    true
-  ),
-} as const;
+  // Comportamental
+  ab_testing: {
+    type: 'ab_testing',
+    name: 'A/B Testing',
+    description: 'Experimentação controlada de variantes',
+    category: 'causal',
+    applicableQuestionTypes: ['boolean', 'likert', 'rating'],
+    enabled: true,
+  },
+  multi_armed_bandit: {
+    type: 'multi_armed_bandit',
+    name: 'Multi-Armed Bandit',
+    description: 'Otimização dinâmica de variantes',
+    category: 'causal',
+    applicableQuestionTypes: ['single', 'boolean'],
+    enabled: true,
+  },
+  behavioral_economics: {
+    type: 'behavioral_economics',
+    name: 'Behavioral Economics Analytics',
+    description: 'Análise de heurísticas e vieses',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'text'],
+    enabled: true,
+  },
+  eye_tracking: {
+    type: 'eye_tracking',
+    name: 'Eye Tracking Analytics',
+    description: 'Análise de rastreamento ocular',
+    category: 'advanced',
+    applicableQuestionTypes: ['image_choice'],
+    enabled: true,
+  },
+  reaction_time: {
+    type: 'reaction_time',
+    name: 'Reaction Time Analysis',
+    description: 'Análise de latência de resposta',
+    category: 'advanced',
+    applicableQuestionTypes: ['single', 'multiple'],
+    enabled: true,
+  },
+  implicit_association: {
+    type: 'implicit_association',
+    name: 'Implicit Association Test',
+    description: 'Atitudes automáticas subconscientes',
+    category: 'advanced',
+    applicableQuestionTypes: ['ranking', 'maxdiff'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: MEDIAÇÃO / MODERAÇÃO / SEM
-// ============================================================================
+  // Validação
+  cross_validation: {
+    type: 'cross_validation',
+    name: 'Cross-Validation',
+    description: 'Avaliação de generalização de modelos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  multicollinearity: {
+    type: 'multicollinearity',
+    name: 'Multicolinearidade (VIF)',
+    description: 'Diagnóstico de colinearidade entre variáveis',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  measurement_invariance: {
+    type: 'measurement_invariance',
+    name: 'Invariância de Medida',
+    description: 'Teste de equivalência entre grupos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  precision_recall: {
+    type: 'precision_recall',
+    name: 'Precision/Recall (F1-Score)',
+    description: 'Performance de modelos de classificação',
+    category: 'explanatory',
+    applicableQuestionTypes: ['single', 'boolean'],
+    enabled: true,
+  },
+  model_calibration: {
+    type: 'model_calibration',
+    name: 'Calibração de Modelos',
+    description: 'Validação de probabilidades preditas',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_MEDIACAO = {
-  'Mediação e Moderação': createMethodology(
-    'med_mediacao_moderacao',
-    'mediacao',
-    'Mediação identifica o mecanismo causal; moderação identifica as condições em que a relação vale.',
-    ['rating', 'likert', 'number']
-  ),
-  'Mediação em Série (Serial Mediation)': createMethodology(
-    'med_serial_mediation',
-    'mediacao',
-    'Extensão da mediação simples para cadeias causais com múltiplos mediadores sequenciais.',
-    ['rating', 'likert', 'number']
-  ),
-  'Moderação por Variáveis Contínuas (Floodlight Analysis)': createMethodology(
-    'med_floodlight',
-    'mediacao',
-    'Identificação dos pontos exatos da escala onde o efeito muda de direção ou significância.',
-    ['rating', 'likert', 'number']
-  ),
-} as const;
+  // Avançadas
+  deep_learning: {
+    type: 'deep_learning',
+    name: 'Deep Learning Neural Networks',
+    description: 'Modelos profundos para padrões complexos',
+    category: 'advanced',
+    applicableQuestionTypes: ['text', 'image_choice', 'matrix'],
+    enabled: true,
+  },
+  hierarchical_bayesian: {
+    type: 'hierarchical_bayesian',
+    name: 'Hierarchical Bayesian Models',
+    description: 'Estimação Bayesiana com estrutura hierárquica',
+    category: 'advanced',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  double_machine_learning: {
+    type: 'double_machine_learning',
+    name: 'Double Machine Learning (DML)',
+    description: 'Inferência causal com machine learning',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  synthetic_control: {
+    type: 'synthetic_control',
+    name: 'Synthetic Control Method',
+    description: 'Grupo controle sintético para causalidade',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  causal_forest: {
+    type: 'causal_forest',
+    name: 'Causal Forests',
+    description: 'Florestas para estimação de efeitos heterogêneos',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  uplift_modeling: {
+    type: 'uplift_modeling',
+    name: 'Uplift Modeling',
+    description: 'Efeito incremental personalizado por cliente',
+    category: 'causal',
+    applicableQuestionTypes: ['likert', 'rating', 'boolean'],
+    enabled: true,
+  },
+  llm_assisted: {
+    type: 'llm_assisted',
+    name: 'LLM-Assisted Insights',
+    description: 'Extração de insights com modelos de linguagem',
+    category: 'text',
+    applicableQuestionTypes: ['text'],
+    enabled: true,
+  },
+  synthetic_respondents: {
+    type: 'synthetic_respondents',
+    name: 'Synthetic Respondent Generation',
+    description: 'Geração de respondentes sintéticos calibrados',
+    category: 'advanced',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
+  scenario_modeling: {
+    type: 'scenario_modeling',
+    name: 'Scenario Modeling & Simulation',
+    description: 'Simulação de múltiplos cenários futuros',
+    category: 'advanced',
+    applicableQuestionTypes: ['likert', 'rating', 'number'],
+    enabled: true,
+  },
 
-export const METODOLOGIA_SEM = {
-  'SEM Clássico (LISREL / AMOS)': createMethodology(
-    'sem_classico',
-    'sem',
-    'Teste simultâneo de relações causais entre variáveis latentes e observadas.',
-    ['rating', 'likert', 'number']
-  ),
-  'PLS-SEM': createMethodology(
-    'sem_pls',
-    'sem',
-    'Alternativa ao SEM para amostras menores ou normalidade não atendida.',
-    ['rating', 'likert', 'number']
-  ),
-  'SEM Multigrupo (MSEM)': createMethodology(
-    'sem_multigrupo',
-    'sem',
-    'Comparação de parâmetros estruturais entre grupos distintos.',
-    ['rating', 'likert', 'number']
-  ),
-} as const;
+  // Valor do Cliente
+  clv_analysis: {
+    type: 'clv_analysis',
+    name: 'Customer Lifetime Value',
+    description: 'Valor monetário esperado por cliente',
+    category: 'explanatory',
+    applicableQuestionTypes: ['number', 'likert'],
+    enabled: true,
+  },
+  cohort_analysis: {
+    type: 'cohort_analysis',
+    name: 'Cohort Analysis',
+    description: 'Acompanhamento de coortes ao longo do tempo',
+    category: 'explanatory',
+    applicableQuestionTypes: ['number', 'likert'],
+    enabled: true,
+  },
 
-// ============================================================================
-// NEW: SOBREVIVÊNCIA / REDE / VALIDAÇÃO / ESTATÍSTICA AVANÇADA
-// ============================================================================
-
-export const METODOLOGIA_SOBREVIVENCIA = {
-  'Modelagem de Tempo até Abandono / Churn': createMethodology(
-    'surv_tempo_churn',
-    'sobrevivencia',
-    'Modelagem do tempo até abandono de marca ou descontinuidade de uso.',
-    ['number', 'date', 'single']
-  ),
-  'Curvas de Kaplan-Meier': createMethodology(
-    'surv_kaplan_meier',
-    'sobrevivencia',
-    'Estimativa não paramétrica da função de sobrevivência ao longo do tempo.',
-    ['number', 'date', 'single']
-  ),
-  'Modelo de Cox (Cox Proportional Hazards)': createMethodology(
-    'surv_cox',
-    'sobrevivencia',
-    'Regressão de sobrevivência que identifica variáveis que aumentam ou reduzem o risco de churn.',
-    ['number', 'date', 'single', 'rating']
-  ),
-} as const;
-
-export const METODOLOGIA_REDE = {
-  'Mapeamento de Conexões entre Atributos e Marcas': createMethodology(
-    'rede_conexoes',
-    'rede',
-    'Estruturas relacionais para entender quais atributos se associam e reforçam mutuamente.',
-    ['single', 'multiple', 'rating']
-  ),
-  'Análise de Centralidade de Rede': createMethodology(
-    'rede_centralidade',
-    'rede',
-    'Identificação dos atributos ou conceitos mais influentes na rede de percepções.',
-    ['single', 'multiple', 'rating']
-  ),
-} as const;
-
-export const METODOLOGIA_ESTATISTICA_AVANCADA = {
-  'Análise Discriminante': createMethodology(
-    'stat_discriminante',
-    'estatistica_avancada',
-    'Classificação de respondentes em grupos predefinidos com base em variáveis preditoras.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-  'Escalonamento Multidimensional (MDS)': createMethodology(
-    'stat_mds',
-    'estatistica_avancada',
-    'Representação visual da percepção de similaridade e diferença entre marcas em mapa perceptual.',
-    ['single', 'multiple', 'rating']
-  ),
-  'Análise de Séries Temporais (ARIMA / SARIMA)': createMethodology(
-    'stat_arima',
-    'estatistica_avancada',
-    'Modelagem de tendências e sazonalidades para previsão de indicadores de brand tracking.',
-    ['number', 'rating']
-  ),
-  'MANOVA': createMethodology(
-    'stat_manova',
-    'estatistica_avancada',
-    'Comparação simultânea de múltiplas variáveis dependentes entre grupos.',
-    ['rating', 'likert', 'number']
-  ),
-  'Alpha de Cronbach': createMethodology(
-    'stat_cronbach_alpha',
-    'estatistica_avancada',
-    'Medida de consistência interna de escalas, avaliando coerência dos itens.',
-    ['rating', 'likert'],
-    true
-  ),
-  'Análise de Classes Latentes (LCA)': createMethodology(
-    'stat_lca',
-    'estatistica_avancada',
-    'Identificação de subgrupos ocultos na população com base em padrões de resposta.',
-    ['single', 'multiple', 'rating', 'likert']
-  ),
-  'Bootstrap e Reamostragem': createMethodology(
-    'stat_bootstrap',
-    'estatistica_avancada',
-    'Estimativa de intervalos de confiança quando premissas paramétricas não são atendidas.',
-    ['number', 'rating', 'likert'],
-    true
-  ),
-  'Simulação de Monte Carlo': createMethodology(
-    'stat_monte_carlo',
-    'estatistica_avancada',
-    'Geração de múltiplos cenários por amostragem de distribuições de probabilidade.',
-    ['number', 'rating']
-  ),
-  'Análise Bayesiana': createMethodology(
-    'stat_bayesiana',
-    'estatistica_avancada',
-    'Estimação de parâmetros incorporando conhecimento prévio.',
-    ['number', 'rating', 'likert', 'cbc']
-  ),
-  'Logit / Probit Multinomial': createMethodology(
-    'stat_logit_probit_multinomial',
-    'estatistica_avancada',
-    'Modelagem de escolha entre múltiplas alternativas mutuamente exclusivas.',
-    ['single', 'multiple', 'cbc']
-  ),
-  'TRI / IRT (Teoria de Resposta ao Item)': createMethodology(
-    'stat_irt',
-    'estatistica_avancada',
-    'Modelagem da relação entre traço latente e probabilidade de resposta a cada item.',
-    ['rating', 'likert']
-  ),
-  'Shapley Values e Relative Importance Analysis': createMethodology(
-    'stat_shapley',
-    'estatistica_avancada',
-    'Quantificação da contribuição relativa de cada variável preditora sobre a variável dependente, com base em teoria dos jogos cooperativos.',
-    ['rating', 'likert', 'number'],
-    true
-  ),
-  'SHAP (SHapley Additive exPlanations)': createMethodology(
-    'stat_shap',
-    'estatistica_avancada',
-    'Interpretação granular de modelos de ML por meio de valores SHAP.',
-    ['single', 'multiple', 'rating', 'likert', 'number']
-  ),
-} as const;
-
-export const METODOLOGIA_VALIDACAO = {
-  'Validação Cruzada (Cross-Validation k-fold)': createMethodology(
-    'val_cross_validation',
-    'validacao',
-    'Avaliação da capacidade de generalização de modelos preditivos.',
-    ['number', 'rating', 'likert']
-  ),
-  'Análise de Multicolinearidade (VIF)': createMethodology(
-    'val_vif',
-    'validacao',
-    'Diagnóstico da colinearidade entre variáveis preditoras em modelos de regressão.',
-    ['number', 'rating', 'likert']
-  ),
-  'Análise de Invariância de Medida': createMethodology(
-    'val_invariancia',
-    'validacao',
-    'Teste de se uma escala mede o mesmo construto de forma equivalente em diferentes grupos.',
-    ['rating', 'likert']
-  ),
-  'Análise de Curva ROC e AUC': createMethodology(
-    'val_roc_auc',
-    'validacao',
-    'Avaliação da capacidade discriminante de modelos de classificação.',
-    ['single', 'multiple', 'boolean']
-  ),
-  'Análise de Precisão e Recall (F1-Score)': createMethodology(
-    'val_f1_score',
-    'validacao',
-    'Avaliação balanceada de modelos de classificação com classes desequilibradas.',
-    ['single', 'multiple', 'boolean']
-  ),
-} as const;
-
-export const ALL_METHODOLOGIES = {
-  ...METODOLOGIA_DESCRITIVA,
-  ...METODOLOGIA_COMPARATIVA,
-  ...METODOLOGIA_PREDITIVA,
-  ...METODOLOGIA_FATORIAL,
-  ...METODOLOGIA_PENALTY,
-  ...METODOLOGIA_CLUSTER,
-  ...METODOLOGIA_TEXT,
-  ...METODOLOGIA_INTENCAO,
-  ...METODOLOGIA_CAUSALIDADE,
-  ...METODOLOGIA_COMPORTAMENTAL,
-  ...METODOLOGIA_MERCADO,
-  ...METODOLOGIA_VALOR_CLIENTE,
-  ...METODOLOGIA_PRICING,
-  ...METODOLOGIA_NPS,
-  ...METODOLOGIA_EXPERIENCIA,
-  ...METODOLOGIA_MARCA,
-  ...METODOLOGIA_KANO,
-  ...METODOLOGIA_MEDIACAO,
-  ...METODOLOGIA_SEM,
-  ...METODOLOGIA_SOBREVIVENCIA,
-  ...METODOLOGIA_REDE,
-  ...METODOLOGIA_ESTATISTICA_AVANCADA,
-  ...METODOLOGIA_VALIDACAO,
-} as const;
-
-export type SpecificMethodologyKey = keyof typeof ALL_METHODOLOGIES;
-
-export const CATEGORY_LABELS: Record<CategoryType, string> = {
-  descritiva: 'Análises Descritivas e de Perfil',
-  comparativa: 'Análises Comparativas',
-  preditiva: 'Análises Explicativas e Preditivas',
-  fatorial: 'Análise Fatorial e Componentes Principais',
-  penalty: 'Análises de Penalty (Impacto / Importância x Performance)',
-  cluster: 'Análises de Clusterização e Tipologias',
-  text: 'Análise de Texto (Text Mining e NLP)',
-  intencao: 'Análises de Intenção e Barreiras',
-  causalidade: 'Análises de Propensão e Causalidade',
-  comportamental: 'Análises Comportamentais e Experimentais',
-  mercado: 'Análises de Mercado e Competição',
-  valor_cliente: 'Análises de Valor do Cliente e Retenção',
-  pricing: 'Análise de Sensibilidade de Preço',
-  nps_analytics: 'NPS Analytics',
-  experiencia: 'Análises de Experiência e Jornada do Consumidor',
-  marca: 'Análises de Marca e Comunicação',
-  mediacao: 'Análise de Mediação e Moderação',
-  sem: 'Modelagem de Equações Estruturais (SEM)',
-  sobrevivencia: 'Análise de Sobrevivência',
-  rede: 'Análise de Redes',
-  estatistica_avancada: 'Análises Estatísticas Avançadas',
-  validacao: 'Métricas e Validação de Modelos',
+  // Adicionais
+  cronbach_alpha: {
+    type: 'cronbach_alpha',
+    name: 'Cronbach\'s Alpha',
+    description: 'Consistência interna de escalas',
+    category: 'descriptive',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  bootstrap_ci: {
+    type: 'bootstrap_ci',
+    name: 'Bootstrap Confidence Intervals',
+    description: 'Intervalos de confiança por reamostragem',
+    category: 'descriptive',
+    applicableQuestionTypes: ['number', 'likert', 'rating'],
+    enabled: true,
+  },
+  monte_carlo: {
+    type: 'monte_carlo',
+    name: 'Monte Carlo Simulation',
+    description: 'Simulação de cenários via amostragem',
+    category: 'advanced',
+    applicableQuestionTypes: ['number', 'likert', 'rating'],
+    enabled: true,
+  },
 };
 
-export const getAllCategories = (): CategoryType[] => {
-  const categories = new Set<CategoryType>();
-  Object.values(ALL_METHODOLOGIES).forEach(m => categories.add(m.category));
-  return Array.from(categories);
+/**
+ * Retorna metodologias aplicáveis para um tipo de pergunta
+ */
+export function getApplicableMethodologies(questionType: string): MethodologyConfig[] {
+  return Object.values(METHODOLOGIES_CATALOG)
+    .filter(m => m.applicableQuestionTypes.includes(questionType) && m.enabled)
+    .sort((a, b) => a.category.localeCompare(b.category));
+}
+
+/**
+ * Metodologias padrão por tipo de pergunta
+ */
+export const DEFAULT_METHODOLOGIES_BY_TYPE: Record<string, MethodologyType[]> = {
+  'single': ['frequency_distribution', 'chi_square', 'conversion_funnel'],
+  'multiple': ['frequency_distribution', 'chi_square', 'clustering'],
+  'likert': ['descriptive_stats', 't_test', 'anova', 'importance_satisfaction'],
+  'nps': ['nps_analysis', 'descriptive_stats'],
+  'rating': ['descriptive_stats', 't_test', 'effect_size'],
+  'matrix': ['descriptive_stats', 'anova', 'network_analysis'],
+  'text': ['sentiment_analysis', 'word_frequency', 'aspect_based_sentiment'],
+  'number': ['descriptive_stats', 't_test', 'linear_regression'],
+  'ranking': ['maxdiff_analysis', 'clustering'],
+  'cbc': ['conjoint_simulation', 'choice_based_conjoint'],
+  'vanwestendorp': ['van_westendorp'],
+  'kano': ['kano_analysis'],
+  'ces': ['ces_analysis'],
+  'csat': ['csat_analysis'],
+  'brand_funnel': ['brand_funnel'],
 };
 
-export const getMethodologiesByCategory = (category: CategoryType): MethodologyInfo[] => {
-  return Object.values(ALL_METHODOLOGIES).filter(m => m.category === category);
-};
-
-export const getApplicableMethodologies = (questionType: string): MethodologyInfo[] => {
-  return Object.values(ALL_METHODOLOGIES).filter(m => 
-    m.applicableQuestionTypes.includes(questionType)
-  );
+export default {
+  METHODOLOGIES_CATALOG,
+  getApplicableMethodologies,
+  DEFAULT_METHODOLOGIES_BY_TYPE,
 };
