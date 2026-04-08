@@ -299,16 +299,33 @@ function analyzeQuestions(
       .map((r) => r.answers[answerKey] ?? r.answers[question.id])
       .filter((a) => a !== undefined && a !== null);
 
-    if (question.type === 'single' || question.type === 'multiple') {
+    if (question.type === 'single' || question.type === 'multiple' || question.type === 'brand_funnel') {
       return analyzeClosedQuestion(question, answers);
     } else if (
       question.type === 'likert' ||
       question.type === 'nps' ||
-      question.type === 'rating'
+      question.type === 'rating' ||
+      question.type === 'ces' ||
+      question.type === 'csat'
     ) {
       return analyzeScaleQuestion(question, answers);
     } else if (question.type === 'text' || question.type === 'textarea') {
       return analyzeOpenQuestion(question, answers);
+    } else if (
+      question.type === 'vanwestendorp' ||
+      question.type === 'kano' ||
+      question.type === 'gabor_granger' ||
+      question.type === 'cbc' ||
+      question.type === 'maxdiff'
+    ) {
+      // Advanced types - handled by methodologyResults; return basic info
+      return {
+        questionId: question.id,
+        question: question.question,
+        type: question.type,
+        distribution: [],
+        stats: { classification: `Análise ${question.type.toUpperCase()} disponível abaixo` },
+      };
     } else {
       return {
         questionId: question.id,
