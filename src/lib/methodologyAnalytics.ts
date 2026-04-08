@@ -1,6 +1,9 @@
 /**
  * Motor de Análise por Metodologia Específica
  * Implementa análises avançadas para cada metodologia descrita no documento Clarifyse
+ * Inclui: Penalty, Importance-Satisfaction, Gap, Funnel, NPS, Sentiment, 
+ * Silhouette, Cronbach, ABSA, TURF, Markov, CLV, Cohort,
+ * Van Westendorp, Kano, CES, CSAT, Gabor-Granger, Brand Funnel, Shapley, Bootstrap
  */
 
 import { AnalysisResponse, Question } from './analyticsEngine';
@@ -952,5 +955,627 @@ export function analyzeCohort(
     cohorts,
     averageRetention,
     churnTrend,
+  };
+}
+
+// ============================================================================
+// VAN WESTENDORP (PSM) ANALYSIS
+// ============================================================================
+
+export interface VanWestendorpResult {
+  pricePoints: number[];
+  tooExpensiveCurve: number[];
+  expensiveCurve: number[];
+  cheapCurve: number[];
+  tooCheapCurve: number[];
+  optimalPricePoint: number;
+  indifferencePricePoint: number;
+  acceptablePriceRange: { min: number; max: number };
+  insight: string;
+}
+
+/**
+ * Análise Van Westendorp PSM - gera curvas de preço e identifica ponto ótimo.
+ * Espera respostas com campos: too_cheap, cheap, expensive, too_expensive
+ */
+export function analyzeVanWestendorp(
+  responses: AnalysisResponse[],
+  questionVariableCode: string
+): VanWestendorpResult {
+  const tooCheapValues: number[] = [];
+  const cheapValues: number[] = [];
+  const expensiveValues: number[] = [];
+  const tooExpensiveValues: number[] = [];
+
+  responses.forEach(r => {
+    const answer = r.answers[questionVariableCode];
+    if (answer && typeof answer === 'object') {
+      if (answer.too_cheap !== undefined) tooCheapValues.push(Number(answer.too_cheap));
+      if (answer.cheap !== undefined) cheapValues.push(Number(answer.cheap));
+      if (answer.expensive !== undefined) expensiveValues.push(Number(answer.expensive));
+      if (answer.too_expensive !== undefined) tooExpensiveValues.push(Number(answer.too_expensive));
+    }
+  });
+
+  // Generate cumulative distribution curves
+  const allPrices = [...tooCheapValues, ...cheapValues, ...expensiveValues, ...tooExpensiveValues]
+    .filter(v => !isNaN(v));
+  
+  if (allPrices.length === 0) {
+    return {
+      pricePoints: [],
+      tooExpensiveCurve: [],
+      expensiveCurve: [],
+      cheapCurve: [],
+      tooCheapCurve: [],
+      optimalPricePoint: 0,
+      indifferencePricePoint: 0,
+      acceptablePriceRange: { min: 0, max: 0 },
+      insight: 'Dados insuficientes para análise Van Westendorp.',
+    };
+  }
+
+  const minPrice = Math.min(...allPrices);
+  const maxPrice = Math.max(...allPrices);
+  const step = (maxPrice - minPrice) / 20;
+  const pricePoints: number[] = [];
+  
+  for (let p = minPrice; p <= maxPrice; p += step) {
+    pricePoints.push(Math.round(p * 100) / 100);
+  }
+
+  const total = responses.length || 1;
+  const cumulativeAbove = (values: number[], price: number) => values.filter(v => v >= price).length / total * 100;
+  const cumulativeBelow = (values: number[], price: number) => values.filter(v => v <= price).length / total * 100;
+
+  const tooExpensiveCurve = pricePoints.map(p => cumulativeBelow(tooExpensiveValues, p));
+  const expensiveCurve = pricePoints.map(p => cumulativeBelow(expensiveValues, p));
+  const cheapCurve = pricePoints.map(p => cumulativeAbove(cheapValues, p));
+  const tooCheapCurve = pricePoints.map(p => cumulativeAbove(tooCheapValues, p));
+
+  // Find intersection points
+  let optimalIdx = 0;
+  let indifferenceIdx = 0;
+  let minDiffOptimal = Infinity;
+  let minDiffIndiff = Infinity;
+
+  pricePoints.forEach((_, i) => {
+    // OPP: too_expensive meets too_cheap
+    const diffOpp = Math.abs(tooExpensiveCurve[i] - tooCheapCurve[i]);
+    if (diffOpp < minDiffOptimal) { minDiffOptimal = diffOpp; optimalIdx = i; }
+
+    // IDP: expensive meets cheap
+    const diffIdp = Math.abs(expensiveCurve[i] - cheapCurve[i]);
+    if (diffIdp < minDiffIndiff) { minDiffIndiff = diffIdp; indifferenceIdx = i; }
+  });
+
+  const optimalPricePoint = pricePoints[optimalIdx] || 0;
+  const indifferencePricePoint = pricePoints[indifferenceIdx] || 0;
+
+  // Acceptable range: where too_cheap > too_expensive
+  const rangeMin = pricePoints.find((_, i) => tooCheapCurve[i] <= tooExpensiveCurve[i]) || minPrice;
+  const rangeMax = [...pricePoints].reverse().find((_, i, arr) => tooExpensiveCurve[pricePoints.length - 1 - i] <= tooCheapCurve[pricePoints.length - 1 - i]) || maxPrice;
+
+  return {
+    pricePoints,
+    tooExpensiveCurve,
+    expensiveCurve,
+    cheapCurve,
+    tooCheapCurve,
+    optimalPricePoint,
+    indifferencePricePoint,
+    acceptablePriceRange: { min: rangeMin, max: rangeMax },
+    insight: `Ponto de preço ótimo: R$ ${optimalPricePoint.toFixed(2)}. Faixa aceitável: R$ ${rangeMin.toFixed(2)} - R$ ${rangeMax.toFixed(2)}. Ponto de indiferença: R$ ${indifferencePricePoint.toFixed(2)}.`,
+  };
+}
+
+// ============================================================================
+// KANO ANALYSIS
+// ============================================================================
+
+export type KanoCategory = 'must_be' | 'one_dimensional' | 'attractive' | 'indifferent' | 'reverse' | 'questionable';
+
+export interface KanoFeatureResult {
+  feature: string;
+  category: KanoCategory;
+  categoryLabel: string;
+  functionalPositive: number;
+  functionalNeutral: number;
+  functionalNegative: number;
+  dysfunctionalPositive: number;
+  dysfunctionalNeutral: number;
+  dysfunctionalNegative: number;
+  satisfactionCoefficient: number;
+  dissatisfactionCoefficient: number;
+}
+
+export interface KanoAnalysisResult {
+  features: KanoFeatureResult[];
+  insight: string;
+}
+
+const KANO_CATEGORY_LABELS: Record<KanoCategory, string> = {
+  must_be: 'Básico (Must-be)',
+  one_dimensional: 'Linear (One-dimensional)',
+  attractive: 'Atrativo (Attractive)',
+  indifferent: 'Indiferente',
+  reverse: 'Reverso',
+  questionable: 'Questionável',
+};
+
+/**
+ * Classificação de Kano baseada em perguntas funcionais/disfuncionais.
+ * Espera respostas com campos: {featureId}_functional e {featureId}_dysfunctional (1-5)
+ */
+export function analyzeKano(
+  responses: AnalysisResponse[],
+  features: Array<{ id: string; name: string }>,
+  questionVariableCode: string
+): KanoAnalysisResult {
+  const results: KanoFeatureResult[] = [];
+
+  features.forEach(feature => {
+    let mustBe = 0, oneDim = 0, attractive = 0, indifferent = 0, reverse = 0, questionable = 0;
+
+    responses.forEach(r => {
+      const answer = r.answers[questionVariableCode];
+      if (!answer || typeof answer !== 'object') return;
+
+      const func = Number(answer[`${feature.id}_functional`]) || 3;
+      const dysfunc = Number(answer[`${feature.id}_dysfunctional`]) || 3;
+
+      // Kano evaluation table (simplified)
+      if (func >= 4 && dysfunc <= 2) oneDim++;
+      else if (func >= 4 && dysfunc >= 3) attractive++;
+      else if (func <= 2 && dysfunc <= 2) questionable++;
+      else if (func <= 2 && dysfunc >= 4) reverse++;
+      else if (func <= 3 && dysfunc <= 2) mustBe++;
+      else indifferent++;
+    });
+
+    const total = responses.length || 1;
+    const counts = { mustBe, oneDim, attractive, indifferent, reverse, questionable };
+    const maxCategory = Object.entries(counts).reduce((a, b) => b[1] > a[1] ? b : a);
+
+    const categoryMap: Record<string, KanoCategory> = {
+      mustBe: 'must_be',
+      oneDim: 'one_dimensional',
+      attractive: 'attractive',
+      indifferent: 'indifferent',
+      reverse: 'reverse',
+      questionable: 'questionable',
+    };
+
+    const category = categoryMap[maxCategory[0]] || 'indifferent';
+
+    // Satisfaction/Dissatisfaction coefficients
+    const satCoeff = (attractive + oneDim) / total;
+    const dissatCoeff = -(oneDim + mustBe) / total;
+
+    results.push({
+      feature: feature.name,
+      category,
+      categoryLabel: KANO_CATEGORY_LABELS[category],
+      functionalPositive: oneDim + attractive,
+      functionalNeutral: indifferent,
+      functionalNegative: mustBe + reverse,
+      dysfunctionalPositive: reverse,
+      dysfunctionalNeutral: indifferent,
+      dysfunctionalNegative: oneDim + mustBe,
+      satisfactionCoefficient: Math.round(satCoeff * 100) / 100,
+      dissatisfactionCoefficient: Math.round(dissatCoeff * 100) / 100,
+    });
+  });
+
+  const mustBeCount = results.filter(r => r.category === 'must_be').length;
+  const attractiveCount = results.filter(r => r.category === 'attractive').length;
+
+  return {
+    features: results,
+    insight: `${mustBeCount} atributos básicos (must-have), ${attractiveCount} atributos atrativos (delighters). Priorize investimento nos atributos lineares e corrija gaps nos básicos.`,
+  };
+}
+
+// ============================================================================
+// CES (Customer Effort Score) ANALYSIS
+// ============================================================================
+
+export interface CESAnalysisResult {
+  averageCES: number;
+  distribution: Array<{ score: number; count: number; percentage: number }>;
+  lowEffortPercentage: number;
+  highEffortPercentage: number;
+  classification: 'Excelente' | 'Bom' | 'Regular' | 'Crítico';
+  insight: string;
+}
+
+/**
+ * Análise do Customer Effort Score (escala 1-7, onde 7 = muito fácil).
+ */
+export function analyzeCES(
+  responses: AnalysisResponse[],
+  cesQuestionCode: string
+): CESAnalysisResult {
+  const scores = responses
+    .map(r => Number(r.answers[cesQuestionCode]))
+    .filter(v => !isNaN(v) && v >= 1 && v <= 7);
+
+  if (scores.length === 0) {
+    return {
+      averageCES: 0,
+      distribution: [],
+      lowEffortPercentage: 0,
+      highEffortPercentage: 0,
+      classification: 'Crítico',
+      insight: 'Dados insuficientes para análise CES.',
+    };
+  }
+
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const dist: Record<number, number> = {};
+  for (let i = 1; i <= 7; i++) dist[i] = 0;
+  scores.forEach(s => dist[s]++);
+
+  const distribution = Object.entries(dist).map(([score, count]) => ({
+    score: Number(score),
+    count,
+    percentage: (count / scores.length) * 100,
+  }));
+
+  const lowEffort = scores.filter(s => s >= 5).length;
+  const highEffort = scores.filter(s => s <= 3).length;
+
+  let classification: CESAnalysisResult['classification'] = 'Crítico';
+  if (avg >= 5.5) classification = 'Excelente';
+  else if (avg >= 4.5) classification = 'Bom';
+  else if (avg >= 3.5) classification = 'Regular';
+
+  return {
+    averageCES: Math.round(avg * 100) / 100,
+    distribution,
+    lowEffortPercentage: Math.round((lowEffort / scores.length) * 100),
+    highEffortPercentage: Math.round((highEffort / scores.length) * 100),
+    classification,
+    insight: `CES médio: ${avg.toFixed(1)}/7.0 (${classification}). ${Math.round((lowEffort / scores.length) * 100)}% consideram a interação fácil. ${Math.round((highEffort / scores.length) * 100)}% reportam alto esforço.`,
+  };
+}
+
+// ============================================================================
+// CSAT ANALYSIS
+// ============================================================================
+
+export interface CSATAnalysisResult {
+  averageCSAT: number;
+  satisfiedPercentage: number;
+  distribution: Array<{ score: number; count: number; percentage: number; label: string }>;
+  classification: 'Excelente' | 'Bom' | 'Regular' | 'Crítico';
+  insight: string;
+}
+
+const CSAT_LABELS = ['Muito Insatisfeito', 'Insatisfeito', 'Neutro', 'Satisfeito', 'Muito Satisfeito'];
+
+/**
+ * Análise do Customer Satisfaction Score (escala 1-5).
+ */
+export function analyzeCSAT(
+  responses: AnalysisResponse[],
+  csatQuestionCode: string
+): CSATAnalysisResult {
+  const scores = responses
+    .map(r => Number(r.answers[csatQuestionCode]))
+    .filter(v => !isNaN(v) && v >= 1 && v <= 5);
+
+  if (scores.length === 0) {
+    return {
+      averageCSAT: 0,
+      satisfiedPercentage: 0,
+      distribution: [],
+      classification: 'Crítico',
+      insight: 'Dados insuficientes para análise CSAT.',
+    };
+  }
+
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const satisfied = scores.filter(s => s >= 4).length;
+  
+  const dist: Record<number, number> = {};
+  for (let i = 1; i <= 5; i++) dist[i] = 0;
+  scores.forEach(s => dist[s]++);
+
+  const distribution = Object.entries(dist).map(([score, count]) => ({
+    score: Number(score),
+    count,
+    percentage: (count / scores.length) * 100,
+    label: CSAT_LABELS[Number(score) - 1] || '',
+  }));
+
+  const satisfiedPct = Math.round((satisfied / scores.length) * 100);
+  let classification: CSATAnalysisResult['classification'] = 'Crítico';
+  if (satisfiedPct >= 80) classification = 'Excelente';
+  else if (satisfiedPct >= 60) classification = 'Bom';
+  else if (satisfiedPct >= 40) classification = 'Regular';
+
+  return {
+    averageCSAT: Math.round(avg * 100) / 100,
+    satisfiedPercentage: satisfiedPct,
+    distribution,
+    classification,
+    insight: `CSAT: ${satisfiedPct}% satisfeitos (4-5). Média: ${avg.toFixed(1)}/5.0 (${classification}).`,
+  };
+}
+
+// ============================================================================
+// GABOR-GRANGER PRICING ANALYSIS
+// ============================================================================
+
+export interface GaborGrangerResult {
+  demandCurve: Array<{ price: number; intentionPercentage: number }>;
+  optimalPrice: number;
+  maxRevenue: number;
+  priceElasticity: number;
+  insight: string;
+}
+
+/**
+ * Análise Gabor-Granger: curva de demanda a partir de intenção em diferentes preços.
+ * Espera respostas com campos: {price}_intention (1-5, onde 4-5 = compraria)
+ */
+export function analyzeGaborGranger(
+  responses: AnalysisResponse[],
+  questionVariableCode: string,
+  pricePoints: number[]
+): GaborGrangerResult {
+  const demandCurve: Array<{ price: number; intentionPercentage: number }> = [];
+  const total = responses.length || 1;
+
+  pricePoints.forEach(price => {
+    const wouldBuy = responses.filter(r => {
+      const answer = r.answers[questionVariableCode];
+      if (!answer || typeof answer !== 'object') return false;
+      const intention = Number(answer[`price_${price}`]) || 0;
+      return intention >= 4; // 4-5 = compraria
+    }).length;
+
+    demandCurve.push({
+      price,
+      intentionPercentage: Math.round((wouldBuy / total) * 100),
+    });
+  });
+
+  // Find optimal price (max revenue = price × intention%)
+  let maxRevenue = 0;
+  let optimalPrice = 0;
+  demandCurve.forEach(point => {
+    const revenue = point.price * (point.intentionPercentage / 100);
+    if (revenue > maxRevenue) {
+      maxRevenue = revenue;
+      optimalPrice = point.price;
+    }
+  });
+
+  // Price elasticity (average change in demand / change in price)
+  let elasticity = 0;
+  if (demandCurve.length > 1) {
+    const first = demandCurve[0];
+    const last = demandCurve[demandCurve.length - 1];
+    const demandChange = (last.intentionPercentage - first.intentionPercentage) / first.intentionPercentage;
+    const priceChange = (last.price - first.price) / first.price;
+    elasticity = priceChange !== 0 ? demandChange / priceChange : 0;
+  }
+
+  return {
+    demandCurve,
+    optimalPrice,
+    maxRevenue: Math.round(maxRevenue * 100) / 100,
+    priceElasticity: Math.round(elasticity * 100) / 100,
+    insight: `Preço ótimo: R$ ${optimalPrice.toFixed(2)} (receita máxima estimada: R$ ${maxRevenue.toFixed(2)} por respondente). Elasticidade-preço: ${elasticity.toFixed(2)}.`,
+  };
+}
+
+// ============================================================================
+// BRAND FUNNEL ANALYSIS
+// ============================================================================
+
+export interface BrandFunnelStage {
+  stage: string;
+  count: number;
+  percentage: number;
+  conversionFromPrevious: number;
+}
+
+export interface BrandFunnelResult {
+  stages: BrandFunnelStage[];
+  bottleneck: string;
+  overallConversion: number;
+  insight: string;
+}
+
+const BRAND_FUNNEL_STAGES = ['awareness', 'consideration', 'preference', 'usage', 'recommendation'];
+const BRAND_FUNNEL_LABELS: Record<string, string> = {
+  awareness: 'Conhecimento',
+  consideration: 'Consideração',
+  preference: 'Preferência',
+  usage: 'Uso',
+  recommendation: 'Recomendação',
+};
+
+/**
+ * Análise de funil de marca: awareness → consideração → preferência → uso → recomendação.
+ */
+export function analyzeBrandFunnel(
+  responses: AnalysisResponse[],
+  questionVariableCode: string
+): BrandFunnelResult {
+  const total = responses.length || 1;
+  const stages: BrandFunnelStage[] = [];
+  let previousCount = total;
+  let maxDropoff = 0;
+  let bottleneckStage = '';
+
+  BRAND_FUNNEL_STAGES.forEach((stage, idx) => {
+    const count = responses.filter(r => {
+      const answer = r.answers[questionVariableCode];
+      if (Array.isArray(answer)) return answer.includes(stage);
+      if (typeof answer === 'object' && answer !== null) return answer[stage] === true;
+      return false;
+    }).length;
+
+    const conversionFromPrevious = previousCount > 0 ? (count / previousCount) * 100 : 0;
+    const dropoff = previousCount - count;
+
+    if (idx > 0 && dropoff > maxDropoff) {
+      maxDropoff = dropoff;
+      bottleneckStage = BRAND_FUNNEL_LABELS[stage] || stage;
+    }
+
+    stages.push({
+      stage: BRAND_FUNNEL_LABELS[stage] || stage,
+      count,
+      percentage: Math.round((count / total) * 100),
+      conversionFromPrevious: Math.round(conversionFromPrevious),
+    });
+
+    previousCount = count;
+  });
+
+  const overallConversion = stages.length > 0 
+    ? Math.round((stages[stages.length - 1].count / total) * 100) 
+    : 0;
+
+  return {
+    stages,
+    bottleneck: bottleneckStage || 'N/A',
+    overallConversion,
+    insight: `Conversão total do funil: ${overallConversion}%. Maior gargalo: ${bottleneckStage || 'N/A'} (queda de ${maxDropoff} respondentes).`,
+  };
+}
+
+// ============================================================================
+// SHAPLEY VALUES (Relative Importance)
+// ============================================================================
+
+export interface ShapleyResult {
+  variables: Array<{ name: string; importance: number; normalizedImportance: number }>;
+  insight: string;
+}
+
+/**
+ * Quantificação da contribuição relativa de cada variável preditora.
+ * Implementação simplificada baseada em correlação parcial.
+ */
+export function analyzeShapleyImportance(
+  responses: AnalysisResponse[],
+  predictorQuestions: Question[],
+  targetQuestion: Question
+): ShapleyResult {
+  const targetKey = targetQuestion.variableCode || targetQuestion.id;
+  const targetValues = responses.map(r => Number(r.answers[targetKey])).filter(v => !isNaN(v));
+
+  if (targetValues.length < 5) {
+    return { variables: [], insight: 'Dados insuficientes para análise de importância relativa.' };
+  }
+
+  const targetMean = targetValues.reduce((a, b) => a + b, 0) / targetValues.length;
+  const targetStd = Math.sqrt(targetValues.reduce((sum, v) => sum + Math.pow(v - targetMean, 2), 0) / targetValues.length);
+
+  const variables = predictorQuestions.map(q => {
+    const key = q.variableCode || q.id;
+    const values = responses.map(r => Number(r.answers[key])).filter(v => !isNaN(v));
+
+    if (values.length < 5 || targetStd === 0) return { name: q.question, importance: 0, normalizedImportance: 0 };
+
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const std = Math.sqrt(values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length);
+
+    if (std === 0) return { name: q.question, importance: 0, normalizedImportance: 0 };
+
+    // Pearson correlation as proxy for importance
+    let sumProduct = 0;
+    const minLen = Math.min(values.length, targetValues.length);
+    for (let i = 0; i < minLen; i++) {
+      sumProduct += ((values[i] - mean) * (targetValues[i] - targetMean));
+    }
+    const correlation = sumProduct / (minLen * std * targetStd);
+    const importance = Math.abs(correlation);
+
+    return { name: q.question, importance: Math.round(importance * 100) / 100, normalizedImportance: 0 };
+  });
+
+  // Normalize
+  const totalImportance = variables.reduce((sum, v) => sum + v.importance, 0);
+  variables.forEach(v => {
+    v.normalizedImportance = totalImportance > 0 ? Math.round((v.importance / totalImportance) * 100) : 0;
+  });
+
+  variables.sort((a, b) => b.importance - a.importance);
+
+  const topVar = variables[0]?.name || 'N/A';
+  return {
+    variables,
+    insight: `Variável mais importante: "${topVar}" (${variables[0]?.normalizedImportance || 0}% da importância relativa).`,
+  };
+}
+
+// ============================================================================
+// BOOTSTRAP CONFIDENCE INTERVALS
+// ============================================================================
+
+export interface BootstrapResult {
+  originalMean: number;
+  bootstrapMean: number;
+  confidenceInterval: { lower: number; upper: number };
+  standardError: number;
+  nIterations: number;
+  insight: string;
+}
+
+/**
+ * Bootstrap para estimativa de intervalos de confiança.
+ */
+export function analyzeBootstrap(
+  values: number[],
+  nIterations: number = 1000,
+  confidenceLevel: number = 0.95
+): BootstrapResult {
+  if (values.length < 3) {
+    return {
+      originalMean: 0,
+      bootstrapMean: 0,
+      confidenceInterval: { lower: 0, upper: 0 },
+      standardError: 0,
+      nIterations,
+      insight: 'Amostra insuficiente para bootstrap.',
+    };
+  }
+
+  const originalMean = values.reduce((a, b) => a + b, 0) / values.length;
+  const bootstrapMeans: number[] = [];
+
+  for (let i = 0; i < nIterations; i++) {
+    const sample: number[] = [];
+    for (let j = 0; j < values.length; j++) {
+      sample.push(values[Math.floor(Math.random() * values.length)]);
+    }
+    bootstrapMeans.push(sample.reduce((a, b) => a + b, 0) / sample.length);
+  }
+
+  bootstrapMeans.sort((a, b) => a - b);
+  const alpha = (1 - confidenceLevel) / 2;
+  const lowerIdx = Math.floor(alpha * nIterations);
+  const upperIdx = Math.floor((1 - alpha) * nIterations);
+
+  const bootstrapMean = bootstrapMeans.reduce((a, b) => a + b, 0) / nIterations;
+  const se = Math.sqrt(bootstrapMeans.reduce((sum, v) => sum + Math.pow(v - bootstrapMean, 2), 0) / nIterations);
+
+  return {
+    originalMean: Math.round(originalMean * 100) / 100,
+    bootstrapMean: Math.round(bootstrapMean * 100) / 100,
+    confidenceInterval: {
+      lower: Math.round(bootstrapMeans[lowerIdx] * 100) / 100,
+      upper: Math.round(bootstrapMeans[upperIdx] * 100) / 100,
+    },
+    standardError: Math.round(se * 100) / 100,
+    nIterations,
+    insight: `Média: ${originalMean.toFixed(2)} [IC ${(confidenceLevel * 100).toFixed(0)}%: ${bootstrapMeans[lowerIdx].toFixed(2)} - ${bootstrapMeans[upperIdx].toFixed(2)}]. Erro padrão: ${se.toFixed(3)}.`,
   };
 }

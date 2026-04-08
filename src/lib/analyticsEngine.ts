@@ -113,6 +113,7 @@ export interface AnalysisResult {
   regressionAnalysis?: RegressionAnalysis;
   conjointAnalysis?: ConjointAnalysis;
   penaltyAnalysis?: PenaltyAnalysis;
+  methodologyResults?: Record<string, any>;
 }
 
 export interface SummaryStats {
@@ -202,6 +203,34 @@ export function generateInsights(
   );
   const quotaComparison = analyzeQuotaComparison(responses, quotas, questions);
 
+  // Auto-detect methodology-specific analyses based on question types
+  const methodologyResults: Record<string, any> = {};
+
+  questions.forEach(q => {
+    const key = q.variableCode || q.id;
+    if (q.type === 'nps') {
+      methodologyResults[`nps_${key}`] = { type: 'nps', questionId: q.id, variableCode: key };
+    }
+    if (q.type === 'vanwestendorp') {
+      methodologyResults[`vanwestendorp_${key}`] = { type: 'vanwestendorp', questionId: q.id, variableCode: key };
+    }
+    if (q.type === 'kano') {
+      methodologyResults[`kano_${key}`] = { type: 'kano', questionId: q.id, variableCode: key };
+    }
+    if (q.type === 'ces') {
+      methodologyResults[`ces_${key}`] = { type: 'ces', questionId: q.id, variableCode: key };
+    }
+    if (q.type === 'csat') {
+      methodologyResults[`csat_${key}`] = { type: 'csat', questionId: q.id, variableCode: key };
+    }
+    if (q.type === 'gabor_granger') {
+      methodologyResults[`gabor_granger_${key}`] = { type: 'gabor_granger', questionId: q.id, variableCode: key };
+    }
+    if (q.type === 'brand_funnel') {
+      methodologyResults[`brand_funnel_${key}`] = { type: 'brand_funnel', questionId: q.id, variableCode: key };
+    }
+  });
+
   return {
     summary,
     questionAnalysis,
@@ -209,6 +238,7 @@ export function generateInsights(
     qualityScore,
     keyInsights,
     quotaComparison,
+    methodologyResults,
   };
 }
 
@@ -269,16 +299,33 @@ function analyzeQuestions(
       .map((r) => r.answers[answerKey] ?? r.answers[question.id])
       .filter((a) => a !== undefined && a !== null);
 
-    if (question.type === 'single' || question.type === 'multiple') {
+    if (question.type === 'single' || question.type === 'multiple' || question.type === 'brand_funnel') {
       return analyzeClosedQuestion(question, answers);
     } else if (
       question.type === 'likert' ||
       question.type === 'nps' ||
-      question.type === 'rating'
+      question.type === 'rating' ||
+      question.type === 'ces' ||
+      question.type === 'csat'
     ) {
       return analyzeScaleQuestion(question, answers);
     } else if (question.type === 'text' || question.type === 'textarea') {
       return analyzeOpenQuestion(question, answers);
+    } else if (
+      question.type === 'vanwestendorp' ||
+      question.type === 'kano' ||
+      question.type === 'gabor_granger' ||
+      question.type === 'cbc' ||
+      question.type === 'maxdiff'
+    ) {
+      // Advanced types - handled by methodologyResults; return basic info
+      return {
+        questionId: question.id,
+        question: question.question,
+        type: question.type,
+        distribution: [],
+        stats: { classification: `Análise ${question.type.toUpperCase()} disponível abaixo` },
+      };
     } else {
       return {
         questionId: question.id,

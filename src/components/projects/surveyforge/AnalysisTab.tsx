@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Download, TrendingUp, AlertCircle, CheckCircle2, BarChart3, 
-  PieChart, Activity, Zap, FileJson, FileSpreadsheet, ArrowRight
+  PieChart, Activity, Zap, FileJson, FileSpreadsheet, ArrowRight,
+  DollarSign, Target, Gauge, Smile, BarChart3 as FunnelIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { generateInsights, AnalysisResult, AnalysisResponse, Question } from '@/lib/analyticsEngine';
@@ -15,8 +16,15 @@ import {
   analyzeFunnel,
   analyzeSentiment,
   calculateCronbachAlpha,
+  analyzeVanWestendorp,
+  analyzeKano,
+  analyzeCES,
+  analyzeCSAT,
+  analyzeGaborGranger,
+  analyzeBrandFunnel,
+  analyzeShapleyImportance,
 } from '@/lib/methodologyAnalytics';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as PieChartComponent, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
@@ -390,6 +398,15 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
         </div>
       </motion.div>
 
+      {/* Methodology-Specific Auto-Analyses */}
+      {analysis.methodologyResults && Object.keys(analysis.methodologyResults).length > 0 && (
+        <MethodologyAnalysisSection 
+          methodologyResults={analysis.methodologyResults}
+          project={project}
+          responses={project.responses || []}
+        />
+      )}
+
       {/* Comparação entre Cotas */}
       {analysis.quotaComparison.length > 0 && (
         <motion.div
@@ -432,6 +449,349 @@ export default function AnalysisTab({ project, isAdmin = false }: AnalysisTabPro
         </motion.div>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// METHODOLOGY ANALYSIS SECTION COMPONENT
+// ============================================================================
+
+function MethodologyAnalysisSection({ methodologyResults, project, responses }: { 
+  methodologyResults: Record<string, any>;
+  project: any;
+  responses: any[];
+}) {
+  const mappedResponses: any[] = responses.map((r: any) => ({
+    id: r.id,
+    timestamp: r.submittedAt || r.timestamp,
+    answers: r.answers || {},
+    quotaProfile: {},
+    timeSpent: r.timeSpentSeconds || r.timeSpent || 0,
+    qualityFlag: r.qualityFlag || 'good',
+  }));
+
+  const sections: React.ReactNode[] = [];
+
+  Object.entries(methodologyResults).forEach(([key, config]) => {
+    const { type, variableCode } = config as any;
+
+    if (type === 'nps') {
+      const npsQ = (project.formQuestions || []).find((q: any) => (q.variableCode || q.id) === variableCode);
+      if (npsQ) {
+        const result = analyzeNPS(mappedResponses, npsQ);
+        sections.push(
+          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="h-5 w-5 text-[#1D9E75]" />
+              <h3 className="text-lg font-bold text-[#2D1E6B]">NPS Analytics — {npsQ.question}</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="p-3 bg-green-50 rounded-lg text-center">
+                <p className="text-xs text-green-600 font-bold">NPS</p>
+                <p className="text-2xl font-bold text-green-700">{result.overall.nps}</p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg text-center">
+                <p className="text-xs text-green-600 font-bold">Promotores</p>
+                <p className="text-2xl font-bold text-green-700">{result.overall.promotersCount}</p>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg text-center">
+                <p className="text-xs text-yellow-600 font-bold">Passivos</p>
+                <p className="text-2xl font-bold text-yellow-700">{result.overall.passivesCount}</p>
+              </div>
+              <div className="p-3 bg-red-50 rounded-lg text-center">
+                <p className="text-xs text-red-600 font-bold">Detratores</p>
+                <p className="text-2xl font-bold text-red-700">{result.overall.detractorsCount}</p>
+              </div>
+            </div>
+            {result.keyInsights.map((insight, i) => (
+              <p key={i} className="text-sm text-[#64748B]">💡 {insight}</p>
+            ))}
+          </motion.div>
+        );
+      }
+    }
+
+    if (type === 'vanwestendorp') {
+      const result = analyzeVanWestendorp(mappedResponses, variableCode);
+      if (result.pricePoints.length > 0) {
+        const chartData = result.pricePoints.map((price, i) => ({
+          price: `R$${price.toFixed(0)}`,
+          'Muito Caro': result.tooExpensiveCurve[i],
+          'Caro': result.expensiveCurve[i],
+          'Barato': result.cheapCurve[i],
+          'Muito Barato': result.tooCheapCurve[i],
+        }));
+
+        sections.push(
+          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign className="h-5 w-5 text-[#1D9E75]" />
+              <h3 className="text-lg font-bold text-[#2D1E6B]">Van Westendorp (PSM) — Curvas de Preço</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="price" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} unit="%" />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Muito Caro" stroke="#EF4444" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Caro" stroke="#F59E0B" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Barato" stroke="#10B981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Muito Barato" stroke="#3B82F6" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <div className="p-3 bg-green-50 rounded-lg text-center">
+                <p className="text-xs text-green-600 font-bold">Preço Ótimo</p>
+                <p className="text-lg font-bold text-green-700">R$ {result.optimalPricePoint.toFixed(2)}</p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg text-center">
+                <p className="text-xs text-blue-600 font-bold">Indiferença</p>
+                <p className="text-lg font-bold text-blue-700">R$ {result.indifferencePricePoint.toFixed(2)}</p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg text-center">
+                <p className="text-xs text-purple-600 font-bold">Faixa Aceitável</p>
+                <p className="text-sm font-bold text-purple-700">R$ {result.acceptablePriceRange.min.toFixed(0)} - R$ {result.acceptablePriceRange.max.toFixed(0)}</p>
+              </div>
+            </div>
+          </motion.div>
+        );
+      }
+    }
+
+    if (type === 'kano') {
+      const question = (project.formQuestions || []).find((q: any) => (q.variableCode || q.id) === variableCode);
+      if (question && question.kanoFeatures) {
+        const result = analyzeKano(mappedResponses, question.kanoFeatures, variableCode);
+        const kanoColors: Record<string, string> = {
+          must_be: '#3B82F6',
+          one_dimensional: '#10B981',
+          attractive: '#F59E0B',
+          indifferent: '#9CA3AF',
+          reverse: '#EF4444',
+          questionable: '#8B5CF6',
+        };
+
+        const chartData = result.features.map(f => ({
+          name: f.feature,
+          'Coef. Satisfação': f.satisfactionCoefficient,
+          'Coef. Insatisfação': Math.abs(f.dissatisfactionCoefficient),
+        }));
+
+        sections.push(
+          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-5 w-5 text-[#1D9E75]" />
+              <h3 className="text-lg font-bold text-[#2D1E6B]">Análise de Kano</h3>
+            </div>
+            <div className="space-y-2 mb-4">
+              {result.features.map((f, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-[#F1EFE8] rounded-lg">
+                  <span className="font-medium text-[#2D1E6B]">{f.feature}</span>
+                  <span className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: kanoColors[f.category] + '20', color: kanoColors[f.category] }}>
+                    {f.categoryLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="Coef. Satisfação" fill="#10B981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Coef. Insatisfação" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="text-sm text-[#64748B] mt-2">💡 {result.insight}</p>
+          </motion.div>
+        );
+      }
+    }
+
+    if (type === 'ces') {
+      const result = analyzeCES(mappedResponses, variableCode);
+      if (result.distribution.length > 0) {
+        const chartData = result.distribution.map(d => ({
+          score: d.score.toString(),
+          count: d.count,
+          percentage: d.percentage,
+        }));
+
+        sections.push(
+          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Gauge className="h-5 w-5 text-[#1D9E75]" />
+              <h3 className="text-lg font-bold text-[#2D1E6B]">Customer Effort Score (CES)</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="p-3 bg-blue-50 rounded-lg text-center">
+                <p className="text-xs text-blue-600 font-bold">CES Médio</p>
+                <p className="text-2xl font-bold text-blue-700">{result.averageCES}/7</p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg text-center">
+                <p className="text-xs text-green-600 font-bold">Baixo Esforço</p>
+                <p className="text-2xl font-bold text-green-700">{result.lowEffortPercentage}%</p>
+              </div>
+              <div className="p-3 bg-red-50 rounded-lg text-center">
+                <p className="text-xs text-red-600 font-bold">Alto Esforço</p>
+                <p className="text-2xl font-bold text-red-700">{result.highEffortPercentage}%</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="score" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#2D1E6B" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="text-sm text-[#64748B] mt-2">💡 {result.insight}</p>
+          </motion.div>
+        );
+      }
+    }
+
+    if (type === 'csat') {
+      const result = analyzeCSAT(mappedResponses, variableCode);
+      if (result.distribution.length > 0) {
+        sections.push(
+          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Smile className="h-5 w-5 text-[#1D9E75]" />
+              <h3 className="text-lg font-bold text-[#2D1E6B]">Customer Satisfaction (CSAT)</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-3 bg-green-50 rounded-lg text-center">
+                <p className="text-xs text-green-600 font-bold">CSAT</p>
+                <p className="text-2xl font-bold text-green-700">{result.satisfiedPercentage}%</p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg text-center">
+                <p className="text-xs text-blue-600 font-bold">Média</p>
+                <p className="text-2xl font-bold text-blue-700">{result.averageCSAT}/5</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {result.distribution.map(d => (
+                <div key={d.score} className="flex items-center gap-3">
+                  <span className="text-xs w-32 text-[#64748B]">{d.label}</span>
+                  <div className="flex-1 bg-gray-100 rounded-full h-3">
+                    <div className="bg-[#1D9E75] h-3 rounded-full" style={{ width: `${d.percentage}%` }} />
+                  </div>
+                  <span className="text-xs font-bold text-[#2D1E6B] w-12 text-right">{Math.round(d.percentage)}%</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        );
+      }
+    }
+
+    if (type === 'brand_funnel') {
+      const result = analyzeBrandFunnel(mappedResponses, variableCode);
+      if (result.stages.length > 0) {
+        sections.push(
+          <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-5 w-5 text-[#1D9E75]" />
+              <h3 className="text-lg font-bold text-[#2D1E6B]">Brand Funnel</h3>
+            </div>
+            <div className="space-y-3 mb-4">
+              {result.stages.map((stage, i) => (
+                <div key={i} className="relative">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-[#2D1E6B]">{stage.stage}</span>
+                    <span className="text-sm font-bold text-[#1D9E75]">{stage.percentage}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-4">
+                    <div
+                      className="bg-gradient-to-r from-[#2D1E6B] to-[#1D9E75] h-4 rounded-full transition-all"
+                      style={{ width: `${stage.percentage}%` }}
+                    />
+                  </div>
+                  {i > 0 && (
+                    <span className="text-[10px] text-[#64748B]">
+                      Conversão: {stage.conversionFromPrevious}% da etapa anterior
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+              <p className="text-xs text-orange-700">
+                <b>Gargalo:</b> {result.bottleneck} · <b>Conversão total:</b> {result.overallConversion}%
+              </p>
+            </div>
+          </motion.div>
+        );
+      }
+    }
+
+    if (type === 'gabor_granger') {
+      const question = (project.formQuestions || []).find((q: any) => (q.variableCode || q.id) === variableCode);
+      if (question?.gaborGranger?.pricePoints) {
+        const result = analyzeGaborGranger(mappedResponses, variableCode, question.gaborGranger.pricePoints);
+        if (result.demandCurve.length > 0) {
+          const chartData = result.demandCurve.map(d => ({
+            price: `R$${d.price.toFixed(0)}`,
+            'Intenção (%)': d.intentionPercentage,
+          }));
+
+          sections.push(
+            <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-5 w-5 text-[#1D9E75]" />
+                <h3 className="text-lg font-bold text-[#2D1E6B]">Gabor-Granger — Curva de Demanda</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="price" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} unit="%" />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="Intenção (%)" stroke="#2D1E6B" fill="#2D1E6B" fillOpacity={0.1} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="p-3 bg-green-50 rounded-lg text-center">
+                  <p className="text-xs text-green-600 font-bold">Preço Ótimo</p>
+                  <p className="text-lg font-bold text-green-700">R$ {result.optimalPrice.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg text-center">
+                  <p className="text-xs text-blue-600 font-bold">Receita Máx</p>
+                  <p className="text-lg font-bold text-blue-700">R$ {result.maxRevenue.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg text-center">
+                  <p className="text-xs text-purple-600 font-bold">Elasticidade</p>
+                  <p className="text-lg font-bold text-purple-700">{result.priceElasticity}</p>
+                </div>
+              </div>
+            </motion.div>
+          );
+        }
+      }
+    }
+  });
+
+  if (sections.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.35 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center gap-2">
+        <Zap className="h-5 w-5 text-[#1D9E75]" />
+        <h3 className="text-lg font-bold text-[#2D1E6B]">Análises Metodológicas Automáticas</h3>
+      </div>
+      {sections}
+    </motion.div>
   );
 }
 
