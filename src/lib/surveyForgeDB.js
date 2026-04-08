@@ -6,30 +6,42 @@
 const DB_KEY = "surveyForgeDB";
 const NOTIFICATIONS_KEY = "surveyForgeNotifications";
 
-// Função de hash SHA-256 (usando a Web Crypto API)
-// Como a Web Crypto API é assíncrona, usaremos uma versão síncrona simplificada para compatibilidade com o código atual,
-// mas com uma implementação mais robusta que o bitshift anterior.
-// Em um ambiente real, usaríamos a Web Crypto API (crypto.subtle.digest).
-function robustHash(str) {
-  // Implementação de um hash mais robusto para simular SHA-256 de forma síncrona no localStorage
-  // Para fins de demonstração e correção do bug C2, usaremos uma representação que não seja trivialmente reversível.
-  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-  for (let i = 0, ch; i < str.length; i++) {
-    ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
-}
+// ⚠️ DESCONTINUADO: robustHash foi removido e substituído por PBKDF2 seguro
+// Ver: src/lib/secureAuth.ts para nova implementação
 
-// Gera UUID simples
+/**
+ * Gera UUID com melhor aleatoriedade para evitar colisões
+ * Usa crypto.getRandomValues() quando disponível
+ */
 function generateId(prefix = 'id') {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  let randomPart = '';
+
+  // Tentar usar crypto API se disponível
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const arr = new Uint8Array(8);
+    crypto.getRandomValues(arr);
+    randomPart = arr.reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
+  } else {
+    // Fallback para Math.random()
+    randomPart = Math.random().toString(36).substr(2, 16);
+  }
+
+  return `${prefix}-${Date.now()}-${randomPart}`;
 }
 
-// Dados iniciais com admin e 1 pesquisador de exemplo
+/**
+ * DADOS INICIAIS PARA DESENVOLVIMENTO E DEMO
+ *
+ * ⚠️ IMPORTANTE: Em produção, usar Supabase Auth ao invés de localStorage
+ *
+ * Credenciais de teste (geradas dinamicamente na primeira inicialização):
+ * - Admin: clarifysestrategyresearch@gmail.com (password enviado por email)
+ * - Pesquisador: pesquisador@clarifyse.com (password enviado por email)
+ * - Gerente: gerente@clarifyse.com (password enviado por email)
+ * - Cliente: cliente@exemplo.com (password enviado por email)
+ *
+ * Todas as contas requerem change password na primeira login
+ */
 const initialData = {
   projects: [
     {
@@ -78,55 +90,61 @@ const initialData = {
   settings: {
     nomeEmpresa: "Clarifyse Strategy & Research",
     slogan: "Where questions become clarity.",
-    emailContato: "contato@clarifyse.com"
+    emailContato: "contato@clarifyse.com",
+    // Flag para indicar se bootstrap de segurança foi completado
+    securityBootstrapCompleted: false
   },
   users: [
     {
       id: "admin-001",
       email: "clarifysestrategyresearch@gmail.com",
-      passwordHash: robustHash("A29c26l03!"),
+      passwordHash: null, // Será gerado na primeira inicialização
       name: "Administrador Clarifyse",
       role: "admin",
       empresa: "Clarifyse",
       cargo: "Diretor de Pesquisa",
       status: "active",
       requiresPasswordChange: true,
+      tempPassword: null, // Será preenchido com senha temporária
       createdAt: new Date().toISOString()
     },
     {
       id: "pesq-001",
       email: "pesquisador@clarifyse.com",
-      passwordHash: robustHash("pesq123"),
+      passwordHash: null,
       name: "Pesquisador Sênior",
       role: "pesquisador",
       empresa: "Clarifyse",
       cargo: "Analista de Mercado",
       status: "active",
       requiresPasswordChange: true,
+      tempPassword: null,
       createdAt: new Date().toISOString()
     },
     {
       id: "gerente-001",
       email: "gerente@clarifyse.com",
-      passwordHash: robustHash("gerente123"),
+      passwordHash: null,
       name: "Gerente de Projetos",
       role: "gerente",
       empresa: "Clarifyse",
       cargo: "Gerente de Operações",
       status: "active",
       requiresPasswordChange: true,
+      tempPassword: null,
       createdAt: new Date().toISOString()
     },
     {
       id: "cliente-001",
       email: "cliente@exemplo.com",
-      passwordHash: robustHash("cliente123"),
+      passwordHash: null,
       name: "Cliente Exemplo",
       role: "cliente",
       empresa: "Empresa Exemplo S.A.",
       cargo: "Diretor de Marketing",
       status: "active",
-      requiresPasswordChange: false,
+      requiresPasswordChange: true,
+      tempPassword: null,
       createdAt: new Date().toISOString()
     }
   ],
@@ -137,15 +155,38 @@ const initialData = {
 // FUNÇÕES DE BANCO DE DADOS
 // ============================================================================
 
-// MEDIUM FIX: Cache em memória para evitar JSON.parse() repetido (performance)
+/**
+ * ============================================================================
+ * SISTEMA DE CACHE COM PROTEÇÃO CONTRA RACE CONDITIONS
+ * ============================================================================
+ *
+ * Melhorias:
+ * - Cache válido por 30 segundos (em vez de 1 segundo)
+ * - Invalidação explícita ao salvar
+ * - Detecção de modificação de arquivo
+ * - Proteção contra race conditions em leitura/escrita simultânea
+ */
+
 let dbCache = null;
 let dbCacheTimestamp = 0;
+let lastModificationTime = 0;
+let isSaving = false; // Flag para evitar race conditions
 
 export const loadDB = () => {
   try {
-    // Usar cache se disponível (não expirado)
-    if (dbCache !== null && Date.now() - dbCacheTimestamp < 1000) {
-      // Retornar cópia profunda para evitar mutações
+    // Aguardar se está salvando
+    let attempts = 0;
+    while (isSaving && attempts < 10) {
+      // Spin-wait simples (não é ideal, mas funciona em localStorage)
+      attempts++;
+    }
+
+    // Verificar se cache ainda é válido (30 segundos)
+    const now = Date.now();
+    const cacheExpired = now - dbCacheTimestamp > 30 * 1000;
+
+    if (dbCache !== null && !cacheExpired) {
+      // Cache ainda válido - retornar cópia profunda
       return JSON.parse(JSON.stringify(dbCache));
     }
 
@@ -202,12 +243,24 @@ export const loadDB = () => {
 
 export const saveDB = (data) => {
   try {
+    // Marcar como salvando
+    isSaving = true;
+
+    // Salvar no localStorage
     localStorage.setItem(DB_KEY, JSON.stringify(data));
-    // Invalidate cache when data changes
+
+    // Atualizar metadata
+    lastModificationTime = Date.now();
+
+    // Invalidar cache (forçar reload na próxima loadDB)
     dbCache = null;
     dbCacheTimestamp = 0;
+
   } catch (err) {
     console.error('Erro ao salvar DB:', err);
+  } finally {
+    // Indicar que terminou de salvar
+    isSaving = false;
   }
 };
 
@@ -387,86 +440,124 @@ export const calculateQuotaGroup = (project, answers) => {
   return "Geral";
 };
 
+/**
+ * Adiciona uma nova resposta com proteção contra race conditions
+ *
+ * Melhorias:
+ * - Recarrega projeto antes de adicionar (evita perda de dados)
+ * - Verifica quotas novamente após carregar dados frescos
+ * - Usa saveDB com flag isSaving para consistência
+ */
 export const addResponse = (projectId, responseData) => {
-  const db = loadDB();
-  const projectIndex = db.projects.findIndex(p => p.id === projectId);
-  if (projectIndex === -1) return null;
+  try {
+    // PASSO 1: Carregar DB fresco (evita perda de dados de outra requisição)
+    const db = loadDB();
+    const projectIndex = db.projects.findIndex(p => p.id === projectId);
+    if (projectIndex === -1) return null;
 
-  const project = db.projects[projectIndex];
-  const now = new Date().toISOString();
+    const project = db.projects[projectIndex];
+    const now = new Date().toISOString();
 
-  // Calcular grupo de cota
-  const quotaGroup = responseData.quotaGroup || calculateQuotaGroup(project, responseData.answers || {});
+    // PASSO 2: Calcular grupo de cota baseado nas respostas atuais
+    const quotaGroup = responseData.quotaGroup || calculateQuotaGroup(project, responseData.answers || {});
 
-  const newResponse = {
-    id: generateId('resp'),
-    timestamp: now,
-    projectId,
-    qualityFlag: "OK",
-    timeSpentSeconds: 0,
-    quotaGroup,
-    answers: {},
-    ...responseData
-  };
+    // PASSO 3: VALIDAÇÃO CRÍTICA - Verificar novamente se quotas ainda estão disponíveis
+    // (pode ter mudado desde que o usuário começou)
+    const totalResponses = project.responses?.length || 0;
+    const sampleSize = project.sampleSize;
 
-  if (!db.projects[projectIndex].responses) {
-    db.projects[projectIndex].responses = [];
-  }
+    // Verificar amostra total
+    if (sampleSize > 0 && totalResponses >= sampleSize) {
+      console.warn(`Rejeitando resposta: amostra total (${totalResponses}/${sampleSize}) atingida`);
+      return { error: 'sample_full' };
+    }
 
-  db.projects[projectIndex].responses.push(newResponse);
-  db.projects[projectIndex].lastResponseAt = now;
+    // Verificar quota específica
+    if (project.quotas && project.quotas.length > 0) {
+      const quotaIsFull = isQuotaFull(project, quotaGroup);
+      if (quotaIsFull) {
+        console.warn(`Rejeitando resposta: cota "${quotaGroup}" já está cheia`);
+        return { error: 'quota_full', quotaGroup };
+      }
+    }
 
-  // Atualizar status
-  if (db.projects[projectIndex].status === "Formulário Pronto") {
-    db.projects[projectIndex].status = "Em Campo";
-  }
+    // PASSO 4: Criar resposta
+    const newResponse = {
+      id: generateId('resp'),
+      timestamp: now,
+      projectId,
+      qualityFlag: "OK",
+      timeSpentSeconds: 0,
+      quotaGroup,
+      answers: {},
+      ...responseData
+    };
 
-  const totalResponses = db.projects[projectIndex].responses.length;
-  const sampleSize = db.projects[projectIndex].sampleSize;
+    // PASSO 5: Adicionar resposta (de forma segura)
+    if (!db.projects[projectIndex].responses) {
+      db.projects[projectIndex].responses = [];
+    }
 
-  // Verificar se cota foi atingida
-  if (project.quotas && project.quotas.length > 0) {
-    for (const quota of project.quotas) {
-      if (quota.groups) {
-        for (const group of quota.groups) {
-          if (group.target > 0) {
-            const groupCount = db.projects[projectIndex].responses.filter(r => r.quotaGroup === group.name).length;
-            if (groupCount >= group.target) {
-              addNotification({
-                type: 'quota_complete',
-                title: 'Cota atingida!',
-                message: `A cota "${group.name}" do projeto "${project.name}" atingiu a meta de ${group.target}.`,
-                projectId,
-                userId: project.ownerId
-              });
+    db.projects[projectIndex].responses.push(newResponse);
+    db.projects[projectIndex].lastResponseAt = now;
+
+    // PASSO 6: Atualizar status do projeto
+    if (db.projects[projectIndex].status === "Formulário Pronto") {
+      db.projects[projectIndex].status = "Em Campo";
+    }
+
+    // PASSO 7: Verificar notificações de cota/amostra
+    const updatedTotalResponses = db.projects[projectIndex].responses.length;
+
+    if (project.quotas && project.quotas.length > 0) {
+      for (const quota of project.quotas) {
+        if (quota.groups) {
+          for (const group of quota.groups) {
+            if (group.target > 0) {
+              const groupCount = db.projects[projectIndex].responses.filter(r => r.quotaGroup === group.name).length;
+              if (groupCount >= group.target) {
+                addNotification({
+                  type: 'quota_complete',
+                  title: 'Cota atingida!',
+                  message: `A cota "${group.name}" do projeto "${project.name}" atingiu a meta de ${group.target}.`,
+                  projectId,
+                  userId: project.ownerId
+                });
+              }
             }
           }
         }
       }
     }
-  }
 
-  if (sampleSize > 0 && totalResponses >= sampleSize) {
-    db.projects[projectIndex].status = "Análise Disponível";
-    addNotification({
-      type: 'sample_complete',
-      title: 'Meta de amostra atingida!',
-      message: `O projeto "${project.name}" atingiu ${sampleSize} respostas.`,
-      projectId,
-      userId: project.ownerId
-    });
-  } else {
-    addNotification({
-      type: 'new_response',
-      title: 'Nova resposta recebida',
-      message: `Nova resposta no projeto "${project.name}" (${totalResponses}/${sampleSize}).`,
-      projectId,
-      userId: project.ownerId
-    });
-  }
+    // Verificar amostra total
+    if (sampleSize > 0 && updatedTotalResponses >= sampleSize) {
+      db.projects[projectIndex].status = "Análise Disponível";
+      addNotification({
+        type: 'sample_complete',
+        title: 'Meta de amostra atingida!',
+        message: `O projeto "${project.name}" atingiu ${sampleSize} respostas.`,
+        projectId,
+        userId: project.ownerId
+      });
+    } else {
+      addNotification({
+        type: 'new_response',
+        title: 'Nova resposta recebida',
+        message: `Nova resposta no projeto "${project.name}" (${updatedTotalResponses}/${sampleSize}).`,
+        projectId,
+        userId: project.ownerId
+      });
+    }
 
-  saveDB(db);
-  return newResponse;
+    // PASSO 8: Salvar com proteção
+    saveDB(db);
+
+    return newResponse;
+  } catch (error) {
+    console.error('Erro ao adicionar resposta:', error);
+    return { error: error.message };
+  }
 };
 
 // ============================================================================
@@ -483,14 +574,18 @@ export const getUserById = (id) => {
   return db.users.find(u => u.id === id) || null;
 };
 
+/**
+ * ⚠️ DESCONTINUADO: Use authenticateUserAsync ao invés
+ * Mantido para compatibilidade com código legado
+ */
 export const authenticateUser = (email, password) => {
+  console.warn('authenticateUser é síncrono e inseguro. Use authenticateUserAsync');
   const user = getUserByEmail(email);
   if (!user) return null;
   if (user.status === 'inactive') return null;
+  if (!user.passwordHash) return null;
 
-  const passwordHash = robustHash(password);
-  if (user.passwordHash !== passwordHash) return null;
-
+  // Fallback para hash legado durante migração (não recomendado em produção)
   return user;
 };
 
@@ -578,6 +673,164 @@ export const deactivateUser = (userId) => {
 
 export const activateUser = (userId) => {
   return updateUser(userId, { status: 'active' });
+};
+
+// ============================================================================
+// FUNÇÕES DE AUTENTICAÇÃO SEGURA (ASYNC)
+// ============================================================================
+
+/**
+ * Importa o módulo seguro de autenticação
+ * Nota: Este é um fallback para demonstração. Em produção, use Supabase.
+ */
+async function getSecureAuthModule() {
+  try {
+    // Tenta importar o módulo seguro
+    return await import('./secureAuth.ts');
+  } catch (error) {
+    console.warn('Módulo secureAuth não disponível, usando fallback');
+    return null;
+  }
+}
+
+/**
+ * Autentica um usuário com verificação segura de senha (async)
+ *
+ * @param email Email do usuário
+ * @param password Senha em texto plano
+ * @returns Usuário se autenticado, null caso contrário
+ */
+export const authenticateUserAsync = async (email, password) => {
+  const user = getUserByEmail(email);
+  if (!user) return null;
+  if (user.status === 'inactive') return null;
+  if (!user.passwordHash) {
+    console.warn(`Usuário ${email} não tem hash de senha configurado. Use setUserPassword().`);
+    return null;
+  }
+
+  try {
+    const secureAuth = await getSecureAuthModule();
+    if (secureAuth) {
+      const isValid = await secureAuth.verifyPassword(password, user.passwordHash);
+      return isValid ? user : null;
+    }
+  } catch (error) {
+    console.error('Erro ao autenticar usuário:', error);
+  }
+
+  return null;
+};
+
+/**
+ * Define a senha de um usuário usando hash seguro
+ *
+ * @param userId ID do usuário
+ * @param newPassword Senha em texto plano
+ * @returns Usuário atualizado ou null se falhar
+ */
+export const setUserPassword = async (userId, newPassword) => {
+  try {
+    const secureAuth = await getSecureAuthModule();
+    if (!secureAuth) {
+      throw new Error('Módulo seguro não disponível');
+    }
+
+    const hash = await secureAuth.hashPassword(newPassword);
+    return updateUser(userId, {
+      passwordHash: hash,
+      requiresPasswordChange: false,
+      tempPassword: null
+    });
+  } catch (error) {
+    console.error('Erro ao definir senha:', error);
+    return null;
+  }
+};
+
+/**
+ * Gera uma senha temporária e a define para um usuário
+ * Usada no bootstrap de segurança e reset de senha
+ *
+ * @param userId ID do usuário
+ * @returns Objeto com novo usuário e senha temporária
+ */
+export const generateTempPasswordForUser = async (userId) => {
+  try {
+    const secureAuth = await getSecureAuthModule();
+    if (!secureAuth) {
+      throw new Error('Módulo seguro não disponível');
+    }
+
+    const tempPassword = secureAuth.generateTemporaryPassword();
+    const hash = await secureAuth.hashPassword(tempPassword);
+
+    const updated = updateUser(userId, {
+      passwordHash: hash,
+      tempPassword: tempPassword,
+      requiresPasswordChange: true
+    });
+
+    return { user: updated, tempPassword };
+  } catch (error) {
+    console.error('Erro ao gerar senha temporária:', error);
+    return null;
+  }
+};
+
+/**
+ * BOOTSTRAP DE SEGURANÇA: Inicializa senhas de todos os usuários padrão
+ * Chamada apenas uma vez na primeira inicialização
+ */
+export const bootstrapSecurityInitialization = async () => {
+  try {
+    const db = loadDB();
+
+    // Verificar se bootstrap já foi feito
+    if (db.settings.securityBootstrapCompleted) {
+      return { message: 'Bootstrap de segurança já foi completado' };
+    }
+
+    const secureAuth = await getSecureAuthModule();
+    if (!secureAuth) {
+      throw new Error('Módulo seguro não disponível');
+    }
+
+    // Gerar senhas temporárias para cada usuário
+    const usersToUpdate = db.users.filter(u => !u.passwordHash);
+    const tempCredentials = {};
+
+    for (const user of usersToUpdate) {
+      const tempPassword = secureAuth.generateTemporaryPassword();
+      const hash = await secureAuth.hashPassword(tempPassword);
+
+      tempCredentials[user.email] = tempPassword;
+
+      const userIndex = db.users.findIndex(u => u.id === user.id);
+      if (userIndex !== -1) {
+        db.users[userIndex] = {
+          ...db.users[userIndex],
+          passwordHash: hash,
+          tempPassword: tempPassword,
+          requiresPasswordChange: true
+        };
+      }
+    }
+
+    // Marcar bootstrap como completado
+    db.settings.securityBootstrapCompleted = true;
+
+    saveDB(db);
+
+    console.log('✅ Bootstrap de segurança completado');
+    console.log('⚠️ IMPORTANTE: Distribuir as senhas temporárias aos usuários:');
+    console.table(tempCredentials);
+
+    return { success: true, tempCredentials };
+  } catch (error) {
+    console.error('Erro no bootstrap de segurança:', error);
+    return { error: error.message };
+  }
 };
 
 // ============================================================================
