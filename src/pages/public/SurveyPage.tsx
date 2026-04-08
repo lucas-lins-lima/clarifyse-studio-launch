@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProjectById, addResponse } from '@/lib/surveyForgeDB';
+import {
+  calculateQuotaGroup,
+  isSampleFull,
+  isQuotaFull,
+  validateQuotasForResponse
+} from '@/lib/sharedQuotaLogic';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -16,21 +22,13 @@ import { MaxDiffQuestion } from '@/components/questions/public/MaxDiffQuestion';
 import { ImageChoiceQuestion } from '@/components/questions/public/ImageChoiceQuestion';
 
 /**
- * CORREÇÕES IMPLEMENTADAS (v2.0):
- * 
- * 1. Verificação de Amostra Total no Carregamento:
- *    - A amostra total é verificada assim que a página carrega
- *    - Se atingida, o formulário é bloqueado imediatamente
- * 
- * 2. Verificação de Cotas Dinâmica:
- *    - Após responder a uma pergunta que define uma cota, o sistema verifica
- *      se aquela cota específica foi atingida
- *    - Se a cota foi atingida, o usuário é bloqueado ANTES de prosseguir
- *    - As outras cotas continuam abertas
- * 
- * 3. Lógica de Bloqueio Refinada:
- *    - Bloqueio de amostra total: formulário inteiro fechado
- *    - Bloqueio de cota individual: apenas aquele perfil é bloqueado
+ * SURVEY PAGE - FORMULÁRIO PÚBLICO
+ *
+ * Características:
+ * - Lógica de cotas centralizada (sharedQuotaLogic.ts)
+ * - Validação consistente frontend e backend
+ * - Suporta múltiplos tipos de questões
+ * - Bloqueio automático quando amostra/cota são atingidas
  */
 
 export default function SurveyPage() {
@@ -46,62 +44,6 @@ export default function SurveyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
   const [quotaCheckResult, setQuotaCheckResult] = useState<any>(null);
-
-  /**
-   * FUNÇÃO AUXILIAR: Calcular o grupo de cota para um conjunto de respostas
-   */
-  const calculateQuotaGroupForAnswers = (proj: any, ans: Record<string, any>): string => {
-    if (!proj.quotas || proj.quotas.length === 0) return "Geral";
-
-    for (const quota of proj.quotas) {
-      if (!quota.questionId) continue;
-
-      const question = proj.formQuestions?.find((q: any) => q.id === quota.questionId);
-      if (!question) continue;
-
-      const answer = ans[question.variableCode];
-      if (answer === undefined || answer === null) continue;
-
-      if (quota.mappings && quota.mappings.length > 0) {
-        const mapping = quota.mappings.find((m: any) => String(m.code) === String(answer));
-        if (mapping && mapping.groupId) {
-          const group = quota.groups?.find((g: any) => g.id === mapping.groupId);
-          if (group) return group.name;
-        }
-      }
-    }
-
-    return "Geral";
-  };
-
-  /**
-   * FUNÇÃO AUXILIAR: Verificar se uma cota específica foi atingida
-   */
-  const isQuotaFull = (proj: any, quotaGroupName: string): boolean => {
-    if (!proj.quotas || proj.quotas.length === 0) return false;
-
-    for (const quota of proj.quotas) {
-      for (const group of quota.groups || []) {
-        if (group.name === quotaGroupName) {
-          const currentCount = (proj.responses || []).filter(
-            (r: any) => r.quotaGroup === quotaGroupName
-          ).length;
-          return group.target > 0 && currentCount >= group.target;
-        }
-      }
-    }
-
-    return false;
-  };
-
-  /**
-   * FUNÇÃO AUXILIAR: Verificar se a amostra total foi atingida
-   */
-  const isSampleFull = (proj: any): boolean => {
-    if (!proj.sampleSize || proj.sampleSize <= 0) return false;
-    const totalResponses = proj.responses?.length || 0;
-    return totalResponses >= proj.sampleSize;
-  };
 
   // ============================================================================
   // CARREGAMENTO INICIAL E VERIFICAÇÃO DE BLOQUEIOS
@@ -166,14 +108,14 @@ export default function SurveyPage() {
         return;
       }
 
-      // ✅ CORREÇÃO 2: Verificar se a resposta atual define uma cota
+      // ✅ Verificar se a resposta atual define uma cota
       // Se sim, verificar se aquela cota foi atingida ANTES de prosseguir
       const freshProject = getProjectById(project.id);
       if (freshProject && freshProject.quotas && freshProject.quotas.length > 0) {
         for (const quota of freshProject.quotas) {
           if (quota.questionId === currentQuestion.id) {
-            // Esta pergunta define uma cota
-            const potentialQuotaGroup = calculateQuotaGroupForAnswers(freshProject, answers);
+            // Esta pergunta define uma cota - validar antes de prosseguir
+            const potentialQuotaGroup = calculateQuotaGroup(freshProject, answers);
             if (isQuotaFull(freshProject, potentialQuotaGroup)) {
               setBlocked('quota');
               setQuotaCheckResult({ quotaGroup: potentialQuotaGroup });

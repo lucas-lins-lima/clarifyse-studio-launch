@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/db';
-import { authenticateUser, changePassword as dbChangePassword, getUserById } from '@/lib/surveyForgeDB';
+import {
+  authenticateUserAsync,
+  setUserPassword,
+  getUserById,
+  bootstrapSecurityInitialization
+} from '@/lib/surveyForgeDB';
 
 export type AppRole = 'admin' | 'pesquisador' | 'cliente' | 'gerente';
 
@@ -155,33 +160,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
-        // Fallback to localStorage for local development
-        const localUser = authenticateUser(email, password);
-        if (!localUser) {
-          return { error: 'E-mail ou senha inválidos.' };
+        // Fallback to localStorage for local development (usando hash seguro)
+        try {
+          const localUser = await authenticateUserAsync(email, password);
+          if (!localUser) {
+            return { error: 'E-mail ou senha inválidos.' };
+          }
+
+          const userProfile: Profile = {
+            id: localUser.id,
+            name: localUser.name,
+            email: localUser.email,
+            empresa: localUser.empresa,
+            cargo: localUser.cargo,
+            role: localUser.role,
+            status: localUser.status,
+            requiresPasswordChange: localUser.requiresPasswordChange
+          };
+
+          const sessionData = {
+            user: { id: localUser.id, email: localUser.email },
+            profile: userProfile
+          };
+
+          localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+          setSession(sessionData);
+          setUser(sessionData.user);
+          setProfile(userProfile);
+          return { error: null };
+        } catch (error) {
+          console.error('Erro na autenticação local:', error);
+          return { error: 'Erro ao fazer login. Tente novamente.' };
         }
-
-        const userProfile: Profile = {
-          id: localUser.id,
-          name: localUser.name,
-          email: localUser.email,
-          empresa: localUser.empresa,
-          cargo: localUser.cargo,
-          role: localUser.role,
-          status: localUser.status,
-          requiresPasswordChange: localUser.requiresPasswordChange
-        };
-
-        const sessionData = {
-          user: { id: localUser.id, email: localUser.email },
-          profile: userProfile
-        };
-
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        setSession(sessionData);
-        setUser(sessionData.user);
-        setProfile(userProfile);
-        return { error: null };
       }
 
       return { error: 'Erro ao fazer login.' };
@@ -237,25 +247,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return { error: null };
       } else {
-        // Fallback to localStorage
-        const updatedUser = dbChangePassword(user.id, newPassword);
-        if (!updatedUser) {
+        // Fallback to localStorage (usando hash seguro)
+        try {
+          const updatedUser = await setUserPassword(user.id, newPassword);
+          if (!updatedUser) {
+            return { error: 'Erro ao alterar senha.' };
+          }
+
+          const updatedProfile: Profile = {
+            ...profile!,
+            requiresPasswordChange: false
+          };
+
+          const sessionData = {
+            user,
+            profile: updatedProfile
+          };
+
+          localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+          setProfile(updatedProfile);
+          return { error: null };
+        } catch (error) {
+          console.error('Erro ao alterar senha:', error);
           return { error: 'Erro ao alterar senha.' };
         }
-
-        const updatedProfile: Profile = {
-          ...profile!,
-          requiresPasswordChange: false
-        };
-
-        const sessionData = {
-          user,
-          profile: updatedProfile
-        };
-
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        setProfile(updatedProfile);
-        return { error: null };
       }
     } catch (err) {
       console.error('Erro ao alterar senha:', err);

@@ -4,6 +4,24 @@ import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import {
+  validateFormData,
+  validateResponseData,
+  sanitizeString,
+  isValidEmail
+} from './schemas.js';
+import {
+  securityHeaders,
+  createAPILimiter,
+  createSubmitLimiter
+} from './security.js';
+import {
+  calculateQuotaGroup,
+  isSampleFull,
+  isQuotaFull,
+  validateQuotasForResponse,
+  getQuotasStats
+} from './sharedQuotaLogic.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -11,13 +29,63 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// ============================================================================
+// MIDDLEWARE DE SEGURANÇA
+// ============================================================================
+
+// CORS: Configurar com whitelist adequado (não use *)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
-  credentials: true
+  origin: (origin, callback) => {
+    // Permitir requests sem origin (como mobile apps)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origem não autorizada pelo CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// Body parser com limites adequados
+app.use(bodyParser.json({ limit: '5mb' })); // Reduzido de 50mb
+app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
+
+// ============================================================================
+// MIDDLEWARE DE VALIDAÇÃO E LOGGING
+// ============================================================================
+
+// Logging básico de requisições
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from ${req.ip}`);
+  next();
+});
+
+// Middleware de erro genérico para validação de JSON
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ error: 'JSON inválido' });
+  }
+  next();
+});
+
+// ============================================================================
+// APLICAR MIDDLEWARE DE SEGURANÇA
+// ============================================================================
+
+// Headers de segurança em todas as respostas
+app.use(securityHeaders);
+
+// Rate limiting em endpoints de API
+app.use('/api/', createAPILimiter());
+
+// Rate limiting mais restritivo em submissão de respostas
+app.use('/api/responses/', createSubmitLimiter());
 
 // Diretórios de dados
 const FORMS_DIR = join(__dirname, '../data/forms');
@@ -70,57 +138,15 @@ const saveResponses = (projectId, responseData) => {
 };
 
 /**
- * Calcula o grupo de cota para um conjunto de respostas
+ * ⚠️ REMOVIDO: Funções duplicadas agora importadas de sharedQuotaLogic.js
+ * Ver: server/src/sharedQuotaLogic.js
+ *
+ * Antigas implementações removidas para evitar inconsistências:
+ * - calculateQuotaGroup()
+ * - isQuotaFull()
+ * - isSampleFull()
+ * - updateQuotaStatus()
  */
-const calculateQuotaGroup = (form, answers) => {
-  if (!form.quotas || form.quotas.length === 0) return 'Geral';
-
-  for (const quota of form.quotas) {
-    if (!quota.questionId) continue;
-
-    const question = form.formQuestions?.find(q => q.id === quota.questionId);
-    if (!question) continue;
-
-    const answer = answers[question.variableCode];
-    if (answer === undefined || answer === null) continue;
-
-    if (quota.mappings && quota.mappings.length > 0) {
-      const mapping = quota.mappings.find(m => String(m.code) === String(answer));
-      if (mapping && mapping.groupId) {
-        const group = quota.groups?.find(g => g.id === mapping.groupId);
-        if (group) return group.name;
-      }
-    }
-  }
-
-  return 'Geral';
-};
-
-/**
- * Verifica se uma cota específica foi atingida
- */
-const isQuotaFull = (form, responses, quotaGroupName) => {
-  if (!form.quotas || form.quotas.length === 0) return false;
-
-  for (const quota of form.quotas) {
-    for (const group of quota.groups || []) {
-      if (group.name === quotaGroupName) {
-        const currentCount = responses.filter(r => r.quotaGroup === quotaGroupName).length;
-        return group.target > 0 && currentCount >= group.target;
-      }
-    }
-  }
-
-  return false;
-};
-
-/**
- * Verifica se a amostra total foi atingida
- */
-const isSampleFull = (form, responses) => {
-  if (!form.sampleSize || form.sampleSize <= 0) return false;
-  return responses.length >= form.sampleSize;
-};
 
 /**
  * Atualiza o status de cotas
@@ -186,21 +212,36 @@ app.get('/api/forms/:projectId', (req, res) => {
 /**
  * POST /api/forms
  * Publica um novo formulário (chamado do admin)
+ *
+ * ✅ VALIDAÇÃO: Dados do formulário são validados antes de salvar
  */
 app.post('/api/forms', (req, res) => {
   try {
     const formData = req.body;
 
-    if (!formData.id) {
-      return res.status(400).json({ error: 'ID do projeto é obrigatório' });
+    // ✅ VALIDAÇÃO 1: Validar estrutura de dados
+    const validation = validateFormData(formData);
+    if (!validation.valid) {
+      console.warn(`Formulário inválido: ${validation.errors.join(', ')}`);
+      return res.status(400).json({
+        error: 'Dados do formulário inválidos',
+        details: validation.errors
+      });
+    }
+
+    // ✅ VALIDAÇÃO 2: Verificar path traversal (evitar ../../)
+    if (formData.id.includes('/') || formData.id.includes('\\')) {
+      return res.status(400).json({ error: 'ID do projeto contém caracteres inválidos' });
     }
 
     // Salvar formulário
-    saveForm(formData.id, {
+    const publishedForm = {
       ...formData,
       publishedAt: new Date().toISOString(),
       status: 'Ativo'
-    });
+    };
+
+    saveForm(formData.id, publishedForm);
 
     res.json({
       success: true,
@@ -244,15 +285,32 @@ app.get('/api/responses/:projectId', (req, res) => {
 /**
  * POST /api/responses/:projectId
  * Submete uma nova resposta
+ *
+ * ✅ VALIDAÇÃO: Dados de resposta são validados antes de salvar
  */
 app.post('/api/responses/:projectId', (req, res) => {
   try {
     const { projectId } = req.params;
     const { answers, quotaGroup, timeSpentSeconds } = req.body;
 
-    // Validar dados
-    if (!answers) {
-      return res.status(400).json({ error: 'Respostas são obrigatórias' });
+    // ✅ VALIDAÇÃO 1: Validar estrutura básica
+    if (!answers || typeof answers !== 'object') {
+      return res.status(400).json({ error: 'Respostas são obrigatórias e devem ser objeto' });
+    }
+
+    // ✅ VALIDAÇÃO 2: Usar função de validação
+    const validation = validateResponseData({ projectId, answers });
+    if (!validation.valid) {
+      console.warn(`Resposta inválida: ${validation.errors.join(', ')}`);
+      return res.status(400).json({
+        error: 'Dados de resposta inválidos',
+        details: validation.errors
+      });
+    }
+
+    // ✅ VALIDAÇÃO 3: Verificar timeSpentSeconds é número válido
+    if (timeSpentSeconds && (!Number.isInteger(timeSpentSeconds) || timeSpentSeconds < 0 || timeSpentSeconds > 86400)) {
+      return res.status(400).json({ error: 'Tempo gasto inválido' });
     }
 
     // Carregar formulário
