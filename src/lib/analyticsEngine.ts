@@ -113,6 +113,7 @@ export interface AnalysisResult {
   regressionAnalysis?: RegressionAnalysis;
   conjointAnalysis?: ConjointAnalysis;
   penaltyAnalysis?: PenaltyAnalysis;
+  methodologyResults?: Record<string, any>;
 }
 
 export interface SummaryStats {
