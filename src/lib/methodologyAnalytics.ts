@@ -1,6 +1,9 @@
 /**
  * Motor de Análise por Metodologia Específica
  * Implementa análises avançadas para cada metodologia descrita no documento Clarifyse
+ * Inclui: Penalty, Importance-Satisfaction, Gap, Funnel, NPS, Sentiment, 
+ * Silhouette, Cronbach, ABSA, TURF, Markov, CLV, Cohort,
+ * Van Westendorp, Kano, CES, CSAT, Gabor-Granger, Brand Funnel, Shapley, Bootstrap
  */
 
 import { AnalysisResponse, Question } from './analyticsEngine';
