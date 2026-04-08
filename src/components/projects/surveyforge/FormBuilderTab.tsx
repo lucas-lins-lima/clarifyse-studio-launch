@@ -4,6 +4,9 @@ import { FileUploadQuestionBuilder } from '@/components/questions/builder/FileUp
 import { ConjointQuestionBuilder } from '@/components/questions/builder/ConjointQuestionBuilder';
 import { MaxDiffQuestionBuilder } from '@/components/questions/builder/MaxDiffQuestionBuilder';
 import { ImageChoiceQuestionBuilder } from '@/components/questions/builder/ImageChoiceQuestionBuilder';
+import { VanWestendorpBuilder } from '@/components/questions/builder/VanWestendorpBuilder';
+import { KanoBuilder } from '@/components/questions/builder/KanoBuilder';
+import { GaborGrangerBuilder } from '@/components/questions/builder/GaborGrangerBuilder';
 import { getApplicableMethodologies } from '@/types/methodologies';
 import { Button } from '@/components/ui/button';
 import { 
@@ -27,7 +30,13 @@ import {
   ArrowRightLeft,
   Grid3X3,
   Layers,
-  MoreHorizontal
+  MoreHorizontal,
+  DollarSign,
+  Gauge,
+  Target,
+  TrendingUp,
+  Smile,
+  BarChart3,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,6 +84,12 @@ const QUESTION_TYPES = [
   { id: 'cbc', label: 'Conjoint (CBC)', icon: LayoutDashboard },
   { id: 'maxdiff', label: 'MaxDiff', icon: ArrowRightLeft },
   { id: 'image_choice', label: 'Imagem Choice', icon: ImageIcon },
+  { id: 'vanwestendorp', label: 'Van Westendorp (PSM)', icon: DollarSign },
+  { id: 'kano', label: 'Análise de Kano', icon: Target },
+  { id: 'gabor_granger', label: 'Gabor-Granger Pricing', icon: TrendingUp },
+  { id: 'ces', label: 'CES (Esforço)', icon: Gauge },
+  { id: 'csat', label: 'CSAT (Satisfação)', icon: Smile },
+  { id: 'brand_funnel', label: 'Brand Funnel', icon: BarChart3 },
 ];
 
 const SortableQuestionItem = ({ question, onEdit, onDelete, isActive, isLocked }: any) => {
