@@ -10,7 +10,17 @@ export type CategoryType =
   | 'causalidade'
   | 'comportamental'
   | 'mercado'
-  | 'valor_cliente';
+  | 'valor_cliente'
+  | 'pricing'
+  | 'nps_analytics'
+  | 'experiencia'
+  | 'marca'
+  | 'estatistica_avancada'
+  | 'mediacao'
+  | 'sem'
+  | 'sobrevivencia'
+  | 'rede'
+  | 'validacao';
 
 export interface MethodologyInfo {
   code: string;
