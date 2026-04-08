@@ -1054,7 +1054,7 @@ export function analyzeVanWestendorp(
 
   // Acceptable range: where too_cheap > too_expensive
   const rangeMin = pricePoints.find((_, i) => tooCheapCurve[i] <= tooExpensiveCurve[i]) || minPrice;
-  const rangeMax = pricePoints.findLast((_, i) => tooExpensiveCurve[i] <= tooCheapCurve[i]) || maxPrice;
+  const rangeMax = [...pricePoints].reverse().find((_, i, arr) => tooExpensiveCurve[pricePoints.length - 1 - i] <= tooCheapCurve[pricePoints.length - 1 - i]) || maxPrice;
 
   return {
     pricePoints,
