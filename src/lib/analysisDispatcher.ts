@@ -141,7 +141,8 @@ export function dispatchAnalyses(config: AnalysisConfig): DispatchResult {
         try {
           intermediateAnalyses.kano = methodLib.analyzeKano(
             responses,
-            kanoQuestion
+            kanoQuestion.id,
+            kanoQuestion.kanoFeatures || []
           );
         } catch (e) {
           console.warn('Erro ao calcular Kano:', e);

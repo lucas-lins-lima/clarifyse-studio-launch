@@ -180,7 +180,7 @@ export default function SurveyPage() {
     }
 
     // Calcular grupo de cota final
-    quotaGroup = calculateQuotaGroupForAnswers(freshProject, answers);
+    quotaGroup = calculateQuotaGroup(freshProject, answers);
 
     // Verificar se a cota específica foi atingida
     if (isQuotaFull(freshProject, quotaGroup)) {
