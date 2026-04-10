@@ -5,9 +5,9 @@
  * Métodos Descritivos, Comparativos, Explicativos, de Texto, Precificação, etc.
  */
 
-import stats from 'simple-statistics';
+import * as stats from 'simple-statistics';
 import jStat from 'jstat';
-import kmeans from 'ml-kmeans';
+import { kmeans } from 'ml-kmeans';
 
 // ============================================================================
 // TIPOS E INTERFACES
@@ -215,7 +215,7 @@ export function performKMeansClustering(
   data: number[][],
   k: number = 3
 ): ClusterResult {
-  const result = kmeans(data, k);
+  const result = kmeans(data, k, {});
 
   // Calcular Silhueta Score
   const silhouette = calculateSilhouetteScore(data, result);
@@ -224,11 +224,11 @@ export function performKMeansClustering(
 
   return {
     clusterCount: k,
-    clusters: result.clusters.map((members, id) => ({
+    clusters: (result.clusters || []).map((members: any, id: number) => ({
       id,
-      size: members.length,
+      size: Array.isArray(members) ? members.length : 0,
       centroid: result.centroids[id],
-      members,
+      members: Array.isArray(members) ? members : [],
     })),
     silhouetteScore: silhouette,
     daviesBouldinIndex: daviesBouldin,
@@ -641,7 +641,7 @@ export function calculateWordFrequency(text: string): Array<{ word: string; coun
  * Calcula correlação de Pearson entre duas variáveis
  */
 export function pearsonCorrelation(x: number[], y: number[]): number {
-  return stats.pearsonCorrelationCoefficient(x, y);
+  return stats.sampleCorrelation(x, y);
 }
 
 /**

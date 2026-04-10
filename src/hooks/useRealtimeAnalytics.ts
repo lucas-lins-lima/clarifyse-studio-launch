@@ -85,7 +85,8 @@ export function useRealtimeAnalytics({
       const results: Record<string, any> = {};
 
       // Usar dispatcher para análises condicionais baseadas em volume de dados
-      const dispatchConfig = {
+      const dispatchConfig: any = {
+        numResponses: responses.length,
         responseCount: responses.length,
         methodologiesRequested: methodologies,
         questions: questions,
@@ -149,7 +150,7 @@ export function useRealtimeAnalytics({
             case 'conversion_funnel': {
               const funnelQuestions = questions.filter(q => q.type === 'funnel_step');
               if (funnelQuestions.length > 0) {
-                results.conversion_funnel = analyzeFunnel(responses, funnelQuestions);
+                results.conversion_funnel = analyzeFunnel(responses, funnelQuestions as any);
               }
               break;
             }
@@ -157,7 +158,8 @@ export function useRealtimeAnalytics({
             case 'sentiment_analysis': {
               const openQuestions = questions.filter(q => q.type === 'text');
               if (openQuestions.length > 0) {
-                results.sentiment_analysis = analyzeSentiment(responses, openQuestions);
+                const textResponses = responses.map(r => String(r.answers[openQuestions[0]?.id] || '')).filter(Boolean);
+                results.sentiment_analysis = analyzeSentiment(textResponses);
               }
               break;
             }
@@ -165,7 +167,7 @@ export function useRealtimeAnalytics({
             case 'van_westendorp': {
               const priceQuestion = questions.find(q => q.type === 'vanwestendorp');
               if (priceQuestion) {
-                results.van_westendorp = analyzeVanWestendorp(responses, priceQuestion);
+                results.van_westendorp = analyzeVanWestendorp(responses, priceQuestion.id);
               }
               break;
             }
@@ -173,7 +175,8 @@ export function useRealtimeAnalytics({
             case 'kano_analysis': {
               const kanoQuestion = questions.find(q => q.type === 'kano');
               if (kanoQuestion) {
-                results.kano_analysis = analyzeKano(responses, kanoQuestion);
+                const features = (kanoQuestion as any).kanoFeatures || [];
+                results.kano_analysis = analyzeKano(responses, features, kanoQuestion.id);
               }
               break;
             }
@@ -181,7 +184,7 @@ export function useRealtimeAnalytics({
             case 'ces_analysis': {
               const cesQuestion = questions.find(q => q.type === 'ces');
               if (cesQuestion) {
-                results.ces_analysis = analyzeCES(responses, cesQuestion);
+                results.ces_analysis = analyzeCES(responses, cesQuestion.id);
               }
               break;
             }
@@ -189,7 +192,7 @@ export function useRealtimeAnalytics({
             case 'csat_analysis': {
               const csatQuestion = questions.find(q => q.type === 'csat');
               if (csatQuestion) {
-                results.csat_analysis = analyzeCSAT(responses, csatQuestion);
+                results.csat_analysis = analyzeCSAT(responses, csatQuestion.id);
               }
               break;
             }
@@ -197,7 +200,8 @@ export function useRealtimeAnalytics({
             case 'gabor_granger': {
               const gbgQuestion = questions.find(q => q.type === 'gabor_granger');
               if (gbgQuestion) {
-                results.gabor_granger = analyzeGaborGranger(responses, gbgQuestion);
+                const prices = (gbgQuestion as any).gaborGranger?.prices || [];
+                results.gabor_granger = analyzeGaborGranger(responses, gbgQuestion.id, prices);
               }
               break;
             }
@@ -205,7 +209,7 @@ export function useRealtimeAnalytics({
             case 'brand_funnel': {
               const brandFunnelQuestions = questions.filter(q => q.type === 'brand_funnel_step');
               if (brandFunnelQuestions.length > 0) {
-                results.brand_funnel = analyzeBrandFunnel(responses, brandFunnelQuestions);
+                results.brand_funnel = analyzeBrandFunnel(responses, brandFunnelQuestions.map(q => q.id).join(','));
               }
               break;
             }
@@ -213,7 +217,9 @@ export function useRealtimeAnalytics({
             case 'shapley_values': {
               const numericalQuestions = questions.filter(q => ['rating', 'slider', 'scale'].includes(q.type));
               if (numericalQuestions.length > 1) {
-                results.shapley_values = analyzeShapleyImportance(responses, numericalQuestions);
+                const targetQ = numericalQuestions[numericalQuestions.length - 1];
+                const predictorQs = numericalQuestions.slice(0, -1);
+                results.shapley_values = analyzeShapleyImportance(responses, predictorQs as any, targetQ as any);
               }
               break;
             }
@@ -221,7 +227,7 @@ export function useRealtimeAnalytics({
             case 'turf_analysis': {
               const turf = questions.find(q => q.type === 'maxdiff' || q.type === 'turf');
               if (turf) {
-                results.turf_analysis = analyzeTURF(responses, turf);
+                results.turf_analysis = analyzeTURF(responses, turf as any);
               }
               break;
             }
@@ -229,7 +235,7 @@ export function useRealtimeAnalytics({
             case 'maxdiff_analysis': {
               const maxdiff = questions.find(q => q.type === 'maxdiff');
               if (maxdiff) {
-                results.maxdiff_analysis = analyzeMaxDiff(responses, maxdiff);
+                results.maxdiff_analysis = analyzeMaxDiff(responses, maxdiff as any);
               }
               break;
             }
@@ -237,7 +243,7 @@ export function useRealtimeAnalytics({
             case 'conjoint_simulation': {
               const conjoint = questions.find(q => q.type === 'conjoint');
               if (conjoint) {
-                results.conjoint_simulation = analyzeConjointUtilities(responses, conjoint);
+                results.conjoint_simulation = analyzeConjointUtilities(responses, conjoint as any);
               }
               break;
             }
@@ -245,51 +251,51 @@ export function useRealtimeAnalytics({
             case 'brand_equity': {
               const brandQuestions = questions.filter(q => q.type === 'brand_attribute');
               if (brandQuestions.length > 0) {
-                results.brand_equity = analyzeBrandEquity(responses, brandQuestions);
+                results.brand_equity = analyzeBrandEquity(responses, brandQuestions as any);
               }
               break;
             }
 
             case 'network_analysis': {
-              results.network_analysis = analyzeNetworkAnalysis(responses, questions);
+              results.network_analysis = analyzeNetworkAnalysis(responses, questions as any);
               break;
             }
 
             case 'survival_analysis': {
-              results.survival_analysis = analyzeSurvivalAnalysis(responses, questions);
+              results.survival_analysis = analyzeSurvivalAnalysis(responses, questions as any);
               break;
             }
 
             case 'cluster_stability': {
-              results.cluster_stability = analyzeClusterStability(responses, questions);
+              results.cluster_stability = analyzeClusterStability(responses, questions as any);
               break;
             }
 
             case 'mediation_analysis': {
               const mediatorQuestions = questions.filter(q => q.type !== 'text');
               if (mediatorQuestions.length >= 3) {
-                results.mediation_analysis = analyzeMediationAnalysis(responses, mediatorQuestions);
+                results.mediation_analysis = analyzeMediationAnalysis(responses, mediatorQuestions as any);
               }
               break;
             }
 
             case 'sem_analysis': {
-              results.sem_analysis = analyzeSEMModel(responses, questions);
+              results.sem_analysis = analyzeSEMModel(responses, questions as any);
               break;
             }
 
             case 'propensity_score': {
-              results.propensity_score = analyzePropensityScore(responses, questions);
+              results.propensity_score = analyzePropensityScore(responses, questions as any);
               break;
             }
 
             case 'difference_in_differences': {
-              results.difference_in_differences = analyzeDifferenceInDifferences(responses, questions);
+              results.difference_in_differences = analyzeDifferenceInDifferences(responses, questions as any);
               break;
             }
 
             case 'uplift_modeling': {
-              results.uplift_modeling = analyzeUpliftModeling(responses, questions);
+              results.uplift_modeling = analyzeUpliftModeling(responses, questions as any);
               break;
             }
           }

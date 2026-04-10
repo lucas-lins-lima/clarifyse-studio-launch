@@ -4,7 +4,7 @@
  * Implementa Decision Trees, Random Forest, Gradient Boosting, SVM, KNN
  */
 
-import stats from 'simple-statistics';
+import * as stats from 'simple-statistics';
 
 // ============================================================================
 // TIPOS E INTERFACES
@@ -145,9 +145,9 @@ export function buildDecisionTree(
         counts[label] = (counts[label] || 0) + 1;
       });
       
-      const mostCommonLabel = Object.keys(counts).reduce((a, b) => 
-        counts[parseInt(b)] > counts[parseInt(a)] ? parseInt(b) : parseInt(a)
-      );
+      const mostCommonLabel = Number(Object.keys(counts).reduce((a, b) => 
+        counts[parseInt(b)] > counts[parseInt(a)] ? b : a
+      ));
       
       return { value: mostCommonLabel, samples: X.length };
     }
@@ -160,9 +160,9 @@ export function buildDecisionTree(
         counts[label] = (counts[label] || 0) + 1;
       });
       
-      const mostCommonLabel = Object.keys(counts).reduce((a, b) => 
-        counts[parseInt(b)] > counts[parseInt(a)] ? parseInt(b) : parseInt(a)
-      );
+      const mostCommonLabel = Number(Object.keys(counts).reduce((a, b) => 
+        counts[parseInt(b)] > counts[parseInt(a)] ? b : a
+      ));
       
       return { value: mostCommonLabel, samples: X.length };
     }
@@ -250,15 +250,15 @@ export function trainRandomForest(
   }
   
   // Agregação (voting para classificação)
-  const predictions = X.map((_, idx) => {
+  const predictions: number[] = X.map((_, idx) => {
     const votes: Record<number, number> = {};
     allPredictions.forEach(pred => {
       votes[pred[idx]] = (votes[pred[idx]] || 0) + 1;
     });
     
-    return Object.keys(votes).reduce((a, b) => 
-      votes[parseInt(b)] > votes[parseInt(a)] ? parseInt(b) : parseInt(a)
-    );
+    return Number(Object.keys(votes).reduce((a, b) => 
+      votes[parseInt(b)] > votes[parseInt(a)] ? b : a
+    ));
   });
   
   // Calcular importância de features (simplificado)
@@ -394,9 +394,9 @@ export function knn(
       votes[neighbor.label] = (votes[neighbor.label] || 0) + 1;
     });
     
-    const prediction = Object.keys(votes).reduce((a, b) =>
-      votes[parseInt(b)] > votes[parseInt(a)] ? parseInt(b) : parseInt(a)
-    );
+    const prediction = Number(Object.keys(votes).reduce((a, b) =>
+      votes[parseInt(b)] > votes[parseInt(a)] ? b : a
+    ));
     
     predictions.push(prediction);
   });

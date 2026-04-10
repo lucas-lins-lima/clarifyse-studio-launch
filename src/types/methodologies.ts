@@ -34,6 +34,7 @@ export type MethodologyType =
   | 'gap_analysis'
   | 'kano_analysis'
   | 'importance_matrix'
+  | 'positioning_map'
   // Preços
   | 'van_westendorp'
   | 'gabor_granger'
@@ -359,6 +360,22 @@ export const METHODOLOGIES_CATALOG: Record<MethodologyType, MethodologyConfig> =
     description: 'Classificação de atributos (básicos, lineares, atrativos)',
     category: 'explanatory',
     applicableQuestionTypes: ['likert'],
+    enabled: true,
+  },
+  importance_matrix: {
+    type: 'importance_matrix',
+    name: 'Matriz de Importância',
+    description: 'Matriz de importância relativa de atributos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating'],
+    enabled: true,
+  },
+  positioning_map: {
+    type: 'positioning_map',
+    name: 'Mapa de Posicionamento',
+    description: 'Mapeamento perceptual de marcas/produtos',
+    category: 'explanatory',
+    applicableQuestionTypes: ['likert', 'rating', 'multiple'],
     enabled: true,
   },
 
@@ -1130,6 +1147,29 @@ export const DEFAULT_METHODOLOGIES_BY_TYPE: Record<string, MethodologyType[]> = 
   'csat': ['csat_analysis'],
   'brand_funnel': ['brand_funnel'],
 };
+
+// Exports needed by ProjectForm.tsx
+export type CategoryType = MethodologyConfig['category'];
+
+export const ALL_METHODOLOGIES = Object.values(METHODOLOGIES_CATALOG);
+
+export const CATEGORY_LABELS: Record<CategoryType, string> = {
+  descriptive: 'Descritivas',
+  comparative: 'Comparativas',
+  explanatory: 'Explicativas',
+  text: 'Texto',
+  pricing: 'Precificação',
+  causal: 'Causalidade',
+  advanced: 'Avançadas',
+};
+
+export function getAllCategories(): CategoryType[] {
+  return Object.keys(CATEGORY_LABELS) as CategoryType[];
+}
+
+export function getMethodologiesByCategory(category: CategoryType): MethodologyConfig[] {
+  return ALL_METHODOLOGIES.filter(m => m.category === category);
+}
 
 export default {
   METHODOLOGIES_CATALOG,

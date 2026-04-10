@@ -651,54 +651,7 @@ export function analyzeAspectBasedSentiment(textResponses: string[]): AspectSent
   return Object.values(aspectSentiments).sort((a, b) => b.frequency - a.frequency);
 }
 
-// ============================================================================
-// TURF ANALYSIS (Total Unduplicated Reach and Frequency)
-// ============================================================================
-
-export interface TURFResult {
-  combination: string[];
-  reachPercentage: number;
-  frequency: number;
-  uniqueReach: number;
-  totalCoverage: number;
-}
-
-/**
- * Otimização de portfólio de produtos, atributos ou mensagens para maximizar
- * alcance único e frequência de preferência.
- */
-export function analyzeTURF(
-  responses: AnalysisResponse[],
-  items: Array<{ id: string; name: string }>,
-  maxCombinationSize: number = 3
-): TURFResult[] {
-  const results: TURFResult[] = [];
-  const totalRespondents = responses.length;
-
-  // Gera todas as combinações possíveis
-  const combinations = generateCombinations(items, maxCombinationSize);
-
-  combinations.forEach(combo => {
-    const respondentsWithCombo = responses.filter(r => {
-      return combo.every(item => {
-        const itemKey = Object.keys(r.answers).find(k => r.answers[k] === item.id);
-        return itemKey !== undefined;
-      });
-    });
-
-    const reachPercentage = (respondentsWithCombo.length / totalRespondents) * 100;
-    
-    results.push({
-      combination: combo.map(c => c.name),
-      reachPercentage,
-      frequency: respondentsWithCombo.length,
-      uniqueReach: respondentsWithCombo.length,
-      totalCoverage: reachPercentage,
-    });
-  });
-
-  return results.sort((a, b) => b.reachPercentage - a.reachPercentage);
-}
+// TURF ANALYSIS - see unified implementation below (line ~1584)
 
 function generateCombinations<T>(items: T[], maxSize: number): T[][] {
   const result: T[][] = [];

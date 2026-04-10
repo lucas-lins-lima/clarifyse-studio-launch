@@ -8,11 +8,11 @@ export interface ValidationResult {
   errors: string[];
   warnings: string[];
   recommendations: string[];
-  methodologyStatus: Record<MethodologyType, {
+  methodologyStatus: Partial<Record<MethodologyType, {
     isValid: boolean;
     errors: string[];
     warnings: string[];
-  }>;
+  }>>;
   questionsStatus: {
     totalQuestions: number;
     validQuestions: number;
@@ -24,6 +24,7 @@ export interface ValidationResult {
     current: number;
     minimum: number;
     message: string;
+    percentage: number;
   };
   quotasStatus: {
     isValid: boolean;
@@ -52,7 +53,7 @@ export function useProjectValidation({
     const errors: string[] = [];
     const warnings: string[] = [];
     const recommendations: string[] = [];
-    const methodologyStatus: Record<MethodologyType, any> = {};
+    const methodologyStatus: Partial<Record<MethodologyType, any>> = {};
 
     // Validar perguntas
     const questionsStatus = validateQuestions(questions);
@@ -190,7 +191,7 @@ function validateSampleSize(
   message: string;
   percentage: number;
 } {
-  const minimumSize = Math.max(10, Math.ceil(targetSize * 0.1)); // 10% ou mínimo 10
+  const minimumSize = Math.max(10, Math.ceil(targetSize * 0.1));
 
   if (targetSize === 0) {
     return {

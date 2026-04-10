@@ -264,7 +264,7 @@ export function ProjectForm({ open, onClose, project, gerentes, onSuccess }: Pro
               {getAllCategories().map(category => {
                 const methodologiesInCategory = getMethodologiesByCategory(category);
                 const selectedCount = form.metodologias_analise.filter(m => {
-                  const info = ALL_METHODOLOGIES[m as keyof typeof ALL_METHODOLOGIES];
+                  const info = ALL_METHODOLOGIES.find(met => met.type === (m as string));
                   return info && info.category === category;
                 }).length;
 

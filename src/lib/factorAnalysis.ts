@@ -325,7 +325,7 @@ function calculateCorrelationMatrix(data: number[][]): number[][] {
       const col_i = data.map(row => row[i]);
       const col_j = data.map(row => row[j]);
       
-      const correlation = stats.pearsonCorrelationCoefficient(col_i, col_j);
+      const correlation = stats.sampleCorrelation(col_i, col_j);
       corrMatrix[i][j] = isNaN(correlation) ? 0 : correlation;
     }
   }
