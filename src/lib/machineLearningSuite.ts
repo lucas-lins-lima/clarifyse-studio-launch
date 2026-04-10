@@ -250,13 +250,13 @@ export function trainRandomForest(
   }
   
   // Agregação (voting para classificação)
-  const predictions = X.map((_, idx) => {
+  const predictions: number[] = X.map((_, idx) => {
     const votes: Record<number, number> = {};
     allPredictions.forEach(pred => {
       votes[pred[idx]] = (votes[pred[idx]] || 0) + 1;
     });
     
-    const prediction = Number(Object.keys(votes).reduce((a, b) => 
+    return Number(Object.keys(votes).reduce((a, b) => 
       votes[parseInt(b)] > votes[parseInt(a)] ? b : a
     ));
   });
