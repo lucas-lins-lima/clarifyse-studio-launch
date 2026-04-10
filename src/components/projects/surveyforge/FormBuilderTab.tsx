@@ -286,8 +286,8 @@ export default function FormBuilderTab({ project, onSave, isLocked }: { project:
                         <p className="text-[10px] font-bold text-blue-600 mb-2 uppercase tracking-wider">Metodologias Aplicáveis</p>
                         <div className="flex flex-wrap gap-1">
                           {getApplicableMethodologies(activeQuestion.type).map(method => (
-                            <span key={method.code} className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap">
-                              {method.code}
+                            <span key={method.type} className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap">
+                              {method.name}
                             </span>
                           ))}
                           {getApplicableMethodologies(activeQuestion.type).length === 0 && (

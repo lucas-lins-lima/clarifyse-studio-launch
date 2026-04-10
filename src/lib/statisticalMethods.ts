@@ -5,9 +5,9 @@
  * Métodos Descritivos, Comparativos, Explicativos, de Texto, Precificação, etc.
  */
 
-import stats from 'simple-statistics';
+import * as stats from 'simple-statistics';
 import jStat from 'jstat';
-import kmeans from 'ml-kmeans';
+import { kmeans } from 'ml-kmeans';
 
 // ============================================================================
 // TIPOS E INTERFACES
@@ -641,7 +641,7 @@ export function calculateWordFrequency(text: string): Array<{ word: string; coun
  * Calcula correlação de Pearson entre duas variáveis
  */
 export function pearsonCorrelation(x: number[], y: number[]): number {
-  return stats.pearsonCorrelationCoefficient(x, y);
+  return stats.sampleCorrelation(x, y);
 }
 
 /**

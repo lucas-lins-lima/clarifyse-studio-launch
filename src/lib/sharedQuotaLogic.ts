@@ -220,7 +220,4 @@ export function getAvailableQuotaGroups(project: Project): string[] {
   return [...new Set(available)];
 }
 
-/**
- * Exporta tipos para TypeScript
- */
-export type { Quota, Project, ValidationResult };
+// Types already exported above via interface declarations

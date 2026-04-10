@@ -4,7 +4,7 @@
  * Implementa Decision Trees, Random Forest, Gradient Boosting, SVM, KNN
  */
 
-import stats from 'simple-statistics';
+import * as stats from 'simple-statistics';
 
 // ============================================================================
 // TIPOS E INTERFACES
