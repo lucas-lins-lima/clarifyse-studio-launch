@@ -12,7 +12,7 @@ export interface ValidationResult {
     isValid: boolean;
     errors: string[];
     warnings: string[];
-  }>;
+  }>>;
   questionsStatus: {
     totalQuestions: number;
     validQuestions: number;
